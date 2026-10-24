@@ -94,8 +94,8 @@ export default function EditorPage() {
   const [imageFit, setImageFit] = useState<"cover" | "contain">("cover");
   const [notice, setNotice] = useState("");
   const [saved, setSaved] = useState(false);
-  const [history, setHistory] = useState<EditorObject[][]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [history, setHistory] = useState<EditorObject[][]>([DEFAULT_OBJECTS]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [stagePixels, setStagePixels] = useState(600);
   const [drag, setDrag] = useState<DragState>(null);
   const stageRef = useRef<HTMLDivElement>(null);
