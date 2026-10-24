@@ -100,7 +100,7 @@ function hasEmbeddedVideo(html) {
     || /<iframe\b[^>]*src\s*=\s*["'][^"']*(?:youtube\.com\/embed|youtu\.be\/|vimeo\.com\/video|dailymotion\.com\/embed)/i.test(html);
 }
 function isClearlyVideoPost(item) {
-  return /\\b(?:videos?|video\\s+memes?|video\\s+templates?|video\\s+download|footage|meme\\s+clips?|animated\\s+memes?)\\b/i.test(item.id.replace(/-/g, " ") + " " + item.name);
+  return /\b(?:videos?|video\s+memes?|video\s+templates?|video\s+download|footage|meme\s+clips?|animated\s+memes?)\b/i.test(item.id.replace(/-/g, " ") + " " + item.name);
 }
 function parseCards(html) {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
