@@ -177,3 +177,6 @@
  .ratio-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){.editor-object,.template-picker-item,.sticker-grid button{transition:none!important}}
+
+/* Allow direct manipulation of canvas objects on touch screens */
+.editor-canvas-stage{touch-action:none}
