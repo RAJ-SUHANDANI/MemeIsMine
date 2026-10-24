@@ -66,7 +66,7 @@ export function FloatingGallery({ memes = [] }: { memes?: MemeTemplate[] }) {
     category: meme.category ?? "Meme format",
     tilt: [-8, 7, 4, -4][index % 4],
     className: ["float-card float-card-one", "float-card float-card-two", "float-card float-card-three", "float-card float-card-four"][index % 4],
-    href: "source" in meme && meme.source === "indianmemetemplates" ? "/create/" + encodeURIComponent(meme.id) + "?source=indian" : "/create/" + encodeURIComponent(meme.id),
+    href: "source" in meme && (meme.source === "indian" || meme.source === "indianmemetemplates") ? "/create/" + encodeURIComponent(meme.id) + "?source=indian" : "/create/" + encodeURIComponent(meme.id),
   }));
   return <div className="floating-gallery" ref={ref} aria-label="A floating collage of randomly selected meme templates">
     <div className="gallery-orbit orbit-one"/><div className="gallery-orbit orbit-two"/>
