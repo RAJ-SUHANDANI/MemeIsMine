@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, SlidersHorizontal, ArrowUpRight, ArrowLeft, ArrowRight, Globe2, LibraryBig } from "lucide-react";
+import { Search, SlidersHorizontal, ArrowUpRight, ArrowLeft, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { SiteHeader, MemeCard } from "@/components/site";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
@@ -15,7 +15,7 @@ export default function ExplorePage() {
   const [sort, setSort] = useState("popular");
   const [showCount, setShowCount] = useState(24);
   const [loading, setLoading] = useState(true);
-  const [library, setLibrary] = useState<LibraryMode>("mine");
+  const [library, setLibrary] = useState<LibraryMode>("indian");
   const [archivePage, setArchivePage] = useState(1);
   const [totalPages, setTotalPages] = useState(170);
   const [upstreamPageCount, setUpstreamPageCount] = useState(0);
@@ -26,7 +26,7 @@ export default function ExplorePage() {
     if (requestedCategory) setCategory(requestedCategory);
     const requestedQuery = params.get("q");
     if (requestedQuery) setQuery(requestedQuery);
-    if (params.get("source") === "indian") setLibrary("indian");
+    if (params.get("source") === "mine") setLibrary("mine");
   }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 450);
@@ -79,20 +79,16 @@ export default function ExplorePage() {
   return <main className="paper-noise"><SiteHeader/>
     <section className="page-hero"><div className="container"><span className="eyebrow">The format directory</span><h1>Find your <span>format.</span></h1><p>For the group chat, the group project, and whatever happened last night.</p></div></section>
     <section className="container">
-      <div className="template-library-switch" role="group" aria-label="Choose a template library">
-        <button type="button" onClick={() => switchLibrary("mine")} className={library === "mine" ? "library-choice active" : "library-choice"}><LibraryBig size={17}/><span><strong>Meme Is Mine picks</strong><small>Classics and quick favourites</small></span><span className="library-choice-check">{library === "mine" ? "✓" : ""}</span></button>
-        <button type="button" onClick={() => switchLibrary("indian")} className={library === "indian" ? "library-choice active" : "library-choice"}><Globe2 size={17}/><span><strong>Indian template archive</strong><small>Browse the full paginated collection</small></span><span className="library-choice-check">{library === "indian" ? "✓" : ""}</span></button>
-      </div>
       <div className="explore-controls">
-        <label className="search-wrap"><Search size={17}/><input type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder={library === "indian" ? "Search the Indian template archive…" : "Search templates, reactions, situations…"} aria-label="Search meme templates"/></label>
+        <label className="search-wrap"><Search size={17}/><input type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder="Search templates, reactions, situations…" aria-label="Search meme templates"/></label>
         {library === "mine" && <div className="filter-row" role="group" aria-label="Filter meme categories">{categories.map((item) => <button type="button" key={item} onClick={() => { setCategory(item); setShowCount(24); }} className={category === item ? "filter-pill active" : "filter-pill"}>{item}</button>)}</div>}
         <select className="sort-select" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort templates"><option value="popular">Popular</option><option value="trending">Trending</option><option value="recent">Recent</option><option value="name">Name A to Z</option></select>
       </div>
       <div className="explore-summary">
         <span>{loading ? "Finding the formats…" : library === "indian" ? (upstreamPageCount || visible.length) + " templates on page " + archivePage + " of " + totalPages : visible.length + " formats found"}</span>
-        <span>{library === "indian" ? <a className="archive-source-link" href="https://indianmemetemplates.com/meme-templates/" target="_blank" rel="noreferrer">Original archive <ArrowUpRight size={12}/></a> : "Meme Is Mine template collection"}</span>
+        <span>Template collection</span>
       </div>
-      {errorMessage && <div className="archive-message"><p>{errorMessage}</p>{library === "indian" && <p>The original website may be temporarily limiting automated requests. Try again shortly or open the source archive directly.</p>}<a className="text-link" href="https://indianmemetemplates.com/meme-templates/" target="_blank" rel="noreferrer">Open source website <ArrowUpRight size={14}/></a></div>}
+      {errorMessage && <div className="archive-message"><p>{errorMessage}</p>{library === "indian" && <p>The template collection may be temporarily unavailable. Try again shortly.</p>}</div>}
       {!loading && !errorMessage && visible.length === 0 && <div className="empty-state"><SlidersHorizontal size={25}/><h2>No formats found.</h2><p>Try another search or clear the category filter.</p><button className="button button-dark button-small" onClick={() => { setQuery(""); setCategory("All"); setArchivePage(1); }}>Clear filters</button></div>}
       {visible.length > 0 && <motion.div layout className="template-grid explore-grid">{visible.slice(0, showCount).map((meme, index) => <MemeCard key={meme.id} meme={meme} index={index}/>)}</motion.div>}
       {library === "indian" && <div className="archive-pagination"><button className="button button-paper button-small" disabled={loading || archivePage <= 1} onClick={() => setArchivePage((page) => Math.max(1, page - 1))}><ArrowLeft size={14}/> Previous</button><span>Page <strong>{archivePage}</strong> of {totalPages}</span><button className="button button-dark button-small" disabled={loading || archivePage >= totalPages} onClick={() => setArchivePage((page) => Math.min(totalPages, page + 1))}>Next page <ArrowRight size={14}/></button></div>}
