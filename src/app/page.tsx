@@ -74,7 +74,7 @@ export default function HomePage() {
 
 
     <section className="section home-video-section" id="video-templates"><div className="container">
-      <div className="section-head"><div><span className="eyebrow">The memes that move</span><h2 className="section-title">Bring the joke<br/><span className="serif-italic">to life.</span></h2></div><p className="section-note">Real video clips and animated reactions, ready for your captions. Start with a moving template, then tweak it in the browser.</p></div>
+      <div className="section-head"><div><span className="eyebrow">Video templates / the memes that move</span><h2 className="section-title">Bring the joke<br/><span className="serif-italic">to life.</span></h2></div><p className="section-note">Real video clips and animated reactions, ready for your captions. Start with a moving template, then tweak it in the browser.</p></div>
       {videoTemplates.length > 0 ? <div className="video-template-grid home-video-grid">{videoTemplates.map((template, index) => <motion.article key={template.id} className="video-template-card" initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .12 }} transition={{ duration: .35, delay: index * .05 }} whileHover={reduce ? undefined : { y: -5 }}><div className="video-template-preview">
         <Link className="video-template-media-link" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}>
           {template.mediaType === "gif" ? <img src={homeVideoSource(template)} alt={template.name} loading="lazy"/> : <video src={homeVideoSource(template)} poster={template.posterUrl || undefined} muted autoPlay loop playsInline preload="metadata" aria-label={template.name}/>}
