@@ -31,8 +31,9 @@ export default function HomePage() {
     const loadReviews = () => {
       try {
         const stored = JSON.parse(localStorage.getItem(REVIEW_KEY) ?? "[]");
-        if (Array.isArray(stored) && stored.length) setReviews(stored.filter((item) => item && typeof item.name === "string" && typeof item.review === "string"));
-        else setReviews(starterReviews);
+        const submitted = Array.isArray(stored) ? stored.filter((item) => item && typeof item.name === "string" && typeof item.review === "string") : [];
+        // Keep three starter cards in the deck, then show submitted reviews on top.
+        setReviews([...submitted, ...starterReviews]);
       } catch { setReviews(starterReviews); }
     };
     loadReviews();
@@ -134,7 +135,7 @@ export default function HomePage() {
       <div className="review-deck" aria-label="User reviews. Swipe the front card left or right to browse." onTouchStart={(event) => { event.currentTarget.dataset.touchX = String(event.touches[0]?.clientX ?? 0); }} onTouchEnd={(event) => { const start = Number(event.currentTarget.dataset.touchX ?? 0); const delta = (event.changedTouches[0]?.clientX ?? start) - start; if (Math.abs(delta) > 45) moveReview(delta < 0 ? 1 : -1); }}>
         {reviews.slice(0, Math.min(3, reviews.length)).map((_, stackIndex) => {
           const review = reviews[(reviewIndex + stackIndex) % reviews.length];
-          return <motion.article key={review.id} className={"review-card review-card-stack-" + stackIndex} drag={stackIndex === 0 ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.72} onDragEnd={(_, info) => { if (info.offset.x < -70) moveReview(1); else if (info.offset.x > 70) moveReview(-1); }} style={{ zIndex: 3 - stackIndex }} whileDrag={stackIndex === 0 ? { rotate: 4, cursor: "grabbing" } : undefined}>
+          return <motion.article key={review.id} className={"review-card review-card-stack-" + stackIndex} drag={stackIndex === 0 ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.82} animate={{ x: stackIndex * 13, y: stackIndex * -8, rotate: stackIndex * 4, scale: 1 - stackIndex * .035 }} transition={{ type: "spring", stiffness: 260, damping: 24 }} onDragEnd={(_, info) => { if (info.offset.x < -70) moveReview(1); else if (info.offset.x > 70) moveReview(-1); }} style={{ zIndex: 3 - stackIndex }} whileDrag={stackIndex === 0 ? { rotate: 5, cursor: "grabbing" } : undefined}>
             <div className="review-card-top"><span className="review-quote-mark">“</span><span className="review-rating" aria-label="5 out of 5 stars">{Array.from({ length: 5 }, (_, i) => <Star key={i} size={13} fill="currentColor"/>)}</span></div>
             <p className="review-quote">{review.review}</p><div className="review-card-footer"><span className="review-avatar">{review.name.trim().charAt(0).toUpperCase() || "M"}</span><div><strong>{review.name}</strong><small>{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Meme Is Mine community"}</small></div><span className="review-swipe-cue">SWIPE ↔</span></div>
           </motion.article>;
