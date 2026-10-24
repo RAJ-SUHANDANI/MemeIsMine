@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/site";
 type VideoTemplate = {
   id: string; name: string; url: string; posterUrl: string;
   mediaType: "gif" | "video"; publishedAt: string | null; trending: boolean;
+  sourcePage?: string;
 };
 type TextLayer = {
   id: string; kind: "text"; name: string; text: string; x: number; y: number; w: number; h: number;
@@ -50,7 +51,10 @@ function dataUrl(file: File) {
     reader.readAsDataURL(file);
   });
 }
-function mediaUrl(url: string) { return "/api/video-source?url=" + encodeURIComponent(url); }
+function mediaUrl(url: string, sourcePage?: string) {
+  return "/api/video-source?url=" + encodeURIComponent(url)
+    + (sourcePage ? "&referrer=" + encodeURIComponent(sourcePage) : "");
+}
 
 
 async function convertToMp4(blob: Blob, ffmpegRef: { current: import("@ffmpeg/ffmpeg").FFmpeg | null }): Promise<Blob> {
@@ -117,7 +121,7 @@ export default function VideoEditorPage() {
   const selectedText = selected?.kind === "text" ? selected : null;
   const selectedImage = selected?.kind === "image" ? selected : null;
   const currentPreset = PRESETS.find((preset) => preset.width === width && preset.height === height)?.label ?? "custom";
-  const safeMediaUrl = useMemo(() => template ? mediaUrl(template.url) : "", [template]);
+  const safeMediaUrl = useMemo(() => template ? mediaUrl(template.url, template.sourcePage) : "", [template]);
 
   const setLayerList = useCallback((next: Layer[]) => { layersRef.current = next; setLayers(next); }, []);
   const updateLayer = useCallback((id: string, patch: Partial<Layer>) => {
