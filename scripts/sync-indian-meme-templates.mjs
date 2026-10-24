@@ -54,6 +54,12 @@ function imageUrl(block) {
       }
     }
   }
+  for (const tag of block.match(/<(?:a|source|video)\b[^>]*>/gi) ?? []) {
+    const raw = attr(tag, "href") ?? attr(tag, "src") ?? attr(tag, "data-src");
+    if (!raw || !/\.gif(?:[?#]|$)/i.test(raw)) continue;
+    const safe = siteUrl(raw);
+    if (safe && /\/wp-content\/uploads\//i.test(new URL(safe).pathname)) candidates.push(safe);
+  }
   for (const raw of block.match(/https?:[^\s"'<>\\]+?\.gif(?:\?[^\s"'<>\\]*)?/gi) ?? []) {
     const safe = siteUrl(raw.replace(/&amp;/g, "&"));
     if (safe && /\/wp-content\/uploads\//i.test(new URL(safe).pathname)) candidates.push(safe);
