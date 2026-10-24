@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff,
-  ImagePlus, Layers, Move, Palette, RotateCcw, Save, SlidersHorizontal, Trash2, Type, Upload, Video, X
+  ImagePlus, Move, Palette, SlidersHorizontal, Trash2, Type, Video
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
@@ -15,7 +15,7 @@ type VideoTemplate = {
 };
 type TextLayer = {
   id: string; kind: "text"; name: string; text: string; x: number; y: number; w: number; h: number;
-  rotation: number; fontSize: number; color: string; outline: boolean; outlineColor: string;
+  rotation: number; fontSize: number; fontFamily: string; color: string; outline: boolean; outlineColor: string; outlineWidth: number;
   shadow: boolean; align: "left" | "center" | "right"; uppercase: boolean; opacity: number;
 };
 type ImageLayer = { id: string; kind: "image"; name: string; src: string; x: number; y: number; w: number; h: number; rotation: number; opacity: number };
@@ -34,8 +34,8 @@ const PRESETS: Preset[] = [
 const COLORS = ["#F5F0E7", "#151515", "#F0442E", "#FFFFFF", "#DFD6C8", "#CCD9B9", "#D9D2E8"];
 const INITIAL_LAYER: TextLayer = {
   id: "video-caption-1", kind: "text", name: "Caption", text: "YOUR TEXT HERE",
-  x: 50, y: 20, w: 86, h: 18, rotation: 0, fontSize: 54, color: "#FFFFFF",
-  outline: true, outlineColor: "#000000", shadow: true, align: "center", uppercase: true, opacity: 1,
+  x: 50, y: 20, w: 86, h: 18, rotation: 0, fontSize: 54, fontFamily: "Impact", color: "#FFFFFF",
+  outline: true, outlineColor: "#000000", outlineWidth: 7, shadow: true, align: "center", uppercase: true, opacity: 1,
 };
 const PANEL_ITEMS: { id: Panel; label: string; icon: typeof Type }[] = [
   { id: "text", label: "Text", icon: Type }, { id: "overlay", label: "Overlay", icon: ImagePlus },
@@ -72,7 +72,6 @@ export default function VideoEditorPage() {
   const [seconds, setSeconds] = useState(8);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [stageWidth, setStageWidth] = useState(600);
   const [viewportHeight, setViewportHeight] = useState(900);
   const [drag, setDrag] = useState<DragInfo>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -104,13 +103,10 @@ export default function VideoEditorPage() {
     return () => { alive = false; };
   }, [templateId]);
   useEffect(() => {
-    if (!stageRef.current || typeof ResizeObserver === "undefined") return;
-    const resize = new ResizeObserver((entries) => { if (entries[0]) setStageWidth(entries[0].contentRect.width); });
-    resize.observe(stageRef.current);
     setViewportHeight(window.innerHeight);
     const handleResize = () => setViewportHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
-    return () => { resize.disconnect(); window.removeEventListener("resize", handleResize); };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
   function toast(message: string) { setNotice(message); window.setTimeout(() => setNotice(""), 3200); }
   function addText() {
@@ -197,7 +193,6 @@ export default function VideoEditorPage() {
         recorder.onerror = () => reject(new Error("Recording failed. Please try a shorter export."));
         recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
       });
-      const start = performance.now();
       const drawFit = (image: CanvasImageSource, imageW: number, imageH: number) => {
         const scale = fit === "cover" ? Math.max(width / imageW, height / imageH) : Math.min(width / imageW, height / imageH);
         const w = imageW * scale; const h = imageH * scale;
@@ -221,7 +216,7 @@ export default function VideoEditorPage() {
             }
           } else {
             const fontPx = layer.fontSize * width / 1080;
-            ctx.font = "900 " + fontPx + "px Impact, Arial Black, sans-serif"; ctx.textAlign = layer.align; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+            ctx.font = "900 " + fontPx + "px " + layer.fontFamily + ", Arial Black, sans-serif"; ctx.textAlign = layer.align; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
             ctx.shadowColor = layer.shadow ? "rgba(0,0,0,.5)" : "transparent"; ctx.shadowBlur = layer.shadow ? fontPx * .08 : 0;
             const text = layer.uppercase ? layer.text.toUpperCase() : layer.text;
             const lines: string[] = []; let line = "";
@@ -234,7 +229,7 @@ export default function VideoEditorPage() {
             const lineX = layer.align === "left" ? -w / 2 : layer.align === "right" ? w / 2 : 0;
             shown.forEach((value, index) => {
               const lineY = (index - (shown.length - 1) / 2) * fontPx * 1.05;
-              if (layer.outline) { ctx.lineWidth = Math.max(2, fontPx * .08); ctx.strokeStyle = layer.outlineColor; ctx.strokeText(value, lineX, lineY, w); }
+              if (layer.outline) { ctx.lineWidth = Math.max(1, layer.outlineWidth * width / 1080); ctx.strokeStyle = layer.outlineColor; ctx.strokeText(value, lineX, lineY, w); }
               ctx.fillStyle = layer.color; ctx.fillText(value, lineX, lineY, w);
             });
           }
@@ -247,6 +242,7 @@ export default function VideoEditorPage() {
         await new Promise<void>((resolve) => { if (image.complete && image.naturalWidth) resolve(); else { image.onload = () => resolve(); image.onerror = () => resolve(); } });
       }
       if (source instanceof HTMLVideoElement) { source.currentTime = 0; source.muted = true; await source.play().catch(() => undefined); }
+      const start = performance.now();
       recorder.start(250);
       const renderFrame = () => {
         paint();
@@ -290,7 +286,7 @@ export default function VideoEditorPage() {
         {template && <div className="canvas-stage-shell"><div ref={stageRef} className="editor-canvas-stage video-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * .65 * width / height))) + "px)", aspectRatio: width + " / " + height, background }} onPointerMove={onStageMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
           {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl} muted loop autoPlay playsInline controls={false} preload="auto" style={{ objectFit: fit }} />}
           {layers.map((layer,index) => <div key={layer.id} className={selectedId === layer.id ? "editor-object selected" : "editor-object"} role="button" tabIndex={0} aria-label={"Select " + layer.name} style={{ left: layer.x + "%", top: layer.y + "%", width: layer.w + "%", height: layer.h + "%", zIndex: index + 2, opacity: layer.opacity, transform: "translate(-50%, -50%) rotate(" + layer.rotation + "deg)" }} onPointerDown={(event) => onDragStart(event,layer)} onClick={() => setSelectedId(layer.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(layer.id); }}>
-            {layer.kind === "text" ? <div className="editor-object-text" style={{ fontFamily: "Impact, Arial Black, sans-serif", fontSize: "clamp(12px, " + (layer.fontSize / 1080 * 100) + "cqw, 80px)", color: layer.color, textAlign: layer.align, textTransform: layer.uppercase ? "uppercase" : "none", WebkitTextStroke: layer.outline ? "1px " + layer.outlineColor : "0 transparent", textShadow: layer.shadow ? "2px 2px 0 rgba(0,0,0,.5)" : "none" }}>{layer.text}</div> : <img className="editor-overlay-image" src={layer.src} alt={layer.name} draggable={false}/>}
+            {layer.kind === "text" ? <div className="editor-object-text" style={{ fontFamily: layer.fontFamily + ", Arial Black, sans-serif", fontSize: "clamp(12px, " + (layer.fontSize / 1080 * 100) + "cqw, 80px)", color: layer.color, textAlign: layer.align, textTransform: layer.uppercase ? "uppercase" : "none", WebkitTextStroke: layer.outline ? (layer.outlineWidth / 1080 * 100) + "cqw " + layer.outlineColor : "0 transparent", textShadow: layer.shadow ? "2px 2px 0 rgba(0,0,0,.5)" : "none" }}>{layer.text}</div> : <img className="editor-overlay-image" src={layer.src} alt={layer.name} draggable={false}/>}
             {selectedId === layer.id && <button type="button" className="object-resize-handle" aria-label="Resize selected layer" onPointerDown={(event) => onDragStart(event,layer,"resize")}/>}
           </div>)}
         </div></div>}
