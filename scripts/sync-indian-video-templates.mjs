@@ -71,8 +71,8 @@ function getMediaCandidates(html, base) {
   const found = [];
   for (const raw of candidates) {
     const safe = validSiteUrl(raw, base);
-    if (!safe || !/\/wp-content\/uploads\//i.test(new URL(safe).pathname) || !MEDIA_EXT.test(new URL(safe).pathname)) continue;
-    if (!found.some((item) => item.url === safe)) found.push({ url: safe, type: new URL(safe).pathname.toLowerCase().endsWith(".gif") ? "gif" : "video" });
+    if (!safe || !/\/wp-content\/uploads\//i.test(new URL(safe).pathname) || !new URL(safe).pathname.toLowerCase().endsWith(".gif")) continue;
+    if (!found.some((item) => item.url === safe)) found.push({ url: safe, type: "gif" });
   }
   return found;
 }
@@ -156,7 +156,8 @@ async function main() {
       const publishedMeta = html.match(/<meta\b(?=[^>]*(?:property|name)=["']article:published_time["'])[^>]*>/i)?.[0];
       const published = timeTag ?? (publishedMeta ? attr(publishedMeta, "content") : null);
       const name = plainText(heading ?? (ogTitle ? attr(ogTitle, "content") ?? post.name : post.name));
-      const mediaChoice = media.find((item) => item.type === "gif") ?? media[0];
+      const mediaChoice = media.find((item) => item.type === "gif");
+      if (!mediaChoice) continue;
       results.push({
         id: post.id, name, url: mediaChoice.url, posterUrl: post.posterUrl ?? mediaChoice.url,
         width: 0, height: 0, box_count: 2, category: "Video Memes",
@@ -171,9 +172,8 @@ async function main() {
     completed++;
     if (completed % 20 === 0) console.log("Checked " + completed + "/" + posts.size + " source pages; found " + results.length + " media templates.");
   }
-  if (!results.length) throw new Error("No direct GIF or video assets were found. Catalog was not overwritten.");
   await mkdir(dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, JSON.stringify(results, null, 2) + "\n", "utf8");
-  console.log("Saved " + results.length + " GIF and video templates to " + OUTPUT + ". The media files were not copied.");
+  console.log("Saved " + results.length + " GIF templates to " + OUTPUT + ". Non GIF video files were excluded; media files were not copied.");
 }
 main().catch((error) => { console.error("Video template sync failed:", error instanceof Error ? error.message : error); process.exitCode = 1; });
