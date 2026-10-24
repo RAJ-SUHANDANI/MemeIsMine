@@ -2,13 +2,11 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowUpRight, Star } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { SiteHeader } from "@/components/site";
 
 const REVIEW_KEY = "mim-user-reviews";
 type UserReview = { id: string; name: string; review: string; createdAt: string };
 export default function AddReviewPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [review, setReview] = useState("");
   const [error, setError] = useState("");
@@ -24,7 +22,7 @@ export default function AddReviewPage() {
       const next = [{ id: "review-" + Date.now(), name: cleanName, review: cleanReview, createdAt: new Date().toISOString() }, ...previous].slice(0, 100);
       localStorage.setItem(REVIEW_KEY, JSON.stringify(next));
       window.dispatchEvent(new Event("mim-reviews-updated"));
-      router.push("/#reviews");
+      window.location.assign("/#reviews");
     } catch { setError("Your browser could not save this review. Check available site storage and try again."); }
   }
   return <main className="paper-noise"><SiteHeader/><section className="page-hero"><div className="container"><span className="eyebrow">Your words, your way</span><h1>Leave a <span>review.</span></h1><p>Tell us what you think of Meme Is Mine. Keep it kind, honest, and helpful for the next meme maker.</p></div></section>
