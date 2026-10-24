@@ -195,6 +195,7 @@ export default function VideoTemplatesPage() {
     const controller = new AbortController();
     setLoading(true);
     setError("");
+    setTemplates([]);
     const params = new URLSearchParams({ page: String(page), limit: "24", sort: filter });
     if (filter === "surprise") params.set("seed", String(surpriseSeed));
     if (debouncedQuery) params.set("q", debouncedQuery);
@@ -235,8 +236,9 @@ export default function VideoTemplatesPage() {
       <div className="video-directory-heading"><div><span className="eyebrow">The moving collection</span><h2 className="section-title">Find the <span className="serif-italic">moment.</span></h2></div><span className="video-count"><Video size={15}/> {loading ? "Checking the archive" : templates.length + " templates on this page"}</span></div>
       <div className="video-filter-bar">
         <label className="search-wrap"><Search size={16}/><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Search video memes…" aria-label="Search video templates"/></label>
-        <div className="filter-row" role="group" aria-label="Filter video templates">{filters.map((item) => <button key={item.key} className={filter === item.key ? "filter-pill active" : "filter-pill"} onClick={() => chooseFilter(item.key)}>{item.label}</button>)}</div>
+        <div className="filter-row" role="group" aria-label="Filter video templates">{filters.map((item) => <button key={item.key} type="button" aria-pressed={filter === item.key} className={filter === item.key ? "filter-pill active" : "filter-pill"} onClick={() => chooseFilter(item.key)}>{item.label}</button>)}</div>
       </div>
+      {loading && <div className="template-loading"><span className="tiny-dot"/> Updating the motion collection…</div>}
       {error && <div className="archive-message"><p>{error}</p></div>}
       {!loading && !error && templates.length === 0 && <div className="video-empty-state"><div className="video-empty-icon"><Clapperboard size={28}/></div><h2>The motion catalog is syncing.</h2><p>Video clips are kept in their original format. New templates will appear here as the video catalog refreshes.</p><div className="video-empty-actions"><Link className="button button-paper" href="/templates">Browse image templates <ArrowRight size={15}/></Link></div></div>}
       {templates.length > 0 && <div className="video-template-grid">{templates.map((template, index) => <motion.article key={template.id} className="video-template-card" initial={reduce ? false : { opacity: 0, y: 18, rotate: index % 2 ? 1 : -1 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: .08 }} transition={{ duration: .35, delay: Math.min(index % 6, 5) * .035 }} whileHover={reduce ? undefined : { y: -6, rotate: index % 2 ? 1 : -1 }}>
