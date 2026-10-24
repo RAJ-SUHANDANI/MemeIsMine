@@ -93,7 +93,7 @@ export default function TemplatesPage(){
     const seen=readSeenTemplates();
     setAllTemplates(unique); setSeenIds(seen);
     setVisibleTemplates(pickTemplates(unique,"surprise",new Set(seen),12));
-    if(!pulled.length)setCatalogError("Showing the bundled Imgflip collection while the API is unavailable.");
+    if(!pulled.length)setCatalogError("Showing the built-in image collection while the API is unavailable.");
    })
    .catch(()=>{
     if(!alive)return;
@@ -101,7 +101,7 @@ export default function TemplatesPage(){
     const fallback=prepareTemplates(starterMemes.filter((item)=>{try{return new URL(item.url).hostname==="i.imgflip.com";}catch{return false;}}));
     setAllTemplates(fallback); setSeenIds(seen);
     setVisibleTemplates(pickTemplates(fallback,"surprise",new Set(seen),12));
-    setCatalogError("Showing the bundled Imgflip collection while the API is unavailable.");
+    setCatalogError("Showing the built-in image collection while the API is unavailable.");
    })
    .finally(()=>{if(alive)setLoadingTemplates(false);});
   return()=>{alive=false;};
