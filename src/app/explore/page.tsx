@@ -38,8 +38,8 @@ export default function ExplorePage() {
     setLoading(true);
     setErrorMessage("");
     const url = library === "indian"
-      ? "/api/indian-memes?page=" + archivePage + "&limit=24" + (debouncedQuery ? "&q=" + encodeURIComponent(debouncedQuery) : "")
-      : "/api/memes?limit=100" + (query.trim() ? "&q=" + encodeURIComponent(query.trim()) : "");
+      ? "/api/indian-memes?page=" + archivePage + "&limit=24&sort=" + encodeURIComponent(sort) + (debouncedQuery ? "&q=" + encodeURIComponent(debouncedQuery) : "")
+      : "/api/memes?limit=100" + (debouncedQuery ? "&q=" + encodeURIComponent(debouncedQuery) : "");
     fetch(url, { signal: controller.signal })
       .then(async (response) => {
         const data = await response.json();
@@ -57,7 +57,7 @@ export default function ExplorePage() {
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; controller.abort(); };
-  }, [library, archivePage, debouncedQuery]);
+  }, [library, archivePage, debouncedQuery, sort]);
   const visible = useMemo(() => {
     let result = memes.filter((meme) => {
       const matchesQuery = library === "indian" || meme.name.toLowerCase().includes(query.toLowerCase().trim());
@@ -65,7 +65,9 @@ export default function ExplorePage() {
       return matchesQuery && matchesCategory;
     });
     if (sort === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "newest") result = [...result].reverse();
+    if (sort === "recent" || sort === "newest") result = [...result].sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
+    if (sort === "trending") result = [...result].sort((a, b) => Number(Boolean(b.trending)) - Number(Boolean(a.trending)) || (b.popularity ?? 0) - (a.popularity ?? 0));
+    if (sort === "popular") result = [...result].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
     return result;
   }, [memes, query, category, sort, library]);
   function switchLibrary(next: LibraryMode) {
@@ -84,7 +86,7 @@ export default function ExplorePage() {
       <div className="explore-controls">
         <label className="search-wrap"><Search size={17}/><input type="search" value={query} onChange={(event) => changeQuery(event.target.value)} placeholder={library === "indian" ? "Search the Indian template archive…" : "Search templates, reactions, situations…"} aria-label="Search meme templates"/></label>
         {library === "mine" && <div className="filter-row" role="group" aria-label="Filter meme categories">{categories.map((item) => <button type="button" key={item} onClick={() => { setCategory(item); setShowCount(24); }} className={category === item ? "filter-pill active" : "filter-pill"}>{item}</button>)}</div>}
-        <select className="sort-select" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort templates"><option value="popular">Popular formats</option><option value="name">Name A to Z</option><option value="newest">Reverse listing order</option></select>
+        <select className="sort-select" value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort templates"><option value="popular">Popular</option><option value="trending">Trending</option><option value="recent">Recent</option><option value="name">Name A to Z</option></select>
       </div>
       <div className="explore-summary">
         <span>{loading ? "Finding the formats…" : library === "indian" ? (upstreamPageCount || visible.length) + " templates on page " + archivePage + " of " + totalPages : visible.length + " formats found"}</span>
