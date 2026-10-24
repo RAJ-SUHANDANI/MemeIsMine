@@ -102,6 +102,7 @@ export default function VideoEditorPage() {
   const effectFilter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)${grayscale ? " grayscale(1)" : ""}`;
   const [busy, setBusy] = useState(false);
   const [videoAudioEnabled, setVideoAudioEnabled] = useState(false);
+  const [videoRecoveryAttempted, setVideoRecoveryAttempted] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const ffmpegRef = useRef<import("@ffmpeg/ffmpeg").FFmpeg | null>(null);
@@ -131,6 +132,7 @@ export default function VideoEditorPage() {
         if (!response.ok || !data.success || !data.template) throw new Error(data.error ?? "This video template is not available yet.");
         if (!alive) return;
         setTemplate(data.template);
+        setVideoRecoveryAttempted(false);
       })
       .catch((reason: unknown) => { if (alive) setError(reason instanceof Error ? reason.message : "Could not load the video template."); })
       .finally(() => { if (alive) setLoading(false); });
@@ -213,6 +215,25 @@ export default function VideoEditorPage() {
     video.muted = !enabled;
     setVideoAudioEnabled(enabled);
     if (video.paused) void video.play().catch(() => undefined);
+  }
+
+  async function recoverEditorVideo() {
+    if (!template || template.mediaType !== "video" || videoRecoveryAttempted) return;
+    setVideoRecoveryAttempted(true);
+    try {
+      const response = await fetch("/api/video-templates?slug=" + encodeURIComponent(template.id) + "&refresh=1", { cache: "no-store" });
+      const data = await response.json();
+      const fresh = data?.template as VideoTemplate | undefined;
+      if (response.ok && data?.success && fresh?.url && fresh.url !== template.url) {
+        setTemplate(fresh);
+        setVideoAudioEnabled(false);
+        toast("Recovered the latest source video.");
+        return;
+      }
+    } catch {
+      // Keep the editor usable and report the source problem without crashing.
+    }
+    toast("This source video could not be loaded. Try another video template.");
   }
 
   async function exportVideo(format: "webm" | "mp4" = "webm") {
@@ -384,7 +405,7 @@ export default function VideoEditorPage() {
         <div className="canvas-workspace-meta"><span><span className="canvas-live-dot"/> Live motion preview</span><span>{width} × {height}</span><span>{layers.length} layers</span></div>
         {loading && <div className="empty-state"><Clapperboard size={26}/><h2>Loading the moving template…</h2></div>}
         {template && <div className="canvas-stage-shell"><div ref={stageRef} className="editor-canvas-stage video-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * .65 * width / height))) + "px)", aspectRatio: width + " / " + height, background }} onPointerMove={onStageMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
-          {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit, filter: effectFilter }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="auto" style={{ objectFit: fit, filter: effectFilter }} />}
+          {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit, filter: effectFilter }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="metadata" onError={() => { void recoverEditorVideo(); }} style={{ objectFit: fit, filter: effectFilter }} />}
           {layers.map((layer,index) => <div key={layer.id} className={selectedId === layer.id ? "editor-object selected" : "editor-object"} role="button" tabIndex={0} aria-label={"Select " + layer.name} style={{ left: layer.x + "%", top: layer.y + "%", width: layer.w + "%", height: layer.h + "%", zIndex: index + 2, opacity: layer.opacity, transform: "translate(-50%, -50%) rotate(" + layer.rotation + "deg)" }} onPointerDown={(event) => onDragStart(event,layer)} onClick={() => setSelectedId(layer.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(layer.id); }}>
             {layer.kind === "text" ? <div className="editor-object-text" style={{ fontFamily: layer.fontFamily + ", Arial Black, sans-serif", fontSize: "clamp(12px, " + (layer.fontSize / 1080 * 100) + "cqw, 80px)", color: layer.color, textAlign: layer.align, textTransform: layer.uppercase ? "uppercase" : "none", WebkitTextStroke: layer.outline ? (layer.outlineWidth / 1080 * 100) + "cqw " + layer.outlineColor : "0 transparent", textShadow: layer.shadow ? "2px 2px 0 rgba(0,0,0,.5)" : "none" }}>{layer.text}</div> : <img className="editor-overlay-image" src={layer.src} alt={layer.name} draggable={false}/>}
             {selectedId === layer.id && <button type="button" className="object-resize-handle" aria-label="Resize selected layer" onPointerDown={(event) => onDragStart(event,layer,"resize")}/>}
