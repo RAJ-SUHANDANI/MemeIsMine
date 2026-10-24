@@ -168,6 +168,22 @@ async function fetchHtml(url: string): Promise<{ html: string; response: Respons
   return { html, response };
 }
 
+function publicMeme(item: IndianTemplate) {
+  return {
+    id: item.id,
+    name: item.name,
+    url: item.url,
+    width: item.width,
+    height: item.height,
+    box_count: item.box_count,
+    category: item.category,
+    description: "Ready to customize in Meme Is Mine.",
+    source: "indian",
+    ...(item.publishedAt ? { publishedAt: item.publishedAt } : {}),
+    ...(item.trending !== undefined ? { trending: item.trending } : {}),
+    ...(item.popularity !== undefined ? { popularity: item.popularity } : {}),
+  };
+}
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const slug = (params.get("slug") ?? "").trim().replace(/^\/+|\/+$/g, "");
@@ -181,7 +197,7 @@ export async function GET(request: Request) {
     if (slug) {
       const localMatch = snapshot.find((item) => item.id === slug);
       if (localMatch) {
-        return NextResponse.json({ success: true, source: "indianmemetemplates", meme: localMatch }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+        return NextResponse.json({ success: true, source: "indianmemetemplates", meme: publicMeme(localMatch) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
       }
       if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) {
         return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
@@ -200,7 +216,7 @@ export async function GET(request: Request) {
         category: "Indian Memes", description: "Open the original page for template details and download options.",
         source: "indianmemetemplates", originalUrl,
       };
-      return NextResponse.json({ success: true, source: "indianmemetemplates", meme }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+      return NextResponse.json({ success: true, source: "indianmemetemplates", meme: publicMeme(meme) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     }
 
     if (snapshot.length) {
@@ -218,11 +234,10 @@ export async function GET(request: Request) {
       const totalPages = Math.max(1, Math.ceil(totalItems / limit));
       const memes = filtered.slice((page - 1) * limit, page * limit);
       return NextResponse.json({
-        success: true, source: "indianmemetemplates", collection: "synced-metadata",
+        success: true, collection: "image-templates",
         query: query || null, page, limit, count: memes.length, pageCount: memes.length,
         totalItems, totalPages, hasPreviousPage: page > 1, hasNextPage: page < totalPages,
-        memes,
-        attribution: { name: "Indian Meme Templates", url: SITE, note: "Preview images and original pages remain hosted by the source website." },
+        memes: memes.map(publicMeme),
       }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
     }
 
@@ -243,8 +258,7 @@ export async function GET(request: Request) {
     const sliced = memes.slice(0, limit);
     return NextResponse.json({
       success: true,
-      source: "indianmemetemplates",
-      collection: query ? "search" : "meme-templates",
+      collection: query ? "search" : "image-templates",
       query: query || null,
       page,
       limit,
@@ -253,8 +267,7 @@ export async function GET(request: Request) {
       totalPages,
       hasPreviousPage: page > 1,
       hasNextPage: page < totalPages,
-      memes: sliced,
-      attribution: { name: "Indian Meme Templates", url: SITE, note: "Preview images and original pages remain hosted by the source website." },
+      memes: sliced.map(publicMeme),
     }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown error";
