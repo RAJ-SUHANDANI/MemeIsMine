@@ -32,10 +32,10 @@ function attr(tag, name) {
   const doubleQuoted = tag.match(new RegExp("\\b" + name + "\\s*=\\s*\"([^\"]*)\"", "i"));
   return doubleQuoted?.[1] ? decodeEntities(doubleQuoted[1].trim()) : null;
 }
-function siteUrl(raw) {
+function siteUrl(raw, base = SITE) {
   if (!raw) return null;
   try {
-    const value = new URL(raw, SITE);
+    const value = new URL(raw, base);
     if (value.protocol !== "https:" || !["indianmemetemplates.com", "www.indianmemetemplates.com"].includes(value.hostname)) return null;
     return value.toString();
   } catch { return null; }
@@ -86,7 +86,7 @@ function extractAnimatedMedia(html, base) {
   const found = [];
   for (const raw of candidates) {
     const safe = siteUrl(raw, base);
-    if (!safe || !/\/wp-content\/uploads\//i.test(new URL(safe).pathname)) continue;
+    if (!safe || !new URL(safe).pathname.toLowerCase().includes("/wp-content/uploads/")) continue;
     const ext = new URL(safe).pathname.toLowerCase().split(".").pop();
     const type = ext === "gif" ? "gif" : ["mp4", "webm", "mov", "m4v", "ogv"].includes(ext ?? "") ? "video" : null;
     if (type && !found.some((item) => item.url === safe)) found.push({ url: safe, type });
