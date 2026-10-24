@@ -74,7 +74,7 @@ export default function TemplatesPage(){
  const [loadingMore,setLoadingMore]=useState(false);
  useEffect(()=>{
   let alive=true;
-  fetch("/api/memes?limit=100")
+  fetch("/api/memes?limit=100", { cache: "no-store" })
    .then(async(response)=>{
     const data=await response.json();
     if(!response.ok||!data?.success||!Array.isArray(data.memes))throw new Error("Imgflip templates are temporarily unavailable.");
@@ -84,8 +84,12 @@ export default function TemplatesPage(){
     if(!alive)return;
     // The /templates page is intentionally Imgflip-only. Indian archive images
     // (including video posters) belong in separate collections, not this index.
-    const apiTemplates=pulled.length?pulled:starterMemes;
-    const unique=Array.from(new Map(prepareTemplates(apiTemplates).map((item)=>[item.id,item])).values());
+    const isImgflipImage=(item:MemeTemplate)=>{
+     try{return new URL(item.url).hostname==="i.imgflip.com";}catch{return false;}
+    };
+    const apiTemplates=pulled.filter(isImgflipImage);
+    const bundled=starterMemes.filter(isImgflipImage);
+    const unique=Array.from(new Map(prepareTemplates(apiTemplates.length?apiTemplates:bundled).map((item)=>[item.id,item])).values());
     const seen=readSeenTemplates();
     setAllTemplates(unique); setSeenIds(seen);
     setVisibleTemplates(pickTemplates(unique,"surprise",new Set(seen),12));
@@ -94,7 +98,7 @@ export default function TemplatesPage(){
    .catch(()=>{
     if(!alive)return;
     const seen=readSeenTemplates();
-    const fallback=prepareTemplates(starterMemes);
+    const fallback=prepareTemplates(starterMemes.filter((item)=>{try{return new URL(item.url).hostname==="i.imgflip.com";}catch{return false;}}));
     setAllTemplates(fallback); setSeenIds(seen);
     setVisibleTemplates(pickTemplates(fallback,"surprise",new Set(seen),12));
     setCatalogError("Showing the bundled Imgflip collection while the API is unavailable.");
