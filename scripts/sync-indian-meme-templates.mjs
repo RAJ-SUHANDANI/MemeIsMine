@@ -109,20 +109,30 @@ function parseRobots(text) {
   }
   return groups;
 }
-async function checkRobots(path) {
-  let response;
-  try {
-    response = await fetch(SITE + "/robots.txt", {
-      headers: { "User-Agent": USER_AGENT, "Accept": "text/plain,*/*" },
-      signal: AbortSignal.timeout(15000),
-    });
-  } catch (error) {
-    throw new Error("Could not verify the source site's robots.txt; stopping rather than crawling without the rules.");
+let robotsGroupsPromise;
+async function loadRobotsGroups() {
+  if (!robotsGroupsPromise) {
+    robotsGroupsPromise = (async () => {
+      let response;
+      try {
+        response = await fetch(SITE + "/robots.txt", {
+          headers: { "User-Agent": USER_AGENT, "Accept": "text/plain,*/*" },
+          signal: AbortSignal.timeout(15000),
+        });
+      } catch {
+        throw new Error("Could not verify the source site's robots.txt; stopping rather than crawling without the rules.");
+      }
+      if (response.status === 404) return [];
+      if (!response.ok) throw new Error("Could not read robots.txt (HTTP " + response.status + "); stopping the sync.");
+      return parseRobots(await response.text());
+    })();
   }
-  if (response.status === 404) return;
-  if (!response.ok) throw new Error("Could not read robots.txt (HTTP " + response.status + "); stopping the sync.");
-  const groups = parseRobots(await response.text());
-  const applicable = groups.filter((item) => item.agents.includes("*") || item.agents.includes("memeismine template index"));
+  return robotsGroupsPromise;
+}
+async function checkRobots(path) {
+  const groups = await loadRobotsGroups();
+  const specific = groups.filter((item) => item.agents.some((agent) => agent !== "*" && USER_AGENT.toLowerCase().startsWith(agent)));
+  const applicable = specific.length ? specific : groups.filter((item) => item.agents.includes("*"));
   const rules = applicable.flatMap((item) => item.rules).filter((rule) => rule.path && (rule.path === "/" || rule.path === path || path.startsWith(rule.path)));
   rules.sort((a, b) => b.path.length - a.path.length || (a.type === "allow" ? -1 : 1));
   if (rules[0]?.type === "disallow") throw new Error("robots.txt disallows crawling " + path + "; sync stopped.");
