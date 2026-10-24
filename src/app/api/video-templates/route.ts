@@ -156,10 +156,16 @@ export async function GET(request: Request) {
   const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
-  const catalog = (videoCatalog as VideoTemplate[]).filter((item) => {
+  const validCatalog = (videoCatalog as VideoTemplate[]).filter((item) => {
     const path = (() => { try { return new URL(item.url).pathname.toLowerCase(); } catch { return ""; } })();
     return item.mediaType === "gif" ? path.endsWith(".gif") : item.mediaType === "video" && /\.(mp4|webm|mov|m4v|ogv)$/.test(path);
   });
+  // Older catalog records may not carry ranking fields. Use their preserved
+  // catalog order as a stable fallback so Popular differs from Name A to Z.
+  const catalog = validCatalog.map((item, index) => ({
+    ...item,
+    popularity: item.popularity > 0 ? item.popularity : validCatalog.length - index,
+  }));
 
   if (slug) {
     const item = catalog.find((template) => template.id === slug);
@@ -201,7 +207,15 @@ export async function GET(request: Request) {
   if (sort === "trending") {
     items = [...items].sort((a, b) => Number(b.trending) - Number(a.trending) || b.popularity - a.popularity || a.name.localeCompare(b.name));
   } else if (sort === "recent") {
-    items = [...items].sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.popularity - a.popularity || b.id.localeCompare(a.id));
+    items = [...items].sort((a, b) => {
+      const aDate = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+      const bDate = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+      if (aDate !== bDate) return bDate - aDate;
+      const aOrder = Number((a as VideoTemplate & { originalOrder?: number }).originalOrder);
+      const bOrder = Number((b as VideoTemplate & { originalOrder?: number }).originalOrder);
+      if (Number.isFinite(aOrder) && Number.isFinite(bOrder)) return aOrder - bOrder;
+      return b.popularity - a.popularity || a.id.localeCompare(b.id);
+    });
   } else if (sort === "name") {
     items = [...items].sort((a, b) => a.name.localeCompare(b.name));
   } else if (sort === "surprise") {
