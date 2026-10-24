@@ -71,8 +71,11 @@ function getMediaCandidates(html, base) {
   const found = [];
   for (const raw of candidates) {
     const safe = validSiteUrl(raw, base);
-    if (!safe || !/\/wp-content\/uploads\//i.test(new URL(safe).pathname) || !new URL(safe).pathname.toLowerCase().endsWith(".gif")) continue;
-    if (!found.some((item) => item.url === safe)) found.push({ url: safe, type: "gif" });
+    if (!safe || !/\/wp-content\/uploads\//i.test(new URL(safe).pathname)) continue;
+    const ext = new URL(safe).pathname.toLowerCase().split(".").pop();
+    const type = ext === "gif" ? "gif" : ["mp4", "webm", "mov", "m4v", "ogv"].includes(ext ?? "") ? "video" : null;
+    if (!type) continue;
+    if (!found.some((item) => item.url === safe)) found.push({ url: safe, type });
   }
   return found;
 }
@@ -156,7 +159,7 @@ async function main() {
       const publishedMeta = html.match(/<meta\b(?=[^>]*(?:property|name)=["']article:published_time["'])[^>]*>/i)?.[0];
       const published = timeTag ?? (publishedMeta ? attr(publishedMeta, "content") : null);
       const name = plainText(heading ?? (ogTitle ? attr(ogTitle, "content") ?? post.name : post.name));
-      const mediaChoice = media.find((item) => item.type === "gif");
+      const mediaChoice = media.find((item) => item.type === "video") ?? media.find((item) => item.type === "gif");
       if (!mediaChoice) continue;
       results.push({
         id: post.id, name, url: mediaChoice.url, posterUrl: post.posterUrl ?? mediaChoice.url,
@@ -174,6 +177,6 @@ async function main() {
   }
   await mkdir(dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, JSON.stringify(results, null, 2) + "\n", "utf8");
-  console.log("Saved " + results.length + " GIF templates to " + OUTPUT + ". Non GIF video files were excluded; media files were not copied.");
+  console.log("Saved " + results.length + " animated/video templates to " + OUTPUT + " (including direct MP4/WebM/MOV and GIF files). Media files were not copied.");
 }
 main().catch((error) => { console.error("Video template sync failed:", error instanceof Error ? error.message : error); process.exitCode = 1; });
