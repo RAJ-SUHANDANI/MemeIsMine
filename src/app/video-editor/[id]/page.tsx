@@ -51,9 +51,10 @@ function dataUrl(file: File) {
     reader.readAsDataURL(file);
   });
 }
-function mediaUrl(url: string, sourcePage?: string) {
+function mediaUrl(url: string, sourcePage?: string, fresh = false) {
   return "/api/video-source?url=" + encodeURIComponent(url)
-    + (sourcePage ? "&referrer=" + encodeURIComponent(sourcePage) : "");
+    + (sourcePage ? "&referrer=" + encodeURIComponent(sourcePage) : "")
+    + (fresh ? "&fresh=1" : "");
 }
 
 
@@ -107,6 +108,7 @@ export default function VideoEditorPage() {
   const [busy, setBusy] = useState(false);
   const [videoAudioEnabled, setVideoAudioEnabled] = useState(false);
   const [videoRecoveryAttempted, setVideoRecoveryAttempted] = useState(false);
+  const [videoRefreshNonce, setVideoRefreshNonce] = useState(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const ffmpegRef = useRef<import("@ffmpeg/ffmpeg").FFmpeg | null>(null);
@@ -121,7 +123,7 @@ export default function VideoEditorPage() {
   const selectedText = selected?.kind === "text" ? selected : null;
   const selectedImage = selected?.kind === "image" ? selected : null;
   const currentPreset = PRESETS.find((preset) => preset.width === width && preset.height === height)?.label ?? "custom";
-  const safeMediaUrl = useMemo(() => template ? mediaUrl(template.url, template.sourcePage) : "", [template]);
+  const safeMediaUrl = useMemo(() => template ? mediaUrl(template.url, template.sourcePage, videoRefreshNonce > 0) : "", [template, videoRefreshNonce]);
 
   const setLayerList = useCallback((next: Layer[]) => { layersRef.current = next; setLayers(next); }, []);
   const updateLayer = useCallback((id: string, patch: Partial<Layer>) => {
@@ -228,10 +230,13 @@ export default function VideoEditorPage() {
       const response = await fetch("/api/video-templates?slug=" + encodeURIComponent(template.id) + "&refresh=1", { cache: "no-store" });
       const data = await response.json();
       const fresh = data?.template as VideoTemplate | undefined;
-      if (response.ok && data?.success && fresh?.url && fresh.url !== template.url) {
-        setTemplate(fresh);
+      if (response.ok && data?.success && fresh?.url) {
+        // Force a fresh proxy request even when the archive still points to the
+        // same file: the source may have transiently returned a cached error.
+        setTemplate({ ...fresh, sourcePage: fresh.sourcePage ?? template.sourcePage });
+        setVideoRefreshNonce((value) => value + 1);
         setVideoAudioEnabled(false);
-        toast("Recovered the latest source video.");
+        toast("Retried the latest source video.");
         return;
       }
     } catch {
