@@ -29,7 +29,7 @@ export default function HomePage() {
       }
       return result;
     };
-    fetch("/api/memes?limit=100")
+    fetch("/api/memes?limit=100", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok || !data?.success || !Array.isArray(data.memes)) throw new Error("Imgflip memes are unavailable.");
@@ -38,11 +38,14 @@ export default function HomePage() {
       .then((imgflipMemes) => {
         if (!alive) return;
         // Never mix the Indian archive into the image cards; they are Imgflip-only.
-        const source = imgflipMemes.length ? imgflipMemes : starterMemes;
-        const unique = Array.from(new Map(source.map((item) => [item.id, item])).values());
+        const isImgflipImage = (item: MemeTemplate) => {
+          try { return new URL(item.url).hostname === "i.imgflip.com"; } catch { return false; }
+        };
+        const source = imgflipMemes.filter(isImgflipImage);
+        const unique = Array.from(new Map((source.length ? source : starterMemes).filter(isImgflipImage).map((item) => [item.id, item])).values());
         setMemes(shuffle(unique).slice(0, 4));
       })
-      .catch(() => { if (alive) setMemes(shuffle(starterMemes).slice(0, 4)); });
+      .catch(() => { if (alive) setMemes(shuffle(starterMemes.filter((item) => { try { return new URL(item.url).hostname === "i.imgflip.com"; } catch { return false; } })).slice(0, 4)); });
     fetch("/api/video-templates?limit=4&sort=popular")
       .then(async (response) => {
         const data = await response.json();
