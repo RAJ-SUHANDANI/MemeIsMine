@@ -1,3 +1,4 @@
+import snapshotData from "@/data/indian-meme-templates.json";
 import { NextResponse } from "next/server";
 
 const SITE = "https://indianmemetemplates.com";
@@ -117,10 +118,15 @@ export async function GET(request: Request) {
   const slug = (params.get("slug") ?? "").trim().replace(/^\/+|\/+$/g, "");
   const query = (params.get("q") ?? "").trim().slice(0, 120);
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
-  const limit = Math.min(24, Math.max(1, Math.floor(Number(params.get("limit") ?? 12) || 12)));
+  const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
+  const snapshot = snapshotData as IndianTemplate[];
 
   try {
     if (slug) {
+      const localMatch = snapshot.find((item) => item.id === slug);
+      if (localMatch) {
+        return NextResponse.json({ success: true, source: "indianmemetemplates", meme: localMatch }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+      }
       if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) {
         return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
       }
@@ -139,6 +145,20 @@ export async function GET(request: Request) {
         source: "indianmemetemplates", originalUrl,
       };
       return NextResponse.json({ success: true, source: "indianmemetemplates", meme }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+    }
+
+    if (snapshot.length) {
+      const filtered = query ? snapshot.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())) : snapshot;
+      const totalItems = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+      const memes = filtered.slice((page - 1) * limit, page * limit);
+      return NextResponse.json({
+        success: true, source: "indianmemetemplates", collection: "synced-metadata",
+        query: query || null, page, limit, count: memes.length, pageCount: memes.length,
+        totalItems, totalPages, hasPreviousPage: page > 1, hasNextPage: page < totalPages,
+        memes,
+        attribution: { name: "Indian Meme Templates", url: SITE, note: "Preview images and original pages remain hosted by the source website." },
+      }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
     }
 
     const url = archiveUrl(page, query);
