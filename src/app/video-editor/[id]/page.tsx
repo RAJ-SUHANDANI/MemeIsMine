@@ -309,11 +309,12 @@ export default function VideoEditorPage() {
       return;
     }
 
-    // Do not switch the editor to the third-party URL directly. A cross-origin
-    // media element cannot be safely captured for canvas-based video export.
+    // Last-resort preview fallback. The editor prefers the same-origin proxy
+    // (which is required for composited export), but keep the clip visible if
+    // the source host permits browser playback while blocking server fetches.
     if (!directFallbackTried) {
       setDirectFallbackTried(true);
-      toast("The source host blocked the video proxy. Export is disabled until the same-origin preview loads.");
+      setVideoSourceOverride(template.url);
       return;
     }
 
@@ -329,12 +330,63 @@ export default function VideoEditorPage() {
     if (!("captureStream" in canvas) || typeof MediaRecorder === "undefined") { toast("WebM export is not supported in this browser. Try the latest Chrome or Edge."); return; }
     const source = template.mediaType === "gif" ? gifRef.current : videoRef.current;
     if (!source) { toast("The template is still loading."); return; }
+
+    if (source instanceof HTMLVideoElement) {
+      let sourceOrigin = "";
+      try { sourceOrigin = new URL(source.currentSrc || source.src, window.location.href).origin; } catch { /* Use the proxy recovery below. */ }
+      if (sourceOrigin !== window.location.origin) {
+        const proxySrc = mediaUrl(template.url, template.sourcePage, true);
+        let probe: Response;
+        try {
+          probe = await fetch(proxySrc, { headers: { Range: "bytes=0-1" }, cache: "no-store" });
+        } catch {
+          toast("The source video plays, but the same-origin media proxy is unavailable. Export needs the proxy to work.");
+          return;
+        }
+        if (!probe.ok && probe.status !== 206) {
+          const detail = await probe.text().catch(() => "");
+          toast("Could not prepare a safe export source. " + (detail.slice(0, 120) || "The media proxy returned " + probe.status + "."));
+          return;
+        }
+        await probe.body?.cancel().catch(() => undefined);
+
+        // Switch the existing media element back to the proxy before drawing
+        // frames to canvas. A direct cross-origin source taints canvas exports.
+        const loaded = new Promise<void>((resolve, reject) => {
+          let finished = false;
+          const finish = (error?: Error) => {
+            if (finished) return;
+            finished = true;
+            window.clearTimeout(timer);
+            source.removeEventListener("loadeddata", onReady);
+            source.removeEventListener("canplay", onReady);
+            source.removeEventListener("error", onError);
+            if (error) reject(error); else resolve();
+          };
+          const onReady = () => {
+            try {
+              if (new URL(source.currentSrc || source.src, window.location.href).origin === window.location.origin) finish();
+            } catch { /* Wait for a valid source URL. */ }
+          };
+          const onError = () => finish(new Error("The same-origin video proxy could not load the clip."));
+          const timer = window.setTimeout(() => finish(new Error("Timed out while loading the export source.")), 12000);
+          source.addEventListener("loadeddata", onReady);
+          source.addEventListener("canplay", onReady);
+          source.addEventListener("error", onError);
+          setVideoSourceOverride(proxySrc);
+        });
+        try { await loaded; } catch (error) {
+          toast(error instanceof Error ? error.message : "Could not prepare the export source.");
+          return;
+        }
+      }
+    }
+
     const nativeW = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
     const nativeH = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
     if (!nativeW || !nativeH) { toast("Wait for the template preview to load, then export again."); return; }
     setBusy(true);
     let stream: MediaStream | null = null;
-    let sourceCaptureStream: MediaStream | null = null;
     let audioDestination: MediaStreamAudioDestinationNode | null = null;
     let originalMuted: boolean | null = null;
     try {
@@ -342,37 +394,32 @@ export default function VideoEditorPage() {
       if (source instanceof HTMLVideoElement) {
         originalMuted = source.muted;
         source.playbackRate = playbackSpeed;
-        // Capture the original audio track along with the caption-composited canvas frames.
         source.muted = false;
         source.currentTime = 0;
         await source.play().catch(() => undefined);
-        const capturable = source as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream };
-        const capture = capturable.captureStream ?? capturable.mozCaptureStream;
-        if (capture) {
-          // Some browsers reject captureStream() for media that originated
-          // cross-origin, even when the preview itself is playable. Treat audio
-          // capture as optional and continue with the canvas video track.
+
+        // Capture audio through Web Audio only. Calling HTMLMediaElement
+        // captureStream() throws in some browsers for cross-origin media.
+        // The origin check below ensures export uses the same-origin proxy.
+        if (typeof window.AudioContext !== "undefined") {
           try {
-            sourceCaptureStream = capture.call(source);
-            sourceCaptureStream.getAudioTracks().forEach((track) => stream?.addTrack(track));
+            let audioContext = audioContextRef.current;
+            if (!audioContext) {
+              audioContext = new AudioContext();
+              audioContextRef.current = audioContext;
+              audioSourceNodeRef.current = audioContext.createMediaElementSource(source);
+              audioSourceNodeRef.current.connect(audioContext.destination);
+            }
+            await audioContext.resume();
+            audioDestination = audioContext.createMediaStreamDestination();
+            audioSourceNodeRef.current?.connect(audioDestination);
+            const audioTrack = audioDestination.stream.getAudioTracks()[0];
+            if (audioTrack && stream) stream.addTrack(audioTrack);
           } catch {
-            sourceCaptureStream = null;
+            // Audio is optional; keep the rendered video export working.
+            audioDestination?.stream.getTracks().forEach((track) => track.stop());
+            audioDestination = null;
           }
-        }
-        // Fall back to Web Audio in browsers without media-element capture.
-        if (!sourceCaptureStream?.getAudioTracks().length && typeof window.AudioContext !== "undefined") {
-          let audioContext = audioContextRef.current;
-          if (!audioContext) {
-            audioContext = new AudioContext();
-            audioContextRef.current = audioContext;
-            audioSourceNodeRef.current = audioContext.createMediaElementSource(source);
-            audioSourceNodeRef.current.connect(audioContext.destination);
-          }
-          await audioContext.resume();
-          audioDestination = audioContext.createMediaStreamDestination();
-          audioSourceNodeRef.current?.connect(audioDestination);
-          const audioTrack = audioDestination.stream.getAudioTracks()[0];
-          if (audioTrack && stream) stream.addTrack(audioTrack);
         }
       }
       if (!stream) throw new Error("Could not capture the video canvas.");
@@ -463,7 +510,6 @@ export default function VideoEditorPage() {
         audioSourceNodeRef.current?.disconnect(audioDestination);
         audioDestination.stream.getTracks().forEach((track) => track.stop());
       }
-      sourceCaptureStream?.getTracks().forEach((track) => track.stop());
       stream?.getTracks().forEach((track) => track.stop());
       if (source instanceof HTMLVideoElement && originalMuted !== null) {
         source.muted = originalMuted;
@@ -498,7 +544,7 @@ export default function VideoEditorPage() {
         {template && <div className="canvas-stage-shell"><div ref={stageRef} className="editor-canvas-stage video-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * .65 * width / height))) + "px)", aspectRatio: width + " / " + height, background }} onPointerMove={onStageMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
           {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit, filter: effectFilter }}/> : <>
             {template.posterUrl && <img className="editor-base-image editor-video-loading-poster" src={template.posterUrl} alt="" aria-hidden="true" draggable={false} style={{ objectFit: fit, filter: effectFilter }}/>}
-            <video key={safeMediaUrl} ref={videoRef} className="editor-base-image editor-video-element" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="auto" onLoadedData={() => { setVideoPreviewReady(true); setVideoRecoveryAttempted(false); }} onCanPlay={() => setVideoPreviewReady(true)} onError={() => { setVideoPreviewReady(false); void recoverEditorVideo(); }} style={{ objectFit: fit, filter: effectFilter, opacity: videoPreviewReady ? 1 : 0 }} />
+            <video key={template.id} ref={videoRef} className="editor-base-image editor-video-element" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="auto" onLoadedData={() => { setVideoPreviewReady(true); setVideoRecoveryAttempted(false); }} onCanPlay={() => setVideoPreviewReady(true)} onPlaying={() => setVideoPreviewReady(true)} onError={() => { setVideoPreviewReady(false); void recoverEditorVideo(); }} style={{ objectFit: fit, filter: effectFilter, opacity: videoPreviewReady ? 1 : 0 }} />
           </>}
           {layers.map((layer,index) => <div key={layer.id} className={selectedId === layer.id ? "editor-object selected" : "editor-object"} role="button" tabIndex={0} aria-label={"Select " + layer.name} style={{ left: layer.x + "%", top: layer.y + "%", width: layer.w + "%", height: layer.h + "%", zIndex: index + 2, opacity: layer.opacity, transform: "translate(-50%, -50%) rotate(" + layer.rotation + "deg)" }} onPointerDown={(event) => onDragStart(event,layer)} onClick={() => setSelectedId(layer.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(layer.id); }}>
             {layer.kind === "text" ? <div className="editor-object-text" style={{ fontFamily: layer.fontFamily + ", Arial Black, sans-serif", fontSize: "clamp(12px, " + (layer.fontSize / 1080 * 100) + "cqw, 80px)", color: layer.color, textAlign: layer.align, textTransform: layer.uppercase ? "uppercase" : "none", WebkitTextStroke: layer.outline ? (layer.outlineWidth / 1080 * 100) + "cqw " + layer.outlineColor : "0 transparent", textShadow: layer.shadow ? "2px 2px 0 rgba(0,0,0,.5)" : "none" }}>{layer.text}</div> : <img className="editor-overlay-image" src={layer.src} alt={layer.name} draggable={false}/>}
