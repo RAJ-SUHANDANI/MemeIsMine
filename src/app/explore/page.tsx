@@ -32,7 +32,7 @@ export default function ExplorePage() {
         <div className="filter-row" role="group" aria-label="Filter meme categories">{categories.map((item)=><button type="button" key={item} onClick={()=>{setCategory(item);setShowCount(24)}} className={category===item?"filter-pill active":"filter-pill"}>{item}</button>)}</div>
         <select className="sort-select" value={sort} onChange={(event)=>setSort(event.target.value)} aria-label="Sort templates"><option value="popular">Popular formats</option><option value="name">Name A–Z</option><option value="newest">Recently added</option></select>
       </div>
-      <div className="explore-summary"><span>{loading?"Finding the formats…":`${visible.length} formats found`}</span><span>{source==="imgflip"?"Live template source · Imgflip":"Showing the local starter collection"}</span></div>
+      <div className="explore-summary"><span>{loading?"Finding the formats…":`${visible.length} formats found`}</span><span>{source==="imgflip"?"Fresh public template feed":"Local starter collection"}</span></div>
       {visible.length?<motion.div layout className="template-grid explore-grid">{visible.slice(0,showCount).map((meme,index)=><MemeCard key={meme.id} meme={meme} index={index}/>)}</motion.div>:<div className="empty-state"><SlidersHorizontal size={25}/><h2>No formats found.</h2><p>Try another search or clear the category filter.</p><button className="button button-dark button-small" onClick={()=>{setQuery("");setCategory("All")}}>Clear filters</button></div>}
       {visible.length>showCount&&<button className="button button-paper load-more" onClick={()=>setShowCount((count)=>count+24)}>Load more formats <ArrowUpRight size={15}/></button>}
     </section>
