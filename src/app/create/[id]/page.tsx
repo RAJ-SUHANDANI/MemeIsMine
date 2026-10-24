@@ -539,7 +539,7 @@ export default function EditorPage() {
           <div className="editor-object-actions"><button className="button button-paper button-small" onClick={duplicateSelected}><Copy size={14}/> Duplicate</button><button className="button button-paper button-small" onClick={deleteSelected}><Trash2 size={14}/> Delete</button></div>
         </>}
         <div className="sidebar-divider"/>
-        <button className="button button-dark editor-full-button" onClick={downloadMeme}><Download size={15}/> Export {canvasWidth} × {canvasHeight}</button>
+        <button className="button button-dark editor-full-button" onClick={() => downloadMeme("png")}><Download size={15}/> Export {canvasWidth} × {canvasHeight}</button>
         <button className="button button-paper button-small editor-full-button" onClick={saveDraft}><Save size={14}/> Save to studio</button>
       </aside>
     </div>
