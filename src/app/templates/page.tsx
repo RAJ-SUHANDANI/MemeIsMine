@@ -27,28 +27,12 @@ function pickTemplates(items:MemeTemplate[],mode:FilterKey,excluded:Set<string>,
   ranked.sort((a,b)=>Number(Boolean(b.trending))-Number(Boolean(a.trending))||(b.popularity??0)-(a.popularity??0));
  }else if(mode==="recent"){
   ranked.sort((a,b)=>(b.publishedAt??"").localeCompare(a.publishedAt??""));
-  if(ranked.every((item)=>!item.publishedAt))ranked.reverse();
  }else{
   ranked=shuffleTemplates(ranked);
  }
  const fresh=ranked.filter((item)=>!excluded.has(item.id));
  const seen=ranked.filter((item)=>excluded.has(item.id));
- let candidates=fresh;
- if(mode==="popular"||mode==="recent")candidates=fresh.slice(0,Math.max(count,Math.ceil(fresh.length*.5)));
- if(mode==="trending"){
-  const freshTrending=fresh.filter((item)=>item.trending);
-  candidates=freshTrending.length>=count?freshTrending:(freshTrending.length?[...freshTrending,...fresh.filter((item)=>!item.trending)]:fresh);
- }
- let selected=shuffleTemplates(candidates).slice(0,count);
- if(selected.length<count){
-  const chosen=new Set(selected.map((item)=>item.id));
-  selected=[...selected,...shuffleTemplates(fresh.filter((item)=>!chosen.has(item.id)))].slice(0,count);
- }
- if(selected.length<count){
-  const chosen=new Set(selected.map((item)=>item.id));
-  selected=[...selected,...shuffleTemplates(seen.filter((item)=>!chosen.has(item.id)))].slice(0,count);
- }
- return selected;
+ return [...fresh,...seen].slice(0,Math.min(count,items.length));
 }
 const groups=[
  {name:"Classics",tag:"THE TIMELESS ONES",copy:"Formats that have lived through a thousand group chats and somehow still work.",icon:Flame,count:"EVERGREEN",href:"/explore?category=Classics",className:"template-feature red"},
