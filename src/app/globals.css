@@ -345,3 +345,42 @@
   .video-template-grid>.video-template-card{margin-bottom:9px;padding:5px}
   .video-template-meta{padding:9px 1px 2px}
 }
+
+/* Video bookmarks and swipeable community reviews */
+.video-template-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.video-template-meta>div{min-width:0}
+.video-template-meta .save-button{flex:0 0 34px}
+.reviews-section{overflow:hidden;background:#eee7dc}
+.reviews-layout{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(340px,1.2fr);gap:clamp(35px,8vw,110px);align-items:center}
+.reviews-intro .section-note{margin:24px 0 25px}
+.review-controls{display:flex;align-items:center;gap:17px;margin-top:30px;color:#6f685f;font:11px var(--mono)}
+.review-controls span i{font-style:normal;color:var(--red);padding:0 4px}
+.review-controls button{width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(21,21,21,.24);border-radius:50%;background:#fbf8f2;cursor:pointer;transition:background .2s,color .2s,transform .2s}
+.review-controls button:hover{background:var(--ink);color:#fbf8f2;transform:translateY(-2px)}
+.review-deck{position:relative;height:390px;max-width:520px;width:100%;margin-inline:auto;perspective:1200px;touch-action:pan-y}
+.review-card{position:absolute;inset:12px 12px 12px 0;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(24px,4vw,38px);border:1px solid rgba(21,21,21,.15);border-radius:8px;background:#fbf8f2;box-shadow:0 18px 42px rgba(43,36,27,.14);transform-origin:50% 100%;cursor:grab;user-select:none}
+.review-card-stack-1{transform:translate(13px,-8px) rotate(4deg) scale(.965);background:#d8e0d0;pointer-events:none}
+.review-card-stack-2{transform:translate(25px,-15px) rotate(7deg) scale(.93);background:#e6c2b4;pointer-events:none}
+.review-card-top{display:flex;justify-content:space-between;align-items:flex-start}
+.review-quote-mark{font:100px/.7 Georgia,serif;color:var(--red)}
+.review-rating{display:flex;gap:3px;color:#bd6d36}
+.review-quote{font:clamp(22px,3vw,31px)/1.22 var(--serif);letter-spacing:-.035em;margin:24px 0;overflow-wrap:anywhere}
+.review-card-footer{display:flex;align-items:center;gap:11px;border-top:1px solid rgba(21,21,21,.15);padding-top:18px}
+.review-avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fbf8f2;font:700 15px var(--display)}
+.review-card-footer>div{display:grid;gap:4px}
+.review-card-footer strong{font-size:12px}
+.review-card-footer small{font:9px var(--mono);color:#777168}
+.review-swipe-cue{margin-left:auto;color:#777168;font:9px var(--mono);letter-spacing:.08em}
+.add-review-layout{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(340px,1.2fr);gap:clamp(35px,8vw,110px);align-items:start}
+.add-review-layout .section-note{margin:24px 0}
+.review-form-note{display:flex;gap:11px;align-items:flex-start;max-width:340px;margin:30px 0;color:#6e675f;font-size:12px;line-height:1.5}
+.review-form-note svg{flex:0 0 auto;color:var(--red)}
+.review-form{display:grid;gap:10px;padding:clamp(24px,4vw,42px);border:1px solid var(--line);border-radius:7px;background:#fbf8f2;box-shadow:0 10px 28px rgba(43,36,27,.06)}
+.review-form label{margin-top:8px;font:10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:#6f685f}
+.review-form input,.review-form textarea{width:100%;border:1px solid rgba(21,21,21,.18);border-radius:4px;background:#fffdf8;padding:13px 14px;color:var(--ink);font:14px/1.5 var(--body);outline:none;resize:vertical}
+.review-form input:focus,.review-form textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(198,55,42,.1)}
+.review-form-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:10px}
+.review-form-foot>span{color:#777168;font:10px var(--mono)}
+.review-form-error{margin:0;color:var(--red);font-size:12px}
+@media(max-width:850px){.reviews-layout,.add-review-layout{grid-template-columns:1fr;gap:35px}.reviews-intro .section-note{max-width:480px}.review-deck{max-width:550px}.review-controls{margin-top:23px}}
+@media(max-width:520px){.review-deck{height:360px}.review-card{padding:24px}.review-quote{font-size:23px}.review-swipe-cue{display:none}.review-form-foot{align-items:flex-start;flex-direction:column}.review-form-foot .button{width:100%}}
