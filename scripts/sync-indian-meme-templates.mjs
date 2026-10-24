@@ -25,7 +25,10 @@ function plainText(value) {
   return decodeEntities(value.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 }
 function attr(tag, name) {
-  const match = tag.match(new RegExp("\\b" + name + "\\s*=\\s*([\\"'])(.*?)\\1", "i"));
+  const singleQuoted = tag.match(new RegExp("\\b" + name + "\\s*=\\s*'([^']*)'", "i"));
+  if (singleQuoted) return decodeEntities(singleQuoted[1].trim());
+  const doubleQuoted = tag.match(new RegExp("\\b" + name + "\\s*=\\s*\"([^\"]*)\"", "i"));
+  return doubleQuoted?.[1] ? decodeEntities(doubleQuoted[1].trim()) : null;
   return match?.[2] ? decodeEntities(match[2].trim()) : null;
 }
 function siteUrl(raw) {
