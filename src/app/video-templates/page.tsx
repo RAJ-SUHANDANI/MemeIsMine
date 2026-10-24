@@ -26,11 +26,12 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = muted;
+    video.muted = false;
     video.volume = 1;
     const attempt = video.play();
     if (attempt) {
@@ -63,8 +64,8 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
 
   return <div className="video-preview-player">
     {(!ready || failed) && <div className="video-preview-placeholder">
-      {template.posterUrl
-        ? <img src={template.posterUrl} alt="" loading="lazy"/>
+      {template.posterUrl && !posterFailed
+        ? <img src={template.posterUrl} alt="" loading="lazy" onError={() => setPosterFailed(true)}/>
         : <div className="video-preview-placeholder-art"><Clapperboard size={30}/><span>VIDEO PREVIEW</span></div>}
     </div>}
     <video
