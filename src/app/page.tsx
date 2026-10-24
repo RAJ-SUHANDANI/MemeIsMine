@@ -60,7 +60,7 @@ export default function HomePage() {
         <div className="eyebrow hero-kicker">The internet is your canvas</div>
         <h1 className="display-title hero-title">Make a meme.<br/>Make it <span className="red-word">yours.</span></h1>
         <p className="hero-subtitle">Find the format. Make it yours. Get back to the group chat.</p>
-        <div className="hero-actions"><Link href="/explore" className="button button-dark">Find your format <ArrowUpRight size={16}/></Link><Link href="/create/upload" className="button button-paper">Start with your image <ArrowRight size={15}/></Link></div>
+        <div className="hero-actions"><Link href="/templates" className="button button-dark">Find your format <ArrowUpRight size={16}/></Link><Link href="/create/upload" className="button button-paper">Start with your image <ArrowRight size={15}/></Link></div>
         <div className="hero-footnote"><span>No account needed</span><span>Free to create</span><span>Download in a click</span></div>
       </motion.div>
       <FloatingGallery memes={memes}/>
@@ -69,7 +69,7 @@ export default function HomePage() {
     <section className="section" id="explore"><div className="container">
       <div className="section-head"><div><span className="eyebrow">Fresh from the internet</span><h2 className="section-title">Good formats.<br/><span className="serif-italic">Questionable decisions.</span></h2></div><p className="section-note">The classics, the reactions, the “you had to be there” moments. Pick a template and make it yours.</p></div>
       <div className="template-grid">{memes.map((meme, index) => <MemeCard key={meme.id} meme={meme} index={index}/>)}</div>
-      <div className="section-footer"><Link href="/explore" className="text-link">Explore all templates <ArrowRight size={15}/></Link></div>
+      <div className="section-footer"><Link href="/templates" className="text-link">Explore all templates <ArrowRight size={15}/></Link></div>
     </div></section>
 
 
@@ -87,7 +87,7 @@ export default function HomePage() {
     <section className="section section-dark"><div className="container dark-layout">
       <motion.div initial={reduce ? false : { opacity: 0, x: -18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .55 }}>
         <span className="eyebrow">Your sense of humour, in full control</span><h2 className="section-title">A little chaos.<br/><span>A lot of control.</span></h2>
-        <p className="dark-copy">No complicated software. Just a good format, the right words, and a download button.</p><Link href="/explore" className="button button-red">Make something funny <ArrowUpRight size={16}/></Link>
+        <p className="dark-copy">No complicated software. Just a good format, the right words, and a download button.</p><Link href="/templates" className="button button-red">Make something funny <ArrowUpRight size={16}/></Link>
       </motion.div>
       <div className="feature-stack">
         <motion.div className="feature-row" whileHover={{ x: 6 }}><span className="feature-number">01 / FIND</span><div><h3>A format for every feeling</h3><p>Browse classics, reactions, office energy, and pure nonsense.</p></div><Layers3 className="feature-arrow" size={20}/></motion.div>
@@ -103,7 +103,7 @@ export default function HomePage() {
         <motion.article className="step-card" whileInView={{ opacity: 1, y: 0 }} initial={reduce ? false : { opacity: 0, y: 18 }} viewport={{ once: true }} transition={{ duration: .4, delay: .16 }}><span className="step-index">STEP 03</span><span className="step-graphic"><Download size={21}/></span><h3>Download. Deploy. Done.</h3><p>Save a clean PNG and send it wherever the joke belongs.</p></motion.article>
       </div>
     </div></section>
-    <section className="cta-section"><div className="container"><div className="cta-panel"><div><span className="eyebrow">Your group chat is waiting</span><h2>The meme is yours.<br/>Make it official.</h2></div><Link href="/explore" className="button button-dark">Let’s make one <ArrowUpRight size={16}/></Link></div></div></section>
+    <section className="cta-section"><div className="container"><div className="cta-panel"><div><span className="eyebrow">Your group chat is waiting</span><h2>The meme is yours.<br/>Make it official.</h2></div><Link href="/templates" className="button button-dark">Let’s make one <ArrowUpRight size={16}/></Link></div></div></section>
     <section className="section about-teaser" id="about">
       <div className="container about-teaser-grid">
         <motion.div className="teaser-photo-wrap" initial={reduce ? false : { opacity: 0, x: -20, rotate: -2 }} whileInView={{ opacity: 1, x: 0, rotate: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .5 }}>
@@ -129,6 +129,6 @@ export default function HomePage() {
         <article><span>03 / KEEP IT USEFUL</span><h3>Let people get on with it.</h3><p>Simple controls, browser based editing, and a direct download keep the main task clear.</p></article>
       </div>
     </section>
-    <footer className="site-footer"><div className="container footer-inner"><div><Link href="/" className="brand-lockup" aria-label="Meme Is Mine home"><img src="/meme-is-mine-logo.svg" alt="Meme Is Mine" className="brand-full-logo"/></Link><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/explore">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/about">About Raj</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
+    <footer className="site-footer"><div className="container footer-inner"><div><Link href="/" className="brand-lockup" aria-label="Meme Is Mine home"><img src="/meme-is-mine-logo.svg" alt="Meme Is Mine" className="brand-full-logo"/></Link><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/templates">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/about">About Raj</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
   </main>;
 }
