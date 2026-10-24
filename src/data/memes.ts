@@ -1,5 +1,5 @@
 export type MemeTemplate = {
-  id: string; name: string; url: string; width: number; height: number; box_count: number; category: string; description: string; source?: string; originalUrl?: string;
+  id: string; name: string; url: string; width: number; height: number; box_count: number; category: string; description: string; source?: string; originalUrl?: string; publishedAt?: string | null; trending?: boolean; popularity?: number;
 };
 export const starterMemes: MemeTemplate[] = [
   { id: "181913649", name: "Drake Hotline Bling", url: "https://i.imgflip.com/30b1gx.jpg", width: 1200, height: 1200, box_count: 2, category: "Classics", description: "Two choices. One obvious winner." },
