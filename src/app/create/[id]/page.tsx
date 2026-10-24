@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { ArrowLeft, Download, Eye, ImagePlus, Layers, Save, Type, Undo2, Redo2, Shapes, SlidersHorizontal, RotateCcw, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -9,7 +9,7 @@ import { starterMemes, type MemeTemplate } from "@/data/memes";
 type Draft = { id:string; templateId:string; name:string; url:string; topText:string; bottomText:string; fontSize:number; outline:boolean; updatedAt:string };
 const DRAFTS_KEY = "mim-drafts";
 export default function EditorPage() {
-  const params = useParams<{id:string}>(); const router = useRouter(); const searchParams = useSearchParams(); const draftId = searchParams.get("draft"); const id = params.id;
+  const params = useParams<{id:string}>(); const router = useRouter(); const id = params.id; const [draftId,setDraftId] = useState<string|null>(null);
   const [catalog,setCatalog] = useState<MemeTemplate[]>(starterMemes); const [template,setTemplate] = useState<MemeTemplate|null>(null);
   const [topText,setTopText] = useState(id==="upload"?"YOUR TOP TEXT":"WHEN THE MEME HITS"); const [bottomText,setBottomText] = useState(id==="upload"?"YOUR BOTTOM TEXT":"JUST RIGHT");
   const [fontSize,setFontSize] = useState(38); const [font,setFont] = useState("Impact"); const [textColor,setTextColor] = useState("#ffffff");
@@ -18,6 +18,7 @@ export default function EditorPage() {
   const [history,setHistory] = useState<{top:string;bottom:string}[]>([]); const [historyIndex,setHistoryIndex] = useState(-1);
   const imageInput = useRef<HTMLInputElement>(null);
 
+  useEffect(()=>{setDraftId(new URLSearchParams(window.location.search).get("draft"))},[]);
   useEffect(()=>{let alive=true;fetch("/api/memes?limit=100").then((res)=>res.json()).then((data)=>{if(alive&&data.success&&data.memes?.length)setCatalog(data.memes)}).catch(()=>undefined);return()=>{alive=false}},[]);
   useEffect(()=>{
     if(id==="upload"){setTemplate(null);return}
