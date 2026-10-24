@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import {
   ArrowLeft, ArrowUpRight, BringToFront, Check, Copy, Download, Eye, EyeOff, FlipHorizontal,
   ImagePlus, Layers, Move, Redo2, RotateCcw, Save, Shapes, SlidersHorizontal,
-  Sparkles, Trash2, Type, Undo2, Upload, X, ZoomIn
+  Sparkles, Trash2, Type, Undo2, Upload, X, ZoomIn, ExternalLink
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
@@ -57,6 +57,7 @@ const PANEL_ITEMS: { id: PanelId; label: string; icon: typeof Layers }[] = [
   { id: "layers", label: "Layers", icon: BringToFront },
 ];
 
+function isImgflipUrl(url?: string | null) { try { return Boolean(url) && new URL(url!).hostname === "i.imgflip.com"; } catch { return false; } }
 function makeId() {
   return "obj-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
 }
@@ -431,7 +432,7 @@ export default function EditorPage() {
   return <main className="paper-noise editor-page">
     <SiteHeader/>
     <div className="editor-topbar">
-      <div className="editor-crumb"><Link href="/explore" aria-label="Back to explore"><ArrowLeft size={16}/></Link><span>/</span><Link href="/explore">Explore</Link><span>/</span><strong>{template?.name ?? "Your image"}</strong></div>
+      <div className="editor-crumb"><Link href="/explore" aria-label="Back to explore"><ArrowLeft size={16}/></Link><span>/</span><Link href="/explore">Explore</Link><span>/</span><strong>{template?.name ?? "Your image"}</strong>{isImgflipUrl(template?.url) && <a className="editor-source-link" href="https://imgflip.com" target="_blank" rel="noreferrer" aria-label="Open image source site" title="Open image source site"><ExternalLink size={13}/></a>}</div>
       <div className="saved-indicator">{saved ? "Draft saved locally" : "Changes stay in your browser"}</div>
       <div className="editor-top-actions">
         <button className="button button-paper button-small" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl Z)"><Undo2 size={14}/><span>Undo</span></button>
