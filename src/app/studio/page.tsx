@@ -6,14 +6,16 @@ import { SiteHeader } from "@/components/site";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
 type Draft={id:string;templateId:string;name:string;url:string;topText:string;bottomText:string;fontSize?:number;outline?:boolean;updatedAt:string;source?:string};
 type VideoDraft={id:string;templateId:string;name:string;url:string;mediaType:"gif"|"video";updatedAt:string};
+type VideoTemplateInfo={id:string;name:string;url:string;posterUrl:string;mediaType:"gif"|"video"};
 const DRAFTS_KEY="mim-drafts";const BOOKMARKS_KEY="mim-bookmarks";
 export default function StudioPage(){
-  const[drafts,setDrafts]=useState<Draft[]>([]);const[videoDrafts,setVideoDrafts]=useState<VideoDraft[]>([]);const[savedIds,setSavedIds]=useState<string[]>([]);const[memes,setMemes]=useState<MemeTemplate[]>(starterMemes);
+  const[drafts,setDrafts]=useState<Draft[]>([]);const[videoDrafts,setVideoDrafts]=useState<VideoDraft[]>([]);const[videoTemplates,setVideoTemplates]=useState<VideoTemplateInfo[]>([]);const[savedIds,setSavedIds]=useState<string[]>([]);const[memes,setMemes]=useState<MemeTemplate[]>(starterMemes);
   useEffect(()=>{
     try{setDrafts(JSON.parse(localStorage.getItem(DRAFTS_KEY)??"[]"))}catch{setDrafts([])}
     try{setVideoDrafts(JSON.parse(localStorage.getItem("mim-video-drafts")??"[]"))}catch{setVideoDrafts([])}
     try{setSavedIds(JSON.parse(localStorage.getItem(BOOKMARKS_KEY)??"[]"))}catch{setSavedIds([])}
     fetch("/api/memes?limit=100").then((res)=>res.json()).then((data)=>{if(data.success&&data.memes?.length)setMemes(data.memes)}).catch(()=>undefined);
+    fetch("/api/video-templates?limit=100&sort=popular").then((res)=>res.json()).then((data)=>{if(data.success&&Array.isArray(data.templates))setVideoTemplates(data.templates)}).catch(()=>undefined);
     const refresh=()=>{try{setSavedIds(JSON.parse(localStorage.getItem(BOOKMARKS_KEY)??"[]"))}catch{setSavedIds([])}};
     window.addEventListener("mim-bookmarks-updated",refresh);window.addEventListener("storage",refresh);
     return()=>{window.removeEventListener("mim-bookmarks-updated",refresh);window.removeEventListener("storage",refresh)};
@@ -21,6 +23,7 @@ export default function StudioPage(){
   function deleteDraft(id:string){const next=drafts.filter((draft)=>draft.id!==id);setDrafts(next);localStorage.setItem(DRAFTS_KEY,JSON.stringify(next))}
   const savedMemes=memes.filter((meme)=>savedIds.includes(meme.id));
   const savedVideoIds=savedIds.filter((id)=>id.startsWith("video:")).map((id)=>id.slice(6));
+  const savedVideos=videoTemplates.filter((template)=>savedVideoIds.includes(template.id));
   return <main className="paper-noise"><SiteHeader/>
     <section className="page-hero"><div className="container studio-header"><div><span className="eyebrow">Your space on this device</span><h1>Your <span>studio.</span></h1><p>Drafts and saved formats, ready when the next idea hits.</p></div><Link href="/explore" className="button button-dark">Find another format <ArrowUpRight size={15}/></Link></div></section>
     <section className="section" style={{paddingTop:44}}><div className="container">
@@ -37,7 +40,7 @@ export default function StudioPage(){
     </div></section>
     <section className="section" style={{paddingTop:10}}><div className="container">
       <div className="section-head"><div><span className="eyebrow">04 / Saved motion formats</span><h2 className="section-title" style={{fontSize:46}}>Video bookmarks</h2></div><p className="section-note">Your bookmarked video templates stay on this device.</p></div>
-      {savedVideoIds.length?<div className="template-grid">{savedVideoIds.map((id)=><article key={id} className="draft-card"><div className="draft-preview"><Clapperboard size={28}/></div><h3 className="draft-title">{id}</h3><div className="draft-actions"><Link href={"/video-editor/"+encodeURIComponent(id)} className="button button-dark button-small">Use template <ArrowUpRight size={13}/></Link><button className="button button-paper button-small" onClick={()=>{const next=savedIds.filter((item)=>item!=="video:"+id);setSavedIds(next);localStorage.setItem(BOOKMARKS_KEY,JSON.stringify(next));window.dispatchEvent(new Event("mim-bookmarks-updated"));}} aria-label="Remove video bookmark"><Trash2 size={14}/></button></div></article>)}</div>:<p className="control-help">Bookmark a video template to find it here.</p>}
+      {savedVideoIds.length?<div className="template-grid">{savedVideoIds.map((id)=>{const template=videoTemplates.find((item)=>item.id===id);return <article key={id} className="draft-card"><div className="draft-preview">{template?.posterUrl?<img src={template.posterUrl} alt={template.name}/>:<Clapperboard size={28}/>}</div><h3 className="draft-title">{template?.name??id}</h3><div className="draft-actions"><Link href={"/video-editor/"+encodeURIComponent(id)} className="button button-dark button-small">Use template <ArrowUpRight size={13}/></Link><button className="button button-paper button-small" onClick={()=>{const next=savedIds.filter((item)=>item!=="video:"+id);setSavedIds(next);localStorage.setItem(BOOKMARKS_KEY,JSON.stringify(next));window.dispatchEvent(new Event("mim-bookmarks-updated"));}} aria-label="Remove video bookmark"><Trash2 size={14}/></button></div></article>})}</div>:<p className="control-help">Bookmark a video template to find it here.</p>}
     </div></section>
     <footer className="site-footer"><div className="container footer-inner"><div className="footer-copy">Meme Is Mine · Studio</div><div className="footer-links"><Link href="/">Home</Link><Link href="/explore">Explore templates</Link></div><span className="footer-copy">Private by default. Stored locally.</span></div></footer>
   </main>;
