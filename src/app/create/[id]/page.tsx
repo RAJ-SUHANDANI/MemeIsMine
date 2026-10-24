@@ -109,7 +109,7 @@ export default function EditorPage() {
           {topText&&<div className="meme-caption top" style={{fontSize:`clamp(15px, ${fontSize/13}vw, ${fontSize}px)`,color:textColor,textAlign:align as "left"|"center"|"right",fontFamily:font==="Impact"?"Impact, 'Arial Black', sans-serif":"'Arial Black', Arial, sans-serif",WebkitTextStroke:outline?"1px #000":"0"}}>{topText}</div>}
           {bottomText&&<div className="meme-caption bottom" style={{fontSize:`clamp(15px, ${fontSize/13}vw, ${fontSize}px)`,color:textColor,textAlign:align as "left"|"center"|"right",fontFamily:font==="Impact"?"Impact, 'Arial Black', sans-serif":"'Arial Black', Arial, sans-serif",WebkitTextStroke:outline?"1px #000":"0"}}>{bottomText}</div>}
         </div></div>
-        <div className="canvas-controls"><span className="canvas-chip"><SlidersHorizontal size={13}/> Live preview</span><span className="canvas-chip">1080 × 1080 PNG</span><span className="canvas-chip"><Check size={13}/> Browser-side export</span></div><p className="editor-hint">Tip: short captions hit harder. Longer ones wrap automatically in your download.</p>
+        <div className="canvas-controls"><span className="canvas-chip"><SlidersHorizontal size={13}/> Live preview</span><span className="canvas-chip">1080 × 1080 PNG</span><span className="canvas-chip"><Check size={13}/> Browser export</span></div><p className="editor-hint">Tip: short captions hit harder. Longer ones wrap automatically in your download.</p>
       </section>
       <aside className="editor-sidebar right">
         <div className="panel-label">Text style</div>
