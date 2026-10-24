@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, Clapperboard, Download, Film, Search, Sparkles, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, Download, Film, Search, Sparkles, Video } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
 type VideoTemplate = {
