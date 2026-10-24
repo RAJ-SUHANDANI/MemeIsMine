@@ -12,7 +12,16 @@ export default function HomePage() {
   const reduce = useReducedMotion();
   useEffect(() => {
     let alive = true;
-    fetch("/api/memes?limit=8").then((res) => res.json()).then((data) => { if (alive && data.success && data.memes?.length) setMemes(data.memes.slice(0, 4)); }).catch(() => undefined);
+    const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+    Promise.allSettled([
+      fetch("/api/memes?limit=100").then((res) => res.json()),
+      fetch("/api/indian-memes?page=1&limit=100").then((res) => res.json()),
+    ]).then((results) => {
+      if (!alive) return;
+      const combined = results.flatMap((result) => result.status === "fulfilled" && result.value?.success && Array.isArray(result.value.memes) ? result.value.memes as MemeTemplate[] : []);
+      const unique = Array.from(new Map([...combined, ...starterMemes].map((item) => [item.id, item])).values());
+      setMemes(shuffle(unique).slice(0, 4));
+    }).catch(() => { if (alive) setMemes(shuffle(starterMemes).slice(0, 4)); });
     return () => { alive = false; };
   }, []);
   return <main className="paper-noise">
@@ -25,7 +34,7 @@ export default function HomePage() {
         <div className="hero-actions"><Link href="/explore" className="button button-dark">Find your format <ArrowUpRight size={16}/></Link><Link href="/create/upload" className="button button-paper">Start with your image <ArrowRight size={15}/></Link></div>
         <div className="hero-footnote"><span>No account needed</span><span>Free to create</span><span>Download in a click</span></div>
       </motion.div>
-      <FloatingGallery/>
+      <FloatingGallery memes={memes}/>
     </div></section>
     <div className="marquee-band" aria-label="Find a format, make it yours, share the joke"><div className="marquee-track">{Array.from({ length: 2 }, (_, i) => <span key={i}>FIND THE FORMAT <b>✳</b> MAKE IT YOURS <b>✳</b> SEND IT TO THE GROUP CHAT <b>✳</b> NO BAD JOKES, JUST BAD TIMING <b>✳</b></span>)}</div></div>
     <section className="section" id="explore"><div className="container">
