@@ -12,6 +12,13 @@ export default function ExplorePage() {
   const [sort, setSort] = useState("popular"); const [showCount, setShowCount] = useState(24);
   const [loading, setLoading] = useState(true); const [source, setSource] = useState("bundled");
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedCategory = categories.find((item) => item.toLowerCase() === (params.get("category") ?? "").toLowerCase());
+    if (requestedCategory) setCategory(requestedCategory);
+    const requestedQuery = params.get("q");
+    if (requestedQuery) setQuery(requestedQuery);
+  }, []);
+  useEffect(() => {
     let alive = true;
     fetch("/api/memes?limit=100").then((res) => res.json()).then((data) => {
       if (alive && data.success && Array.isArray(data.memes) && data.memes.length) { setMemes(data.memes); setSource(data.source); }
