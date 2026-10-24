@@ -166,8 +166,20 @@ export default function VideoEditorPage() {
     return () => { alive = false; };
   }, [templateId]);
   useEffect(() => {
-    if (videoRef.current) videoRef.current.playbackRate = playbackSpeed;
-  }, [playbackSpeed, template]);
+    const video = videoRef.current;
+    if (!video || template?.mediaType !== "video") return;
+    video.playbackRate = playbackSpeed;
+    video.muted = !videoAudioEnabled;
+
+    // Some browsers do not start playback from autoPlay alone, especially when
+    // the video URL changes after recovery. Explicitly request muted playback.
+    if (videoPreviewReady && video.paused) {
+      void video.play().catch(() => {
+        // Keep the poster visible if autoplay is blocked; the browser can retry
+        // after the user interacts with the editor.
+      });
+    }
+  }, [playbackSpeed, template, safeMediaUrl, videoPreviewReady, videoAudioEnabled]);
   useEffect(() => {
     if (!template) return;
     const draftId = new URLSearchParams(window.location.search).get("draft");
