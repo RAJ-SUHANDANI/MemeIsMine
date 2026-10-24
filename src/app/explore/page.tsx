@@ -15,7 +15,7 @@ export default function ExplorePage() {
   const [sort, setSort] = useState("popular");
   const [showCount, setShowCount] = useState(24);
   const [loading, setLoading] = useState(true);
-  const [library, setLibrary] = useState<LibraryMode>("indian");
+  const [library, setLibrary] = useState<LibraryMode>("mine");
   const [archivePage, setArchivePage] = useState(1);
   const [totalPages, setTotalPages] = useState(170);
   const [upstreamPageCount, setUpstreamPageCount] = useState(0);
@@ -65,7 +65,13 @@ export default function ExplorePage() {
       return matchesQuery && matchesCategory;
     });
     if (sort === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "recent" || sort === "newest") result = [...result].sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
+    if (sort === "recent" || sort === "newest") result = [...result].sort((a, b) => {
+      const dates = (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+      if (dates !== 0) return dates;
+      const aId = Number(a.id), bId = Number(b.id);
+      if (Number.isFinite(aId) && Number.isFinite(bId)) return bId - aId;
+      return b.id.localeCompare(a.id, undefined, { numeric: true });
+    });
     if (sort === "trending") result = [...result].sort((a, b) => Number(Boolean(b.trending)) - Number(Boolean(a.trending)) || (b.popularity ?? 0) - (a.popularity ?? 0));
     if (sort === "popular") result = [...result].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
     return result;
