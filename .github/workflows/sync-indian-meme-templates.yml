@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: sync-indian-meme-template-catalog
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   sync:
