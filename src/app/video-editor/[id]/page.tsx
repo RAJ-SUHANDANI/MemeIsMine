@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowLeft, ArrowRight, ArrowUpRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff,
+  ArrowLeft, ArrowRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff,
   ImagePlus, Move, Palette, SlidersHorizontal, Trash2, Type, Video
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
 type VideoTemplate = {
-  id: string; name: string; url: string; posterUrl: string; source: string; originalUrl: string;
+  id: string; name: string; url: string; posterUrl: string;
   mediaType: "gif" | "video"; publishedAt: string | null; trending: boolean;
 };
 type TextLayer = {
