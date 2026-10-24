@@ -40,7 +40,6 @@ function attr(tag: string, name: string): string | null {
   if (singleQuoted) return decodeEntities(singleQuoted[1].trim());
   const doubleQuoted = tag.match(new RegExp("\\b" + name + "\\s*=\\s*\"([^\"]*)\"", "i"));
   return doubleQuoted?.[1] ? decodeEntities(doubleQuoted[1].trim()) : null;
-  return match?.[2] ? decodeEntities(match[2].trim()) : null;
 }
 function allowedSiteUrl(raw: string | null): string | null {
   if (!raw) return null;
