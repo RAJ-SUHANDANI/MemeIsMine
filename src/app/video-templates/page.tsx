@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/site";
 type VideoTemplate = {
   id: string; name: string; url: string; posterUrl: string; category: string;
   mediaType: "gif" | "video"; publishedAt: string | null;
-  trending: boolean; popularity: number;
+  trending: boolean; popularity: number; sourcePage?: string;
 };
 const filters = [
   { key: "popular", label: "Popular" },
@@ -18,7 +18,8 @@ const filters = [
   { key: "name", label: "Name A to Z" },
 ];
 function sourceUrl(template: VideoTemplate) {
-  return "/api/video-source?url=" + encodeURIComponent(template.url);
+  return "/api/video-source?url=" + encodeURIComponent(template.url)
+    + (template.sourcePage ? "&referrer=" + encodeURIComponent(template.sourcePage) : "");
 }
 
 function VideoPreview({ template }: { template: VideoTemplate }) {
