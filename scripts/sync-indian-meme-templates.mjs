@@ -29,7 +29,6 @@ function attr(tag, name) {
   if (singleQuoted) return decodeEntities(singleQuoted[1].trim());
   const doubleQuoted = tag.match(new RegExp("\\b" + name + "\\s*=\\s*\"([^\"]*)\"", "i"));
   return doubleQuoted?.[1] ? decodeEntities(doubleQuoted[1].trim()) : null;
-  return match?.[2] ? decodeEntities(match[2].trim()) : null;
 }
 function siteUrl(raw) {
   if (!raw) return null;
@@ -74,6 +73,9 @@ function parseCards(html) {
       description: "Open the original page for template details and download options.",
       source: "indianmemetemplates",
       originalUrl,
+      publishedAt: block.match(/<time\\b[^>]*datetime=["']([^"']+)["']/i)?.[1] ?? null,
+      trending: false,
+      popularity: 0,
     });
   }
   return [...found.values()];
@@ -181,7 +183,21 @@ async function main() {
     const videoCatalog = JSON.parse(await readFile(resolve("src/data/indian-video-templates.json"), "utf8"));
     videoSlugs = new Set(videoCatalog.map((item) => item.id));
   } catch { console.warn("Video catalog is not available yet; image catalog will be collected without cross filtering."); }
-  const append = (cards) => cards.filter((card) => !videoSlugs.has(card.id)).forEach((card) => all.set(card.id, card));
+  let trendingIds = new Set();
+  let popularRanks = new Map();
+  try {
+    const trendingHtml = await fetchPage(SITE + "/category/trending/", "/category/trending/");
+    trendingIds = new Set(parseCards(trendingHtml).map((item) => item.id));
+  } catch (error) { console.warn("Trending list unavailable: " + (error instanceof Error ? error.message : "request failed")); }
+  try {
+    const homeHtml = await fetchPage(SITE + "/", "/");
+    parseCards(homeHtml).forEach((item, index) => popularRanks.set(item.id, Math.max(1, 1000 - index)));
+  } catch (error) { console.warn("Homepage popularity list unavailable: " + (error instanceof Error ? error.message : "request failed")); }
+  const append = (cards) => cards.filter((card) => !videoSlugs.has(card.id)).forEach((card) => all.set(card.id, {
+    ...card,
+    trending: trendingIds.has(card.id),
+    popularity: popularRanks.get(card.id) ?? (trendingIds.has(card.id) ? 100 : 0),
+  }));
   append(parseCards(firstHtml));
   console.log("Archive pages discovered: " + totalPages + "; page 1 yielded " + all.size + " templates.");
   for (let page = 2; page <= totalPages; page++) {
