@@ -39,19 +39,27 @@ function siteUrl(raw) {
   } catch { return null; }
 }
 function imageUrl(block) {
+  const candidates = [];
   const tags = block.match(/<img\b[^>]*>/gi) ?? [];
   for (const tag of tags) {
     const raw = attr(tag, "data-src") ?? attr(tag, "data-lazy-src") ?? attr(tag, "data-original") ?? attr(tag, "src");
     const safe = siteUrl(raw);
-    if (safe && /\/wp-content\/uploads\//i.test(new URL(safe).pathname) && !/dummyimage|pixel\.(?:gif|png)|blank\.(?:gif|png)/i.test(safe)) return safe;
+    if (safe && /\/wp-content\/uploads\//i.test(new URL(safe).pathname) && !/dummyimage|pixel\.(?:gif|png)|blank\.(?:gif|png)/i.test(safe)) candidates.push(safe);
     const srcset = attr(tag, "data-srcset") ?? attr(tag, "srcset");
     if (srcset) {
-      const candidate = srcset.split(",").map((item) => item.trim().split(/\s+/)[0]).find((item) => /\/wp-content\/uploads\//i.test(item));
-      const fromSet = siteUrl(candidate ?? null);
-      if (fromSet) return fromSet;
+      for (const item of srcset.split(",")) {
+        const candidate = item.trim().split(/\s+/)[0];
+        const fromSet = siteUrl(candidate ?? null);
+        if (fromSet && /\/wp-content\/uploads\//i.test(new URL(fromSet).pathname)) candidates.push(fromSet);
+      }
     }
   }
-  return null;
+  for (const raw of block.match(/https?:[^\s"'<>\\]+?\.gif(?:\?[^\s"'<>\\]*)?/gi) ?? []) {
+    const safe = siteUrl(raw.replace(/&amp;/g, "&"));
+    if (safe && /\/wp-content\/uploads\//i.test(new URL(safe).pathname)) candidates.push(safe);
+  }
+  const unique = [...new Set(candidates)];
+  return unique.find((url) => new URL(url).pathname.toLowerCase().endsWith(".gif")) ?? unique[0] ?? null;
 }
 function parseCards(html) {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
@@ -178,9 +186,12 @@ async function main() {
   if (totalPages > MAX_PAGES) throw new Error("The archive advertises more than " + MAX_PAGES + " pages; stopping for manual review.");
   if (!parseCards(firstHtml).length) throw new Error("Could not parse template cards from page 1. No catalog file was overwritten.");
   const all = new Map();
+  const videoCatalogPath = resolve("src/data/indian-video-templates.json");
+  let videoCatalog = [];
   let videoSlugs = new Set();
+  const discoveredGifs = new Map();
   try {
-    const videoCatalog = JSON.parse(await readFile(resolve("src/data/indian-video-templates.json"), "utf8"));
+    videoCatalog = JSON.parse(await readFile(videoCatalogPath, "utf8"));
     videoSlugs = new Set(videoCatalog.map((item) => item.id));
   } catch { console.warn("Video catalog is not available yet; image catalog will be collected without cross filtering."); }
   let trendingIds = new Set();
@@ -193,11 +204,22 @@ async function main() {
     const homeHtml = await fetchPage(SITE + "/", "/");
     parseCards(homeHtml).forEach((item, index) => popularRanks.set(item.id, Math.max(1, 1000 - index)));
   } catch (error) { console.warn("Homepage popularity list unavailable: " + (error instanceof Error ? error.message : "request failed")); }
-  const append = (cards) => cards.filter((card) => !videoSlugs.has(card.id)).forEach((card) => all.set(card.id, {
-    ...card,
-    trending: trendingIds.has(card.id),
-    popularity: popularRanks.get(card.id) ?? (trendingIds.has(card.id) ? 100 : 0),
-  }));
+  const append = (cards) => cards.forEach((card) => {
+    const isGif = /\.gif(?:[?#]|$)/i.test(card.url);
+    if (isGif) {
+      discoveredGifs.set(card.id, {
+        ...card, posterUrl: card.url, mediaType: "gif", category: "Video Memes",
+        publishedAt: card.publishedAt ?? null, trending: trendingIds.has(card.id),
+        popularity: popularRanks.get(card.id) ?? (trendingIds.has(card.id) ? 100 : 0),
+      });
+      return;
+    }
+    if (!videoSlugs.has(card.id)) all.set(card.id, {
+      ...card,
+      trending: trendingIds.has(card.id),
+      popularity: popularRanks.get(card.id) ?? (trendingIds.has(card.id) ? 100 : 0),
+    });
+  });
   append(parseCards(firstHtml));
   console.log("Archive pages discovered: " + totalPages + "; page 1 yielded " + all.size + " templates.");
   for (let page = 2; page <= totalPages; page++) {
@@ -214,9 +236,12 @@ async function main() {
   }
   if (all.size < 100) throw new Error("Only " + all.size + " records were collected. Refusing to replace the catalog with an incomplete result.");
   const records = [...all.values()];
+  const videosById = new Map(videoCatalog.map((item) => [item.id, item]));
+  for (const [id, gif] of discoveredGifs) videosById.set(id, gif);
   await mkdir(dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, JSON.stringify(records, null, 2) + "\n", "utf8");
-  console.log("Saved " + records.length + " template records to " + OUTPUT + ". Image files were not downloaded or copied.");
+  await writeFile(videoCatalogPath, JSON.stringify([...videosById.values()], null, 2) + "\n", "utf8");
+  console.log("Saved " + records.length + " still image templates and promoted " + discoveredGifs.size + " native GIF templates into the animated catalog. Media files were not downloaded or copied.");
 }
 main().catch((error) => {
   console.error("Template catalog sync failed:", error instanceof Error ? error.message : error);
