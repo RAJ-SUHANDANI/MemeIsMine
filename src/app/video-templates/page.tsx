@@ -29,11 +29,13 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
   const [posterFailed, setPosterFailed] = useState(false);
   const [active, setActive] = useState(false);
   const [videoSrc, setVideoSrc] = useState(sourceUrl(template));
+  const [resolvedUrl, setResolvedUrl] = useState(template.url);
   const [refreshAttempted, setRefreshAttempted] = useState(false);
   const [directFallbackTried, setDirectFallbackTried] = useState(false);
 
   useEffect(() => {
     setVideoSrc(sourceUrl(template));
+    setResolvedUrl(template.url);
     setMuted(false);
     setReady(false);
     setFailed(false);
@@ -83,7 +85,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
     if (refreshAttempted) {
       if (!directFallbackTried) {
         setDirectFallbackTried(true);
-        setVideoSrc(template.url);
+        setVideoSrc(resolvedUrl);
         setFailed(false);
         setReady(false);
         return;
@@ -97,6 +99,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
       const data = await response.json();
       const freshUrl = data?.template?.url as string | undefined;
       if (response.ok && data?.success && freshUrl && freshUrl !== template.url) {
+        setResolvedUrl(freshUrl);
         setVideoSrc(sourceUrl({ ...template, url: freshUrl }));
         setFailed(false);
         setReady(false);
@@ -106,7 +109,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
       // Try the source URL directly below if refreshing the catalog fails.
     }
     setDirectFallbackTried(true);
-    setVideoSrc(template.url);
+    setVideoSrc(resolvedUrl);
     setFailed(false);
     setReady(false);
   }
