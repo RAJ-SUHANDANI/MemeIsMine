@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowLeft, ArrowUpRight, BringToFront, Check, Copy, Download, Eye, EyeOff, FlipHorizontal,
-  ImagePlus, Layers, Move, Palette, Redo2, RotateCcw, Save, Shapes, SlidersHorizontal,
+  ImagePlus, Layers, Move, Redo2, RotateCcw, Save, Shapes, SlidersHorizontal,
   Sparkles, Trash2, Type, Undo2, Upload, X, ZoomIn
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -25,9 +25,14 @@ type EditorObject = TextObject | ImageObject;
 type Draft = {
   id: string; templateId: string; name: string; url: string; topText: string; bottomText: string;
   fontSize: number; outline: boolean; updatedAt: string; source?: string; objects?: EditorObject[];
-  canvasWidth?: number; canvasHeight?: number; backgroundColor?: string; imageFit?: "cover" | "contain";
+  canvasWidth?: number; canvasHeight?: number; backgroundColor?: string; imageFit?: "cover" | "contain"; effectPreset?: EffectPreset;
 };
-type PanelId = "templates" | "text" | "overlay" | "background" | "canvas" | "layers";
+type EffectPreset = "original" | "vivid" | "grayscale" | "sepia" | "warm";
+const EFFECT_FILTERS: Record<EffectPreset, string> = {
+  original: "none", vivid: "saturate(1.55) contrast(1.08)", grayscale: "grayscale(1)",
+  sepia: "sepia(.9)", warm: "sepia(.28) saturate(1.2)",
+};
+type PanelId = "templates" | "text" | "overlay" | "effects" | "canvas" | "layers";
 type DragState = { id: string; mode: "move" | "resize"; startClientX: number; startClientY: number; x: number; y: number; w: number; h: number } | null;
 
 const DRAFTS_KEY = "mim-drafts";
@@ -39,7 +44,6 @@ const RATIO_PRESETS = [
   { label: "4:3", name: "Classic", width: 1440, height: 1080 },
   { label: "3:2", name: "Photo", width: 1500, height: 1000 },
 ];
-const BACKGROUNDS = ["#F5F0E7", "#151515", "#F0442E", "#FFFFFF", "#E8DFC9", "#CCD9B9", "#D9D2E8"];
 const DEFAULT_OBJECTS: EditorObject[] = [
   { id: "caption-top", kind: "text", name: "Top caption", text: "WHEN THE MEME HITS", x: 50, y: 15, w: 88, h: 19, rotation: 0, fontSize: 48, fontFamily: "Impact", color: "#FFFFFF", outline: true, outlineColor: "#000000", outlineWidth: 4, shadow: true, align: "center", opacity: 1, uppercase: true },
   { id: "caption-bottom", kind: "text", name: "Bottom caption", text: "JUST RIGHT", x: 50, y: 85, w: 88, h: 19, rotation: 0, fontSize: 48, fontFamily: "Impact", color: "#FFFFFF", outline: true, outlineColor: "#000000", outlineWidth: 4, shadow: true, align: "center", opacity: 1, uppercase: true },
@@ -48,7 +52,7 @@ const PANEL_ITEMS: { id: PanelId; label: string; icon: typeof Layers }[] = [
   { id: "templates", label: "Templates", icon: Layers },
   { id: "text", label: "Text", icon: Type },
   { id: "overlay", label: "Overlay", icon: ImagePlus },
-  { id: "background", label: "Background", icon: Palette },
+  { id: "effects", label: "Effects", icon: SlidersHorizontal },
   { id: "canvas", label: "Dimensions", icon: SlidersHorizontal },
   { id: "layers", label: "Layers", icon: BringToFront },
 ];
@@ -93,6 +97,8 @@ export default function EditorPage() {
   const [customHeight, setCustomHeight] = useState("1080");
   const [backgroundColor, setBackgroundColor] = useState("#E6DED1");
   const [imageFit, setImageFit] = useState<"cover" | "contain">("cover");
+  const [effectPreset, setEffectPreset] = useState<EffectPreset>("original");
+  const effectFilter = EFFECT_FILTERS[effectPreset];
   const [notice, setNotice] = useState("");
   const [saved, setSaved] = useState(false);
   const [history, setHistory] = useState<EditorObject[][]>([DEFAULT_OBJECTS]);
@@ -191,6 +197,7 @@ export default function EditorPage() {
       if (draft.canvasHeight) setCanvasHeight(draft.canvasHeight);
       if (draft.backgroundColor) setBackgroundColor(draft.backgroundColor);
       if (draft.imageFit) setImageFit(draft.imageFit);
+      if (draft.effectPreset && draft.effectPreset in EFFECT_FILTERS) setEffectPreset(draft.effectPreset);
       setCustomWidth(String(draft.canvasWidth ?? 1080));
       setCustomHeight(String(draft.canvasHeight ?? 1080));
       setSaved(true);
@@ -317,7 +324,7 @@ export default function EditorPage() {
     }}>{item.text}</div>;
   }
 
-  async function downloadMeme() {
+  async function downloadMeme(format: "png" | "jpg" = "png") {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) { showNotice("Canvas export is not supported in this browser."); return; }
@@ -337,8 +344,10 @@ export default function EditorPage() {
     if (safeBaseUrl) {
       try {
         const image = await loadImage(safeBaseUrl);
+        ctx.filter = effectFilter;
         drawFit(image, 0, 0, canvas.width, canvas.height, imageFit);
-      } catch { showNotice("The template image could not load. Your captions and overlays can still be exported."); }
+        ctx.filter = "none";
+      } catch { ctx.filter = "none"; showNotice("The template image could not load. Your captions and overlays can still be exported."); }
     }
     for (const item of objectsRef.current) {
       const x = item.x / 100 * canvas.width; const y = item.y / 100 * canvas.height;
@@ -373,16 +382,17 @@ export default function EditorPage() {
       ctx.restore();
     }
     const link = document.createElement("a");
-    link.download = "meme-is-mine-" + canvasWidth + "x" + canvasHeight + ".png";
-    link.href = canvas.toDataURL("image/png"); link.click();
-    showNotice("Your meme was exported at " + canvasWidth + " by " + canvasHeight + " pixels.");
+    const mime = format === "jpg" ? "image/jpeg" : "image/png";
+    link.download = "meme-is-mine-" + canvasWidth + "x" + canvasHeight + "." + format;
+    link.href = canvas.toDataURL(mime, format === "jpg" ? 0.94 : undefined); link.click();
+    showNotice("Your meme was exported as " + format.toUpperCase() + " at " + canvasWidth + " by " + canvasHeight + " pixels.");
   }
   function saveDraft() {
     const textItems = objectsRef.current.filter((item): item is TextObject => item.kind === "text");
     const draft: Draft = {
       id: "draft-" + Date.now(), templateId: uploadedUrl ? "upload" : template?.id ?? "upload", name: template?.name ?? "My meme",
       url: currentUrl ?? "", source: sourceIndian ? "indian" : template?.source, topText: textItems[0]?.text ?? "", bottomText: textItems[1]?.text ?? "", fontSize: textItems[0]?.fontSize ?? 48,
-      outline: textItems[0]?.outline ?? true, objects: objectsRef.current, canvasWidth, canvasHeight, backgroundColor, imageFit, updatedAt: new Date().toISOString(),
+      outline: textItems[0]?.outline ?? true, objects: objectsRef.current, canvasWidth, canvasHeight, backgroundColor, imageFit, effectPreset, updatedAt: new Date().toISOString(),
     };
     try {
       const existing: Draft[] = JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? "[]");
@@ -427,7 +437,8 @@ export default function EditorPage() {
         <button className="button button-paper button-small" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl Z)"><Undo2 size={14}/><span>Undo</span></button>
         <button className="button button-paper button-small" onClick={redo} disabled={historyIndex < 0 || historyIndex >= history.length - 1} title="Redo (Ctrl Shift Z)"><Redo2 size={14}/><span>Redo</span></button>
         <button className="button button-paper button-small" onClick={saveDraft}><Save size={14}/><span>Save</span></button>
-        <button className="button button-dark button-small" onClick={downloadMeme}><Download size={14}/> Download PNG</button>
+        <button className="button button-dark button-small" onClick={() => downloadMeme("png")}><Download size={14}/> Download PNG</button>
+        <button className="button button-paper button-small" onClick={() => downloadMeme("jpg")}><Download size={14}/> JPG</button>
       </div>
     </div>
     <div className="editor-workspace editor-workspace-upgraded">
@@ -459,10 +470,12 @@ export default function EditorPage() {
           <div className="sticker-grid">{BUILTIN_OVERLAYS.map((sticker) => <button type="button" key={sticker.kind} onClick={() => addSticker(sticker)} title={"Add " + sticker.name}><img src={sticker.src} alt=""/><span>{sticker.name}</span></button>)}</div>
           <div className="control-help">{imageObjects.length} image overlays on canvas. Limit: 8 uploaded or sticker layers.</div>
         </div>}
-        {activePanel === "background" && <div className="editor-tool-panel">
-          <div className="panel-label">Canvas background</div><div className="background-swatches">{BACKGROUNDS.map((color) => <button key={color} className={backgroundColor.toLowerCase() === color.toLowerCase() ? "background-swatch active" : "background-swatch"} style={{ background: color }} onClick={() => { setBackgroundColor(color); setSaved(false); }} aria-label={"Set background " + color}/>)}</div>
-          <label className="control-label" htmlFor="background-custom">Custom colour</label><input id="background-custom" className="editor-color-input" type="color" value={backgroundColor} onChange={(event) => { setBackgroundColor(event.target.value); setSaved(false); }}/>
-          <div className="sidebar-divider"/><div className="panel-label">Image fitting</div><div className="editor-field-grid"><button className={imageFit === "cover" ? "filter-pill active" : "filter-pill"} onClick={() => setImageFit("cover")}>Fill canvas</button><button className={imageFit === "contain" ? "filter-pill active" : "filter-pill"} onClick={() => setImageFit("contain")}>Fit image</button></div>
+        {activePanel === "effects" && <div className="editor-tool-panel">
+          <div className="panel-label">Image effects <span>Live preview</span></div>
+          <p className="control-help">Effects apply to the source image and are included in your export. Captions and stickers stay crisp.</p>
+          <div className="editor-effect-grid">{([["original","Original"],["vivid","Vivid"],["grayscale","B&W"],["sepia","Sepia"],["warm","Warm"]] as [EffectPreset,string][]).map(([preset,label]) => <button type="button" key={preset} className={effectPreset === preset ? "effect-preset active" : "effect-preset"} onClick={() => { setEffectPreset(preset); setSaved(false); }}><span className={"effect-sample effect-sample-" + preset}>Aa</span><strong>{label}</strong></button>)}</div>
+          <div className="sidebar-divider"/><div className="panel-label">Image fitting</div><div className="editor-field-grid"><button className={imageFit === "cover" ? "filter-pill active" : "filter-pill"} onClick={() => { setImageFit("cover"); setSaved(false); }}>Fill canvas</button><button className={imageFit === "contain" ? "filter-pill active" : "filter-pill"} onClick={() => { setImageFit("contain"); setSaved(false); }}>Fit image</button></div>
+          <div className="control-help">Current effect: {effectPreset}. Export format: PNG or JPG.</div>
         </div>}
         {activePanel === "canvas" && <div className="editor-tool-panel">
           <div className="panel-label">Canvas dimensions</div><div className="ratio-grid">{RATIO_PRESETS.map((preset) => <button type="button" key={preset.label} onClick={() => applyPreset(preset)} className={activePreset === preset.label ? "ratio-button active" : "ratio-button"}><span>{preset.label}</span><small>{preset.name}</small><i style={{ aspectRatio: preset.width + " / " + preset.height }}/></button>)}</div>
@@ -485,7 +498,7 @@ export default function EditorPage() {
         <div className="canvas-workspace-meta"><span><span className="canvas-live-dot"/> Live canvas</span><span>{canvasWidth} × {canvasHeight}</span><span>{objects.length} layers</span></div>
         <div className="canvas-stage-shell">
           <div ref={stageRef} className="editor-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * 0.68 * canvasWidth / canvasHeight))) + "px)", aspectRatio: canvasWidth + " / " + canvasHeight, background: backgroundColor }} onPointerMove={movePointer} onPointerUp={stopDrag} onPointerCancel={stopDrag} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(null); }}>
-            {safeBaseUrl ? <img className="editor-base-image" src={safeBaseUrl} alt={template?.name ?? "Your image"} draggable={false} style={{ objectFit: imageFit }}/> : <div className="canvas-placeholder editor-no-image"><ImagePlus size={38}/><strong>Start with your own image</strong><span>Upload an image or choose a template</span><button className="button button-dark button-small" onClick={() => setActivePanel("templates")}>Browse templates</button><button className="button button-paper button-small" onClick={() => baseFileInput.current?.click()}>Upload image</button></div>}
+            {safeBaseUrl ? <img className="editor-base-image" src={safeBaseUrl} alt={template?.name ?? "Your image"} draggable={false} style={{ objectFit: imageFit, filter: effectFilter }}/> : <div className="canvas-placeholder editor-no-image"><ImagePlus size={38}/><strong>Start with your own image</strong><span>Upload an image or choose a template</span><button className="button button-dark button-small" onClick={() => setActivePanel("templates")}>Browse templates</button><button className="button button-paper button-small" onClick={() => baseFileInput.current?.click()}>Upload image</button></div>}
             {objects.map((item,index) => <div key={item.id} className={selectedId === item.id ? "editor-object selected" : "editor-object"} style={{ left: item.x + "%", top: item.y + "%", width: item.w + "%", height: item.h + "%", zIndex: index + 2, transform: "translate(-50%, -50%) rotate(" + item.rotation + "deg)", opacity: item.opacity }} onPointerDown={(event) => startDrag(event, item)} onClick={() => setSelectedId(item.id)} role="button" tabIndex={0} aria-label={"Select " + item.name} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(item.id); }}>
               {item.kind === "text" ? renderTextPreview(item) : <img className="editor-overlay-image" src={item.src} alt={item.name} draggable={false} style={{ objectFit: item.fit }}/>}
               {selectedId === item.id && <><span className="object-handle object-handle-top"/><span className="object-handle object-handle-left"/><button type="button" className="object-resize-handle" aria-label="Resize selected layer" onPointerDown={(event) => startDrag(event, item, "resize")}/></>}
