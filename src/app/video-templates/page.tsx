@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, Download, Film, Search, Sparkles, Video, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Bookmark, Clapperboard, Download, Film, Search, Sparkles, Video, Volume2, VolumeX } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
 type VideoTemplate = {
@@ -175,9 +175,22 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
   </div>;
 }
 
+const BOOKMARKS_KEY = "mim-bookmarks";
+
 export default function VideoTemplatesPage() {
   const reduce = useReducedMotion();
   const [templates, setTemplates] = useState<VideoTemplate[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  useEffect(() => { try { const ids = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) ?? "[]"); setSavedIds(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : []); } catch { setSavedIds([]); } }, []);
+  function toggleBookmark(id: string) {
+    const key = "video:" + id;
+    setSavedIds((current) => {
+      const next = current.includes(key) ? current.filter((item) => item !== key) : [...current, key];
+      try { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next)); } catch { /* Browser storage may be unavailable. */ }
+      window.dispatchEvent(new Event("mim-bookmarks-updated"));
+      return next;
+    });
+  }
   const [filter, setFilter] = useState("popular");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -246,7 +259,7 @@ export default function VideoTemplatesPage() {
           {template.mediaType === "gif" ? <Link className="video-template-media-link" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}><img src={sourceUrl(template)} alt={template.name} loading={index < 4 ? "eager" : "lazy"}/></Link> : <VideoPreview template={template}/>}
           <span className="video-kind-pill">{template.mediaType === "gif" ? "GIF" : "VIDEO"}</span><Link className={template.mediaType === "video" ? "video-edit-cue video-edit-cue-video" : "video-edit-cue"} href={"/video-editor/" + encodeURIComponent(template.id)}><Sparkles size={13}/> Edit this template <ArrowUpRight size={14}/></Link>
         </div>
-        <div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category}</span></div></div>
+        <div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category}</span></div><button type="button" className={savedIds.includes("video:" + template.id) ? "save-button is-saved" : "save-button"} onClick={() => toggleBookmark(template.id)} aria-label={savedIds.includes("video:" + template.id) ? "Remove video template bookmark" : "Bookmark video template"} aria-pressed={savedIds.includes("video:" + template.id)} title={savedIds.includes("video:" + template.id) ? "Remove bookmark" : "Save video template"}><Bookmark size={17} fill={savedIds.includes("video:" + template.id) ? "currentColor" : "none"} strokeWidth={1.8}/></button></div>
       </motion.article>)}</div>}
       {totalPages > 1 && <div className="archive-pagination"><button className="button button-paper button-small" disabled={loading || page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}><ArrowLeft size={14}/> Previous</button><span>Page <strong>{page}</strong> of {totalPages}</span><button className="button button-dark button-small" disabled={loading || page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next page <ArrowRight size={14}/></button></div>}
     </section>
