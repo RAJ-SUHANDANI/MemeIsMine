@@ -180,3 +180,23 @@
 
 /* Allow direct manipulation of canvas objects on touch screens */
 .editor-canvas-stage{touch-action:none}
+
+/* Indian template archive selector and paging */
+.template-library-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:24px 0 5px}
+.library-choice{display:flex;align-items:center;gap:13px;min-width:0;text-align:left;padding:15px 16px;background:rgba(255,255,255,.25);border:1px solid var(--line);border-radius:6px;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+.library-choice:hover{transform:translateY(-2px);border-color:var(--ink)}
+.library-choice.active{border-color:var(--ink);background:#e9e1d5;box-shadow:inset 3px 0 var(--red)}
+.library-choice>svg{color:var(--red);flex-shrink:0}
+.library-choice>span:nth-child(2){display:grid;gap:4px;min-width:0;flex:1}
+.library-choice strong{font-size:12px}
+.library-choice small{font:10px/1.4 var(--mono);color:#7a7268}
+.library-choice-check{display:grid;place-items:center;width:21px;height:21px;flex-shrink:0;border:1px solid var(--line);border-radius:50%;font-size:11px}
+.library-choice.active .library-choice-check{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.archive-source-link{display:inline-flex;align-items:center;gap:5px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:3px;transition:color .2s,border-color .2s}
+.archive-source-link:hover{color:var(--red);border-color:var(--red)}
+.archive-pagination{display:flex;justify-content:center;align-items:center;gap:18px;padding:32px 0 65px}
+.archive-pagination>span{font:11px var(--mono);color:#71695f}
+.archive-pagination>span strong{color:var(--red);font-size:13px}
+.archive-message{padding:20px;margin:20px 0 30px;background:#eee5d9;border-left:3px solid var(--red);border-radius:0 5px 5px 0}
+.archive-message p{margin:0 0 10px;font:14px/1.5 var(--serif);color:#625b52}
+@media(max-width:650px){.template-library-switch{grid-template-columns:1fr;gap:8px;padding-top:18px}.library-choice{padding:12px}.archive-pagination{gap:10px;flex-wrap:wrap}.archive-pagination .button{min-width:118px}.archive-pagination>span{order:-1;flex-basis:100%;text-align:center;margin-bottom:4px}}
