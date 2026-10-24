@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Download, Layers3, MousePointer2, Sparkles, WandSparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Download, Layers3, MousePointer2, Sparkles, Star, WandSparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { SiteHeader, MemeCard, FloatingGallery } from "@/components/site";
@@ -15,9 +15,32 @@ function homeVideoSource(template: HomeVideoTemplate) {
   return "/api/video-source?url=" + encodeURIComponent(template.url)
     + (template.sourcePage ? "&referrer=" + encodeURIComponent(template.sourcePage) : "");
 }
+type UserReview = { id: string; name: string; review: string; createdAt: string };
+const REVIEW_KEY = "mim-user-reviews";
+const starterReviews: UserReview[] = [
+  { id: "starter-1", name: "A meme enthusiast", review: "Finally, a quick way to turn the exact thought in my head into a meme. The editor is easy and fun.", createdAt: "" },
+  { id: "starter-2", name: "A group-chat regular", review: "The video templates are such a good addition. I can add a caption and export without opening a heavy editor.", createdAt: "" },
+  { id: "starter-3", name: "A casual creator", review: "Love the no-fuss workflow. Find a format, make it mine, and send it to friends.", createdAt: "" },
+];
 export default function HomePage() {
   const [memes, setMemes] = useState<MemeTemplate[]>(starterMemes.slice(0, 4));
   const [videoTemplates, setVideoTemplates] = useState<HomeVideoTemplate[]>([]);
+  const [reviews, setReviews] = useState<UserReview[]>(starterReviews);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  useEffect(() => {
+    const loadReviews = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(REVIEW_KEY) ?? "[]");
+        if (Array.isArray(stored) && stored.length) setReviews(stored.filter((item) => item && typeof item.name === "string" && typeof item.review === "string"));
+        else setReviews(starterReviews);
+      } catch { setReviews(starterReviews); }
+    };
+    loadReviews();
+    window.addEventListener("mim-reviews-updated", loadReviews);
+    window.addEventListener("storage", loadReviews);
+    return () => { window.removeEventListener("mim-reviews-updated", loadReviews); window.removeEventListener("storage", loadReviews); };
+  }, []);
+  const moveReview = (direction: number) => setReviewIndex((index) => (index + direction + reviews.length) % reviews.length);
   const reduce = useReducedMotion();
   useEffect(() => {
     let alive = true;
@@ -106,6 +129,18 @@ export default function HomePage() {
         <motion.article className="step-card" whileInView={{ opacity: 1, y: 0 }} initial={reduce ? false : { opacity: 0, y: 18 }} viewport={{ once: true }} transition={{ duration: .4, delay: .16 }}><span className="step-index">STEP 03</span><span className="step-graphic"><Download size={21}/></span><h3>Download. Deploy. Done.</h3><p>Save a clean PNG and send it wherever the joke belongs.</p></motion.article>
       </div>
     </div></section>
+    <section className="section reviews-section" id="reviews"><div className="container reviews-layout">
+      <div className="reviews-intro"><span className="eyebrow">The people have the floor</span><h2 className="section-title">Made for memes.<br/><span className="serif-italic">Rated by humans.</span></h2><p className="section-note">A little love from the people making the internet more entertaining, one punchline at a time.</p><Link href="/add-review" className="button button-paper">Leave a review <ArrowUpRight size={15}/></Link><div className="review-controls"><button type="button" onClick={() => moveReview(-1)} aria-label="Previous review"><ArrowLeft size={17}/></button><span>{reviews.length ? String(reviewIndex + 1).padStart(2, "0") : "00"} <i>/</i> {String(reviews.length).padStart(2, "0")}</span><button type="button" onClick={() => moveReview(1)} aria-label="Next review"><ArrowRight size={17}/></button></div></div>
+      <div className="review-deck" aria-label="User reviews. Swipe the front card left or right to browse." onTouchStart={(event) => { event.currentTarget.dataset.touchX = String(event.touches[0]?.clientX ?? 0); }} onTouchEnd={(event) => { const start = Number(event.currentTarget.dataset.touchX ?? 0); const delta = (event.changedTouches[0]?.clientX ?? start) - start; if (Math.abs(delta) > 45) moveReview(delta < 0 ? 1 : -1); }}>
+        {reviews.slice(0, Math.min(3, reviews.length)).map((_, stackIndex) => {
+          const review = reviews[(reviewIndex + stackIndex) % reviews.length];
+          return <motion.article key={review.id} className={"review-card review-card-stack-" + stackIndex} drag={stackIndex === 0 ? "x" : false} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.72} onDragEnd={(_, info) => { if (info.offset.x < -70) moveReview(1); else if (info.offset.x > 70) moveReview(-1); }} style={{ zIndex: 3 - stackIndex }} whileDrag={stackIndex === 0 ? { rotate: 4, cursor: "grabbing" } : undefined}>
+            <div className="review-card-top"><span className="review-quote-mark">“</span><span className="review-rating" aria-label="5 out of 5 stars">{Array.from({ length: 5 }, (_, i) => <Star key={i} size={13} fill="currentColor"/>)}</span></div>
+            <p className="review-quote">{review.review}</p><div className="review-card-footer"><span className="review-avatar">{review.name.trim().charAt(0).toUpperCase() || "M"}</span><div><strong>{review.name}</strong><small>{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Meme Is Mine community"}</small></div><span className="review-swipe-cue">SWIPE ↔</span></div>
+          </motion.article>;
+        })}
+      </div>
+    </div></section>
     <section className="cta-section"><div className="container"><div className="cta-panel"><div><span className="eyebrow">Your group chat is waiting</span><h2>The meme is yours.<br/>Make it official.</h2></div><Link href="/templates" className="button button-dark">Let’s make one <ArrowUpRight size={16}/></Link></div></div></section>
     <section className="section about-teaser" id="about">
       <div className="container about-teaser-grid">
@@ -123,6 +158,6 @@ export default function HomePage() {
         </motion.div>
       </div>
     </section>
-    <footer className="site-footer"><div className="container footer-inner"><div><Link href="/" className="brand-lockup" aria-label="Meme Is Mine home"><img src="/meme-is-mine-logo.svg" alt="Meme Is Mine" className="brand-full-logo"/></Link><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/templates">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/about">About Raj</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
+    <footer className="site-footer"><div className="container footer-inner"><div><Link href="/" className="brand-lockup" aria-label="Meme Is Mine home"><img src="/meme-is-mine-logo.svg" alt="Meme Is Mine" className="brand-full-logo"/></Link><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/templates">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/add-review">Add a review</Link><Link href="/about">About Raj</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
   </main>;
 }
