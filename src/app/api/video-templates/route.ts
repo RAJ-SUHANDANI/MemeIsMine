@@ -211,5 +211,5 @@ export async function GET(request: Request) {
     hasPreviousPage: page > 1, hasNextPage: page < totalPages,
     templates: results.map(publicTemplate),
     syncedAt: null,
-  }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
+  }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
 }
