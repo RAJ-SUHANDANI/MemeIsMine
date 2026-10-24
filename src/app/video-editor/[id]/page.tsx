@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowLeft, ArrowRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff,
-  ImagePlus, Move, Palette, SlidersHorizontal, Trash2, Type, Video
+  ImagePlus, Move, Palette, SlidersHorizontal, Trash2, Type, Video, Volume2, VolumeX
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
@@ -71,6 +71,9 @@ export default function VideoEditorPage() {
   const [fit, setFit] = useState<"cover" | "contain">("cover");
   const [seconds, setSeconds] = useState(8);
   const [busy, setBusy] = useState(false);
+  const [videoAudioEnabled, setVideoAudioEnabled] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const [notice, setNotice] = useState("");
   const [viewportHeight, setViewportHeight] = useState(900);
   const [drag, setDrag] = useState<DragInfo>(null);
@@ -169,6 +172,15 @@ export default function VideoEditorPage() {
     setLayerList(next);
   }
 
+  function toggleVideoAudio() {
+    const video = videoRef.current;
+    if (!video || template?.mediaType !== "video") return;
+    const enabled = !videoAudioEnabled;
+    video.muted = !enabled;
+    setVideoAudioEnabled(enabled);
+    if (video.paused) void video.play().catch(() => undefined);
+  }
+
   async function exportWebm() {
     if (!template) { toast("Choose a video template first."); return; }
     const canvas = document.createElement("canvas");
@@ -182,8 +194,40 @@ export default function VideoEditorPage() {
     const nativeH = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
     if (!nativeW || !nativeH) { toast("Wait for the template preview to load, then export again."); return; }
     setBusy(true);
+    let stream: MediaStream | null = null;
+    let sourceCaptureStream: MediaStream | null = null;
+    let audioDestination: MediaStreamAudioDestinationNode | null = null;
+    let originalMuted: boolean | null = null;
     try {
-      const stream = canvas.captureStream(30);
+      stream = canvas.captureStream(30);
+      if (source instanceof HTMLVideoElement) {
+        originalMuted = source.muted;
+        // Capture the original audio track along with the caption-composited canvas frames.
+        source.muted = false;
+        source.currentTime = 0;
+        await source.play().catch(() => undefined);
+        const capturable = source as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream };
+        const capture = capturable.captureStream ?? capturable.mozCaptureStream;
+        if (capture) {
+          sourceCaptureStream = capture.call(source);
+          sourceCaptureStream.getAudioTracks().forEach((track) => stream?.addTrack(track));
+        }
+        // Fall back to Web Audio in browsers without media-element capture.
+        if (!sourceCaptureStream?.getAudioTracks().length && typeof window.AudioContext !== "undefined") {
+          let audioContext = audioContextRef.current;
+          if (!audioContext) {
+            audioContext = new AudioContext();
+            audioContextRef.current = audioContext;
+            audioSourceNodeRef.current = audioContext.createMediaElementSource(source);
+            audioSourceNodeRef.current.connect(audioContext.destination);
+          }
+          await audioContext.resume();
+          audioDestination = audioContext.createMediaStreamDestination();
+          audioSourceNodeRef.current?.connect(audioDestination);
+          const audioTrack = audioDestination.stream.getAudioTracks()[0];
+          if (audioTrack) stream.addTrack(audioTrack);
+        }
+      }
       const mimeType = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((type) => MediaRecorder.isTypeSupported(type));
       if (!mimeType) throw new Error("This browser cannot create a WebM file.");
       const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 7000000 });
@@ -241,7 +285,6 @@ export default function VideoEditorPage() {
         const image = new Image(); image.src = layer.src; overlayCache.set(layer.src, image);
         await new Promise<void>((resolve) => { if (image.complete && image.naturalWidth) resolve(); else { image.onload = () => resolve(); image.onerror = () => resolve(); } });
       }
-      if (source instanceof HTMLVideoElement) { source.currentTime = 0; source.muted = true; await source.play().catch(() => undefined); }
       const start = performance.now();
       recorder.start(250);
       const renderFrame = () => {
@@ -258,7 +301,16 @@ export default function VideoEditorPage() {
       toast("Video exported as WebM at " + width + " by " + height + " pixels.");
     } catch (reason) {
       toast(reason instanceof Error ? reason.message : "Could not export this video.");
-    } finally { setBusy(false); }
+    } finally {
+      if (audioDestination) {
+        audioSourceNodeRef.current?.disconnect(audioDestination);
+        audioDestination.stream.getTracks().forEach((track) => track.stop());
+      }
+      sourceCaptureStream?.getTracks().forEach((track) => track.stop());
+      stream?.getTracks().forEach((track) => track.stop());
+      if (source instanceof HTMLVideoElement && originalMuted !== null) source.muted = originalMuted;
+      setBusy(false);
+    }
   }
 
   return <main className="paper-noise editor-page video-editor-page"><SiteHeader/>
@@ -284,13 +336,13 @@ export default function VideoEditorPage() {
         <div className="canvas-workspace-meta"><span><span className="canvas-live-dot"/> Live motion preview</span><span>{width} × {height}</span><span>{layers.length} layers</span></div>
         {loading && <div className="empty-state"><Clapperboard size={26}/><h2>Loading the moving template…</h2></div>}
         {template && <div className="canvas-stage-shell"><div ref={stageRef} className="editor-canvas-stage video-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * .65 * width / height))) + "px)", aspectRatio: width + " / " + height, background }} onPointerMove={onStageMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
-          {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl} muted loop autoPlay playsInline controls={false} preload="auto" style={{ objectFit: fit }} />}
+          {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="auto" style={{ objectFit: fit }} />}
           {layers.map((layer,index) => <div key={layer.id} className={selectedId === layer.id ? "editor-object selected" : "editor-object"} role="button" tabIndex={0} aria-label={"Select " + layer.name} style={{ left: layer.x + "%", top: layer.y + "%", width: layer.w + "%", height: layer.h + "%", zIndex: index + 2, opacity: layer.opacity, transform: "translate(-50%, -50%) rotate(" + layer.rotation + "deg)" }} onPointerDown={(event) => onDragStart(event,layer)} onClick={() => setSelectedId(layer.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(layer.id); }}>
             {layer.kind === "text" ? <div className="editor-object-text" style={{ fontFamily: layer.fontFamily + ", Arial Black, sans-serif", fontSize: "clamp(12px, " + (layer.fontSize / 1080 * 100) + "cqw, 80px)", color: layer.color, textAlign: layer.align, textTransform: layer.uppercase ? "uppercase" : "none", WebkitTextStroke: layer.outline ? (layer.outlineWidth / 1080 * 100) + "cqw " + layer.outlineColor : "0 transparent", textShadow: layer.shadow ? "2px 2px 0 rgba(0,0,0,.5)" : "none" }}>{layer.text}</div> : <img className="editor-overlay-image" src={layer.src} alt={layer.name} draggable={false}/>}
             {selectedId === layer.id && <button type="button" className="object-resize-handle" aria-label="Resize selected layer" onPointerDown={(event) => onDragStart(event,layer,"resize")}/>}
           </div>)}
         </div></div>}
-        <div className="canvas-controls canvas-controls-upgraded"><span className="canvas-chip"><Move size={13}/> Drag captions and overlays</span><span className="canvas-chip"><Video size={13}/> Export to WebM</span><span className="canvas-chip"><Check size={13}/> Rendered in browser</span></div>
+        <div className="canvas-controls canvas-controls-upgraded"><span className="canvas-chip"><Move size={13}/> Drag captions and overlays</span><button type="button" className="canvas-chip audio-toggle-chip" onClick={toggleVideoAudio} disabled={!template || template.mediaType !== "video"} aria-pressed={videoAudioEnabled} title={template?.mediaType === "gif" ? "GIF templates do not have audio" : videoAudioEnabled ? "Mute preview audio" : "Enable preview audio"}>{videoAudioEnabled ? <Volume2 size={13}/> : <VolumeX size={13}/>} {template?.mediaType === "gif" ? "No audio (GIF)" : videoAudioEnabled ? "Audio on" : "Enable sound"}</button><span className="canvas-chip"><Video size={13}/> Export to WebM</span><span className="canvas-chip"><Check size={13}/> Rendered in browser</span></div>
         <p className="editor-hint">Choose a text layer, drag it into place, then export a fresh video with your own captions.</p>
       </section>
       <aside className="editor-sidebar right editor-inspector">
