@@ -43,10 +43,7 @@ function allowedSourceUrl(raw: string | null, base = SITE): string | null {
   } catch { return null; }
 }
 function mediaType(url: string): MediaKind | null {
-  const path = new URL(url).pathname.toLowerCase();
-  if (path.endsWith(".gif")) return "gif";
-  if (/\.(mp4|webm|mov|m4v|ogv)$/.test(path)) return "video";
-  return null;
+  return new URL(url).pathname.toLowerCase().endsWith(".gif") ? "gif" : null;
 }
 function extractPoster(html: string, base: string): string | null {
   const meta = html.match(/<meta\b(?=[^>]*(?:property|name)=["'](?:og:image|twitter:image)["'])[^>]*>/i)?.[0];
@@ -90,7 +87,7 @@ function extractMedia(html: string, base: string): { url: string; kind: MediaKin
     const kind = mediaType(safe);
     if (kind && !found.some((item) => item.url === safe)) found.push({ url: safe, kind });
   }
-  return found.find((item) => item.kind === "gif") ?? found[0] ?? null;
+  return found.find((item) => item.kind === "gif") ?? null;
 }
 function extractPosts(html: string): { id: string; name: string; originalUrl: string; posterUrl: string | null; index: number }[] {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
@@ -152,7 +149,7 @@ export async function GET(request: Request) {
   const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
-  const catalog = videoCatalog as VideoTemplate[];
+  const catalog = (videoCatalog as VideoTemplate[]).filter((item) => item.mediaType === "gif" && /\.gif(?:[?#]|$)/i.test(item.url));
 
   if (slug) {
     const item = catalog.find((template) => template.id === slug);
@@ -164,7 +161,7 @@ export async function GET(request: Request) {
       if (!response.ok) return NextResponse.json({ success: false, error: "Template page is unavailable.", status: response.status }, { status: 502 });
       const html = await response.text();
       const media = extractMedia(html, originalUrl);
-      if (!media) return NextResponse.json({ success: false, error: "This page does not expose a direct GIF or video file." }, { status: 404 });
+      if (!media) return NextResponse.json({ success: false, error: "This page does not expose a direct GIF file. Static images and MP4 clips are not listed in this collection." }, { status: 404 });
       const posterUrl = extractPoster(html, originalUrl) ?? media.url;
       const template: VideoTemplate = {
         id: slug, name: plainText(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? slug.replace(/-/g, " ")),
