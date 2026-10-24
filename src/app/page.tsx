@@ -42,6 +42,12 @@ export default function HomePage() {
     return () => { window.removeEventListener("mim-reviews-updated", loadReviews); window.removeEventListener("storage", loadReviews); };
   }, []);
   const moveReview = (direction: number) => setReviewIndex((index) => (index + direction + reviews.length) % reviews.length);
+  useEffect(() => {
+    // Ensure a deep link from the navigation scrolls to reviews after the page mounts.
+    if (window.location.hash === "#reviews") {
+      requestAnimationFrame(() => document.getElementById("reviews")?.scrollIntoView({ block: "start" }));
+    }
+  }, []);
   const reduce = useReducedMotion();
   useEffect(() => {
     let alive = true;
