@@ -225,7 +225,7 @@ export default function VideoEditorPage() {
           audioDestination = audioContext.createMediaStreamDestination();
           audioSourceNodeRef.current?.connect(audioDestination);
           const audioTrack = audioDestination.stream.getAudioTracks()[0];
-          if (audioTrack) stream.addTrack(audioTrack);
+          if (audioTrack && stream) stream.addTrack(audioTrack);
         }
       }
       if (!stream) throw new Error("Could not capture the video canvas.");
