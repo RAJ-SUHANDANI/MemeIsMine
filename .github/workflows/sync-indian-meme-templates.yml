@@ -1,0 +1,40 @@
+name: Sync Indian meme template catalog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-indian-meme-template-catalog
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Collect template metadata
+        run: node scripts/sync-indian-meme-templates.mjs
+      - name: Commit updated catalog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/indian-meme-templates.json
+          if git diff --cached --quiet; then
+            echo "Template catalog has no changes."
+          else
+            git commit -m "Update Indian meme template catalog"
+            git push origin main
+          fi
