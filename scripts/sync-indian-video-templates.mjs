@@ -121,14 +121,14 @@ async function fetchHtml(url) {
   }
   throw new Error("The source site rate limited repeated requests for " + url);
 }
-async function verifyMediaUrl(url) {
+async function verifyMediaUrl(url, referer = SITE + "/") {
   try {
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "User-Agent": USER_AGENT,
         "Accept": "video/*, image/gif, */*;q=0.8",
-        "Referer": SITE + "/",
+        "Referer": referer,
         "Range": "bytes=0-1",
       },
       signal: AbortSignal.timeout(12000),
@@ -186,7 +186,7 @@ async function main() {
       const orderedMedia = [...media.filter((item) => item.type === "video"), ...media.filter((item) => item.type === "gif")];
       let mediaChoice = null;
       for (const candidate of orderedMedia) {
-        if (await verifyMediaUrl(candidate.url)) { mediaChoice = candidate; break; }
+        if (await verifyMediaUrl(candidate.url, post.originalUrl)) { mediaChoice = candidate; break; }
       }
       if (!mediaChoice) {
         console.warn("Skipped " + post.id + ": no reachable GIF/video media URL.");
