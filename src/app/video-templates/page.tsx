@@ -44,7 +44,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
         void current.play().then(() => setReady(true)).catch(() => undefined);
       });
     }
-  }, [template.url, muted]);
+  }, [template.url]);
 
   function toggleMute(event: ReactMouseEvent<HTMLButtonElement>) {
     event.preventDefault();
