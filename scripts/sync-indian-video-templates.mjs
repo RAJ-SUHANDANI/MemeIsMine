@@ -161,7 +161,7 @@ async function main() {
         description: "Add your own captions and export a video in the browser.",
         source: "indianmemetemplates", originalUrl: post.originalUrl,
         mediaType: mediaChoice.type, publishedAt: published, trending: trendingIds.has(post.id),
-        popularity: Math.max(0, 10000 - completed), originalOrder: completed,
+        popularity: trendingIds.has(post.id) ? 100 : 0, originalOrder: completed,
       });
     } catch (error) {
       console.warn("Skipped " + post.originalUrl + ": " + (error instanceof Error ? error.message : "request failed"));
