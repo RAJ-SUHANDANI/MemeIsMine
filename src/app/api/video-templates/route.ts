@@ -172,7 +172,7 @@ export async function GET(request: Request) {
       const html = await response.text();
       const media = extractMedia(html, originalUrl);
       if (!media) return NextResponse.json({ success: false, error: "This page does not expose a direct GIF file. Static images are not listed in this collection." }, { status: 404 });
-      const posterUrl = extractPoster(html, originalUrl) ?? media.url;
+      const posterUrl = extractPoster(html, originalUrl) ?? (media.kind === "gif" ? media.url : "");
       const template: VideoTemplate = {
         id: slug, name: plainText(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? slug.replace(/-/g, " ")),
         url: media.url, posterUrl, width: 0, height: 0, box_count: 2, category: "Video Memes",
