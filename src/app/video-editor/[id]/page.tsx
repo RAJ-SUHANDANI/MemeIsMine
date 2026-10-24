@@ -309,10 +309,11 @@ export default function VideoEditorPage() {
       return;
     }
 
-    // Last resort: try the source URL directly, just as the template gallery does.
+    // Do not switch the editor to the third-party URL directly. A cross-origin
+    // media element cannot be safely captured for canvas-based video export.
     if (!directFallbackTried) {
       setDirectFallbackTried(true);
-      setVideoSourceOverride(template.url);
+      toast("The source host blocked the video proxy. Export is disabled until the same-origin preview loads.");
       return;
     }
 
@@ -348,8 +349,15 @@ export default function VideoEditorPage() {
         const capturable = source as HTMLVideoElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream };
         const capture = capturable.captureStream ?? capturable.mozCaptureStream;
         if (capture) {
-          sourceCaptureStream = capture.call(source);
-          sourceCaptureStream.getAudioTracks().forEach((track) => stream?.addTrack(track));
+          // Some browsers reject captureStream() for media that originated
+          // cross-origin, even when the preview itself is playable. Treat audio
+          // capture as optional and continue with the canvas video track.
+          try {
+            sourceCaptureStream = capture.call(source);
+            sourceCaptureStream.getAudioTracks().forEach((track) => stream?.addTrack(track));
+          } catch {
+            sourceCaptureStream = null;
+          }
         }
         // Fall back to Web Audio in browsers without media-element capture.
         if (!sourceCaptureStream?.getAudioTracks().length && typeof window.AudioContext !== "undefined") {
