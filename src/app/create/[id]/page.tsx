@@ -97,6 +97,7 @@ export default function EditorPage() {
   const [history, setHistory] = useState<EditorObject[][]>([DEFAULT_OBJECTS]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [stagePixels, setStagePixels] = useState(600);
+  const [viewportHeight, setViewportHeight] = useState(900);
   const [drag, setDrag] = useState<DragState>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const baseFileInput = useRef<HTMLInputElement>(null);
@@ -111,12 +112,15 @@ export default function EditorPage() {
 
   useEffect(() => {
     setDraftId(new URLSearchParams(window.location.search).get("draft"));
-    if (!stageRef.current || typeof ResizeObserver === "undefined") return;
+    setViewportHeight(window.innerHeight);
+    const onResize = () => setViewportHeight(window.innerHeight);
+    window.addEventListener("resize", onResize);
+    if (!stageRef.current || typeof ResizeObserver === "undefined") return () => window.removeEventListener("resize", onResize);
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) setStagePixels(entries[0].contentRect.width);
     });
     observer.observe(stageRef.current);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); window.removeEventListener("resize", onResize); };
   }, []);
   useEffect(() => {
     let alive = true;
@@ -131,8 +135,9 @@ export default function EditorPage() {
     if (found) {
       setTemplate(found);
       if (!draftId && !templateInitialized.current) {
-        setObjects(DEFAULT_OBJECTS.map((item) => item.kind === "text" && item.id === "caption-top" ? { ...item, text: found.name.toUpperCase() } : item));
-        objectsRef.current = DEFAULT_OBJECTS.map((item) => item.kind === "text" && item.id === "caption-top" ? { ...item, text: found.name.toUpperCase() } : item);
+        const initialObjects = DEFAULT_OBJECTS.map((item) => item.kind === "text" && item.id === "caption-top" ? { ...item, text: found.name.toUpperCase() } : item);
+        setObjects(initialObjects); objectsRef.current = initialObjects;
+        setHistory([initialObjects]); setHistoryIndex(0);
         templateInitialized.current = true;
       }
     }
@@ -179,7 +184,7 @@ export default function EditorPage() {
     setHistory(updated);
     setHistoryIndex(updated.length - 1);
     setSaved(false);
-  }, [historyIndex]);
+  }, [history, historyIndex]);
   function patchObject(objectId: string, patch: Partial<EditorObject>) {
     const next = objectsRef.current.map((item) => item.id === objectId ? { ...item, ...patch } as EditorObject : item);
     rememberObjects(next);
@@ -454,7 +459,7 @@ export default function EditorPage() {
       <section className="editor-center editor-center-upgraded" aria-label="Meme canvas workspace">
         <div className="canvas-workspace-meta"><span><span className="canvas-live-dot"/> Live canvas</span><span>{canvasWidth} × {canvasHeight}</span><span>{objects.length} layers</span></div>
         <div className="canvas-stage-shell">
-          <div ref={stageRef} className="editor-canvas-stage" style={{ aspectRatio: canvasWidth + " / " + canvasHeight, background: backgroundColor }} onPointerMove={movePointer} onPointerUp={stopDrag} onPointerCancel={stopDrag} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(null); }}>
+          <div ref={stageRef} className="editor-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * 0.68 * canvasWidth / canvasHeight))) + "px)", aspectRatio: canvasWidth + " / " + canvasHeight, background: backgroundColor }} onPointerMove={movePointer} onPointerUp={stopDrag} onPointerCancel={stopDrag} onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(null); }}>
             {safeBaseUrl ? <img className="editor-base-image" src={safeBaseUrl} alt={template?.name ?? "Your image"} draggable={false} style={{ objectFit: imageFit }}/> : <div className="canvas-placeholder editor-no-image"><ImagePlus size={38}/><strong>Start with your own image</strong><span>Upload an image or choose a template</span><button className="button button-dark button-small" onClick={() => setActivePanel("templates")}>Browse templates</button><button className="button button-paper button-small" onClick={() => baseFileInput.current?.click()}>Upload image</button></div>}
             {objects.map((item,index) => <div key={item.id} className={selectedId === item.id ? "editor-object selected" : "editor-object"} style={{ left: item.x + "%", top: item.y + "%", width: item.w + "%", height: item.h + "%", zIndex: index + 2, transform: "translate(-50%, -50%) rotate(" + item.rotation + "deg)", opacity: item.opacity }} onPointerDown={(event) => startDrag(event, item)} onClick={() => setSelectedId(item.id)} role="button" tabIndex={0} aria-label={"Select " + item.name} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(item.id); }}>
               {item.kind === "text" ? renderTextPreview(item) : <img className="editor-overlay-image" src={item.src} alt={item.name} draggable={false} style={{ objectFit: item.fit }}/>}
