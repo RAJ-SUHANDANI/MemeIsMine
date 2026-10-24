@@ -10,6 +10,7 @@ type LibraryMode = "mine" | "indian";
 export default function ExplorePage() {
   const [memes, setMemes] = useState<MemeTemplate[]>(starterMemes);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("popular");
   const [showCount, setShowCount] = useState(24);
@@ -28,12 +29,16 @@ export default function ExplorePage() {
     if (params.get("source") === "indian") setLibrary("indian");
   }, []);
   useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 450);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+  useEffect(() => {
     let alive = true;
     const controller = new AbortController();
     setLoading(true);
     setErrorMessage("");
     const url = library === "indian"
-      ? "/api/indian-memes?page=" + archivePage + "&limit=24" + (query.trim() ? "&q=" + encodeURIComponent(query.trim()) : "")
+      ? "/api/indian-memes?page=" + archivePage + "&limit=24" + (debouncedQuery ? "&q=" + encodeURIComponent(debouncedQuery) : "")
       : "/api/memes?limit=100" + (query.trim() ? "&q=" + encodeURIComponent(query.trim()) : "");
     fetch(url, { signal: controller.signal })
       .then(async (response) => {
@@ -52,7 +57,7 @@ export default function ExplorePage() {
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; controller.abort(); };
-  }, [library, archivePage, query]);
+  }, [library, archivePage, debouncedQuery]);
   const visible = useMemo(() => {
     let result = memes.filter((meme) => {
       const matchesQuery = library === "indian" || meme.name.toLowerCase().includes(query.toLowerCase().trim());
@@ -64,7 +69,7 @@ export default function ExplorePage() {
     return result;
   }, [memes, query, category, sort, library]);
   function switchLibrary(next: LibraryMode) {
-    setLibrary(next); setArchivePage(1); setQuery(""); setCategory("All"); setSort("popular"); setShowCount(24); setErrorMessage("");
+    setLibrary(next); setArchivePage(1); setQuery(""); setDebouncedQuery(""); setCategory("All"); setSort("popular"); setShowCount(24); setErrorMessage("");
   }
   function changeQuery(value: string) {
     setQuery(value); setArchivePage(1); setShowCount(24);
