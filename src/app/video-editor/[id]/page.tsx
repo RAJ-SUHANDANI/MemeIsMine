@@ -161,6 +161,28 @@ export default function VideoEditorPage() {
     if (videoRef.current) videoRef.current.playbackRate = playbackSpeed;
   }, [playbackSpeed, template]);
   useEffect(() => {
+    if (!template) return;
+    const draftId = new URLSearchParams(window.location.search).get("draft");
+    if (!draftId) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("mim-video-drafts") ?? "[]");
+      const draft = Array.isArray(stored) ? stored.find((item: {id?: string; templateId?: string}) => item.id === draftId && item.templateId === templateId) : null;
+      if (!draft) return;
+      if (Array.isArray(draft.layers) && draft.layers.length) setLayerList(draft.layers);
+      if (Number.isFinite(draft.width)) { setWidth(draft.width); setCustomWidth(String(draft.width)); }
+      if (Number.isFinite(draft.height)) { setHeight(draft.height); setCustomHeight(String(draft.height)); }
+      if (draft.fit === "cover" || draft.fit === "contain") setFit(draft.fit);
+      if (Number.isFinite(draft.seconds)) setSeconds(draft.seconds);
+      if (Number.isFinite(draft.brightness)) setBrightness(draft.brightness);
+      if (Number.isFinite(draft.contrast)) setContrast(draft.contrast);
+      if (Number.isFinite(draft.saturation)) setSaturation(draft.saturation);
+      if (typeof draft.grayscale === "boolean") setGrayscale(draft.grayscale);
+      if (Number.isFinite(draft.playbackSpeed)) setPlaybackSpeed(draft.playbackSpeed);
+      setDraftSaved(true);
+      setNotice("Video draft restored from your studio.");
+    } catch { setNotice("That video draft could not be restored."); }
+  }, [template, templateId, setLayerList]);
+  useEffect(() => {
     setViewportHeight(window.innerHeight);
     const handleResize = () => setViewportHeight(window.innerHeight);
     window.addEventListener("resize", handleResize);
