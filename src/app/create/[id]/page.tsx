@@ -24,7 +24,7 @@ type ImageObject = {
 type EditorObject = TextObject | ImageObject;
 type Draft = {
   id: string; templateId: string; name: string; url: string; topText: string; bottomText: string;
-  fontSize: number; outline: boolean; updatedAt: string; objects?: EditorObject[];
+  fontSize: number; outline: boolean; updatedAt: string; source?: string; objects?: EditorObject[];
   canvasWidth?: number; canvasHeight?: number; backgroundColor?: string; imageFit?: "cover" | "contain";
 };
 type PanelId = "templates" | "text" | "overlay" | "background" | "canvas" | "layers";
@@ -79,6 +79,7 @@ export default function EditorPage() {
   const router = useRouter();
   const id = params.id;
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [sourceIndian, setSourceIndian] = useState(false);
   const [catalog, setCatalog] = useState<MemeTemplate[]>(starterMemes);
   const [template, setTemplate] = useState<MemeTemplate | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
@@ -111,7 +112,9 @@ export default function EditorPage() {
   const activePreset = RATIO_PRESETS.find((item) => item.width === canvasWidth && item.height === canvasHeight)?.label ?? "custom";
 
   useEffect(() => {
-    setDraftId(new URLSearchParams(window.location.search).get("draft"));
+    const pageParams = new URLSearchParams(window.location.search);
+    setDraftId(pageParams.get("draft"));
+    setSourceIndian(pageParams.get("source") === "indian");
     setViewportHeight(window.innerHeight);
     const onResize = () => setViewportHeight(window.innerHeight);
     window.addEventListener("resize", onResize);
@@ -124,12 +127,14 @@ export default function EditorPage() {
   }, []);
   useEffect(() => {
     let alive = true;
-    fetch("/api/memes?limit=100").then((response) => response.json()).then((data) => {
+    const endpoint = sourceIndian ? "/api/indian-memes?page=1&limit=24" : "/api/memes?limit=100";
+    fetch(endpoint).then((response) => response.json()).then((data) => {
       if (alive && data.success && data.memes?.length) setCatalog(data.memes);
     }).catch(() => undefined);
     return () => { alive = false; };
-  }, []);
+  }, [sourceIndian]);
   useEffect(() => {
+    if (sourceIndian) return;
     if (id === "upload") { setTemplate(null); return; }
     const found = catalog.find((item) => item.id === id) ?? starterMemes.find((item) => item.id === id) ?? null;
     if (found) {
@@ -141,7 +146,26 @@ export default function EditorPage() {
         templateInitialized.current = true;
       }
     }
-  }, [id, catalog, draftId]);
+  }, [id, catalog, draftId, sourceIndian]);
+  useEffect(() => {
+    if (!sourceIndian || id === "upload") return;
+    let alive = true;
+    fetch("/api/indian-memes?slug=" + encodeURIComponent(id))
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data.success || !data.meme) throw new Error(data.error ?? "Template could not be loaded.");
+        if (!alive || draftId) return;
+        const item = data.meme as MemeTemplate;
+        setTemplate(item);
+        setUploadedUrl(null);
+        const initialObjects = DEFAULT_OBJECTS.map((object) => object.kind === "text" && object.id === "caption-top" ? { ...object, text: item.name.toUpperCase() } : object);
+        setObjects(initialObjects); objectsRef.current = initialObjects;
+        setHistory([initialObjects]); setHistoryIndex(0);
+        setSelectedId("caption-top"); templateInitialized.current = true;
+      })
+      .catch((error: unknown) => { if (alive) showNotice(error instanceof Error ? error.message : "Template could not be loaded."); });
+    return () => { alive = false; };
+  }, [sourceIndian, id, draftId]);
   useEffect(() => {
     if (!draftId) return;
     try {
@@ -356,7 +380,7 @@ export default function EditorPage() {
     const textItems = objectsRef.current.filter((item): item is TextObject => item.kind === "text");
     const draft: Draft = {
       id: "draft-" + Date.now(), templateId: uploadedUrl ? "upload" : template?.id ?? "upload", name: template?.name ?? "My meme",
-      url: currentUrl ?? "", topText: textItems[0]?.text ?? "", bottomText: textItems[1]?.text ?? "", fontSize: textItems[0]?.fontSize ?? 48,
+      url: currentUrl ?? "", source: sourceIndian ? "indian" : template?.source, topText: textItems[0]?.text ?? "", bottomText: textItems[1]?.text ?? "", fontSize: textItems[0]?.fontSize ?? 48,
       outline: textItems[0]?.outline ?? true, objects: objectsRef.current, canvasWidth, canvasHeight, backgroundColor, imageFit, updatedAt: new Date().toISOString(),
     };
     try {
