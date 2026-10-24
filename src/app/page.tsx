@@ -118,7 +118,7 @@ export default function HomePage() {
           <span className="eyebrow">Independent project / made by Raj</span>
           <h2 className="section-title">THE PERSON<br/>BEHIND THE<br/><span className="serif-italic">PIXELS.</span></h2>
           <p>I’m <strong>Raj Suhandani</strong>, a web developer who enjoys turning ideas into thoughtful, useful digital experiences. I like building products with a clear purpose, distinctive visual identity, and small details that make them enjoyable to use.</p>
-          <p>Meme Is Mine brings that approach to meme creation: find an Imgflip format, make the punchline your own, and download it without unnecessary steps. I built it to make the process playful and straightforward, with a focused editor and a little personality throughout the experience.</p>
+          <p>Meme Is Mine brings that approach to meme creation: find a template, make the punchline your own, and download it without unnecessary steps. I built it to make the process playful and straightforward, with a focused editor and a little personality throughout the experience.</p>
           <div className="teaser-actions"><Link href="/about" className="button button-dark">More about me <ArrowUpRight size={16}/></Link><a href="https://rajsuhandani.vercel.app/" target="_blank" rel="noreferrer" className="text-link">Visit my portfolio <ArrowRight size={15}/></a></div>
         </motion.div>
       </div>
