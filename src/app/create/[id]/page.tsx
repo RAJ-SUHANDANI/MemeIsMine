@@ -144,10 +144,15 @@ export default function EditorPage() {
       const draft = stored.find((item) => item.id === draftId);
       if (!draft) return;
       if (draft.templateId === "upload" && draft.url.startsWith("data:")) setUploadedUrl(draft.url);
-      const restoredObjects = draft.objects?.length ? draft.objects : [
-        { ...DEFAULT_OBJECTS[0], text: draft.topText, fontSize: draft.fontSize, outline: draft.outline },
-        { ...DEFAULT_OBJECTS[1], text: draft.bottomText, fontSize: draft.fontSize, outline: draft.outline },
-      ];
+      const fallbackTextObjects: EditorObject[] = DEFAULT_OBJECTS
+        .filter((item): item is TextObject => item.kind === "text")
+        .map((item, index) => ({
+          ...item,
+          text: index === 0 ? draft.topText : draft.bottomText,
+          fontSize: draft.fontSize,
+          outline: draft.outline,
+        }));
+      const restoredObjects: EditorObject[] = draft.objects?.length ? draft.objects : fallbackTextObjects;
       setObjects(restoredObjects);
       objectsRef.current = restoredObjects;
       setHistory([restoredObjects]);
