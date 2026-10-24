@@ -44,5 +44,7 @@ jobs:
             echo "Template catalogs have no changes."
           else
             git commit -m "Update Indian meme template catalogs"
-            git push origin main
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
