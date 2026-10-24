@@ -28,43 +28,66 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "Only GIF and video files from the template archive are supported." }, { status: 400 });
   }
   try {
-    const referrers = [...new Set([referrer, "https://indianmemetemplates.com/", "https://www.indianmemetemplates.com/"])];
+    const referrers = [...new Set([
+      referrer,
+      "https://indianmemetemplates.com/",
+      "https://www.indianmemetemplates.com/",
+      "https://indianmemetemplates.com",
+    ])];
     const range = request.headers.get("range");
     let upstream: Response | null = null;
     let upstreamStatus = 502;
-    for (const currentReferrer of referrers) {
-      const headers = new Headers({
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        "Accept": "video/mp4, video/webm, video/ogg, video/*;q=0.9, image/gif;q=0.8, */*;q=0.5",
-        "Referer": currentReferrer,
-        "Origin": "https://indianmemetemplates.com",
-        "Accept-Encoding": "identity",
-      });
-      if (range) headers.set("Range", range);
-      let candidate: Response;
-      try {
-        candidate = await fetch(target.toString(), {
-          method: request.method === "HEAD" ? "HEAD" : "GET",
-          headers,
-          cache: range || fresh ? "no-store" : "force-cache",
-          next: range || fresh ? undefined : { revalidate: 86400 },
-          signal: AbortSignal.timeout(45000),
+    let lastFailure = "The upstream host did not return a media response.";
+
+    // Try both canonical hostnames. Some archive/CDN configurations serve the
+    // same upload on one hostname but intermittently fail on the other.
+    const targetUrls = [...new Set([
+      target.toString(),
+      target.hostname === "indianmemetemplates.com"
+        ? target.toString().replace("https://indianmemetemplates.com/", "https://www.indianmemetemplates.com/")
+        : target.toString().replace("https://www.indianmemetemplates.com/", "https://indianmemetemplates.com/"),
+    ])];
+
+    for (const targetUrl of targetUrls) {
+      for (const currentReferrer of referrers) {
+        const headers = new Headers({
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "Accept": "video/mp4, video/webm, video/ogg, video/*;q=0.9, image/gif;q=0.8, */*;q=0.5",
+          "Referer": currentReferrer,
+          "Accept-Encoding": "identity",
         });
-      } catch {
-        continue;
+        if (range) headers.set("Range", range);
+
+        let candidate: Response;
+        try {
+          candidate = await fetch(targetUrl, {
+            method: request.method === "HEAD" ? "HEAD" : "GET",
+            headers,
+            cache: "no-store",
+            redirect: "follow",
+            signal: AbortSignal.timeout(20000),
+          });
+        } catch (error) {
+          lastFailure = error instanceof Error ? error.message : "Network error while contacting the source host.";
+          continue;
+        }
+
+        upstreamStatus = candidate.status;
+        const contentType = (candidate.headers.get("content-type") ?? "").toLowerCase();
+        const isRealMedia = !contentType.includes("text/html") && !contentType.includes("application/json");
+        if ((candidate.ok || candidate.status === 206) && isRealMedia) {
+          upstream = candidate;
+          break;
+        }
+
+        lastFailure = "Source returned HTTP " + candidate.status + (contentType ? " (" + contentType + ")" : "");
+        await candidate.body?.cancel().catch(() => undefined);
       }
-      upstreamStatus = candidate.status;
-      const contentType = (candidate.headers.get("content-type") ?? "").toLowerCase();
-      const isRealMedia = !contentType.includes("text/html") && !contentType.includes("application/json");
-      if ((candidate.ok || candidate.status === 206) && isRealMedia) {
-        upstream = candidate;
-        break;
-      }
-      await candidate.body?.cancel().catch(() => undefined);
+      if (upstream) break;
     }
     if (!upstream) {
       return NextResponse.json(
-        { error: upstreamStatus === 404 ? "The source media file no longer exists." : "The source media could not be retrieved after retrying the original page and archive referrers.", status: upstreamStatus },
+        { error: upstreamStatus === 404 ? "The source media file no longer exists." : "The source media could not be retrieved after retrying the archive hosts and referrers.", status: upstreamStatus, detail: lastFailure },
         { status: upstreamStatus === 404 ? 404 : 502 },
       );
     }
