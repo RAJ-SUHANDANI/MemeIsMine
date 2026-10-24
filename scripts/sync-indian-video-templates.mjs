@@ -156,7 +156,7 @@ async function main() {
       const publishedMeta = html.match(/<meta\b(?=[^>]*(?:property|name)=["']article:published_time["'])[^>]*>/i)?.[0];
       const published = timeTag ?? (publishedMeta ? attr(publishedMeta, "content") : null);
       const name = plainText(heading ?? (ogTitle ? attr(ogTitle, "content") ?? post.name : post.name));
-      const mediaChoice = media[0];
+      const mediaChoice = media.find((item) => item.type === "gif") ?? media[0];
       results.push({
         id: post.id, name, url: mediaChoice.url, posterUrl: post.posterUrl ?? mediaChoice.url,
         width: 0, height: 0, box_count: 2, category: "Video Memes",
