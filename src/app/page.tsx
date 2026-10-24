@@ -1,0 +1,58 @@
+"use client";
+
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, Download, Layers3, MousePointer2, Sparkles, WandSparkles } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
+import { SiteHeader, MemeCard, FloatingGallery } from "@/components/site";
+import { starterMemes, type MemeTemplate } from "@/data/memes";
+
+export default function HomePage() {
+  const [memes, setMemes] = useState<MemeTemplate[]>(starterMemes.slice(0, 4));
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/memes?limit=8").then((res) => res.json()).then((data) => { if (alive && data.success && data.memes?.length) setMemes(data.memes.slice(0, 4)); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
+  return <main className="paper-noise">
+    <SiteHeader/>
+    <section className="hero-section"><div className="container hero-grid">
+      <motion.div className="hero-copy" initial={reduce ? false : { opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65, ease: [.2,.8,.2,1] }}>
+        <div className="eyebrow hero-kicker">The internet is your canvas</div>
+        <h1 className="display-title hero-title">Make a meme.<br/>Make it <span className="red-word">yours.</span></h1>
+        <p className="hero-subtitle">Find the format. Make it yours. Get back to the group chat.</p>
+        <div className="hero-actions"><Link href="/explore" className="button button-dark">Find your format <ArrowUpRight size={16}/></Link><Link href="/create/upload" className="button button-paper">Start with your image <ArrowRight size={15}/></Link></div>
+        <div className="hero-footnote"><span>No account needed</span><span>Free to create</span><span>Download in a click</span></div>
+      </motion.div>
+      <FloatingGallery/>
+    </div></section>
+    <div className="marquee-band" aria-label="Find a format, make it yours, share the joke"><div className="marquee-track">{Array.from({ length: 2 }, (_, i) => <span key={i}>FIND THE FORMAT <b>✳</b> MAKE IT YOURS <b>✳</b> SEND IT TO THE GROUP CHAT <b>✳</b> NO BAD JOKES, JUST BAD TIMING <b>✳</b></span>)}</div></div>
+    <section className="section" id="explore"><div className="container">
+      <div className="section-head"><div><span className="eyebrow">Fresh from the internet</span><h2 className="section-title">Good formats.<br/><span className="serif-italic">Questionable decisions.</span></h2></div><p className="section-note">The classics, the reactions, the “you had to be there” moments. Pick a template and make it yours.</p></div>
+      <div className="template-grid">{memes.map((meme, index) => <MemeCard key={meme.id} meme={meme} index={index}/>)}</div>
+      <div className="section-footer"><Link href="/explore" className="text-link">Explore all templates <ArrowRight size={15}/></Link></div>
+    </div></section>
+    <section className="section section-dark"><div className="container dark-layout">
+      <motion.div initial={reduce ? false : { opacity: 0, x: -18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .55 }}>
+        <span className="eyebrow">Your sense of humour, in full control</span><h2 className="section-title">A little chaos.<br/><span>A lot of control.</span></h2>
+        <p className="dark-copy">No complicated software. No twelve-step workflow. Just a good format, the right words, and a download button.</p><Link href="/explore" className="button button-red">Make something funny <ArrowUpRight size={16}/></Link>
+      </motion.div>
+      <div className="feature-stack">
+        <motion.div className="feature-row" whileHover={{ x: 6 }}><span className="feature-number">01 / FIND</span><div><h3>A format for every feeling</h3><p>Browse classics, reactions, work-chat energy, and pure nonsense.</p></div><Layers3 className="feature-arrow" size={20}/></motion.div>
+        <motion.div className="feature-row" whileHover={{ x: 6 }}><span className="feature-number">02 / TWEAK</span><div><h3>Make the punchline yours</h3><p>Change the copy, tune the text, and make the format fit the moment.</p></div><MousePointer2 className="feature-arrow" size={20}/></motion.div>
+        <motion.div className="feature-row" whileHover={{ x: 6 }}><span className="feature-number">03 / SEND</span><div><h3>Take it and go</h3><p>Export a crisp PNG right in your browser. No account or email required.</p></div><Download className="feature-arrow" size={20}/></motion.div>
+      </div>
+    </div></section>
+    <section className="section" id="how-it-works"><div className="container">
+      <div className="section-head"><div><span className="eyebrow">Three steps. Zero overthinking.</span><h2 className="section-title">From “lol” to <span className="serif-italic">sent.</span></h2></div><p className="section-note">Your best work happens when you stop explaining the joke.</p></div>
+      <div className="steps-grid">
+        <motion.article className="step-card" whileInView={{ opacity: 1, y: 0 }} initial={reduce ? false : { opacity: 0, y: 18 }} viewport={{ once: true }} transition={{ duration: .4 }}><span className="step-index">STEP 01</span><span className="step-graphic"><Sparkles size={21}/></span><h3>Pick the format</h3><p>Start with a classic template or bring your own image.</p></motion.article>
+        <motion.article className="step-card" whileInView={{ opacity: 1, y: 0 }} initial={reduce ? false : { opacity: 0, y: 18 }} viewport={{ once: true }} transition={{ duration: .4, delay: .08 }}><span className="step-index">STEP 02</span><span className="step-graphic"><WandSparkles size={21}/></span><h3>Put your spin on it</h3><p>Write your captions, adjust the look, and preview the punchline.</p></motion.article>
+        <motion.article className="step-card" whileInView={{ opacity: 1, y: 0 }} initial={reduce ? false : { opacity: 0, y: 18 }} viewport={{ once: true }} transition={{ duration: .4, delay: .16 }}><span className="step-index">STEP 03</span><span className="step-graphic"><Download size={21}/></span><h3>Download. Deploy. Done.</h3><p>Save a clean PNG and send it wherever the joke belongs.</p></motion.article>
+      </div>
+    </div></section>
+    <section className="cta-section"><div className="container"><div className="cta-panel"><div><span className="eyebrow">Your group chat is waiting</span><h2>The meme is yours.<br/>Make it official.</h2></div><Link href="/explore" className="button button-dark">Let’s make one <ArrowUpRight size={16}/></Link></div></div></section>
+    <footer className="site-footer"><div className="container footer-inner"><div><div className="brand-lockup"><img src="/mim-mark.svg" alt="" className="brand-mark"/><span className="brand-wordmark">Meme Is <em>Mine</em><i>.</i></span></div><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/explore">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/create/upload">Upload an image</Link><a href="#how-it-works">How it works</a></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
+  </main>;
+}
