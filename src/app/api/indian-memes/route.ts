@@ -1,4 +1,5 @@
 import snapshotData from "@/data/indian-meme-templates.json";
+import videoCatalog from "@/data/indian-video-templates.json";
 import { NextResponse } from "next/server";
 
 const SITE = "https://indianmemetemplates.com";
@@ -191,10 +192,12 @@ export async function GET(request: Request) {
   const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
-  const snapshot = snapshotData as IndianTemplate[];
+  const videoIds = new Set((videoCatalog as { id: string; url: string }[]).map((item) => item.id));
+  const snapshot = (snapshotData as IndianTemplate[]).filter((item) => !videoIds.has(item.id) && !/\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.url));
 
   try {
     if (slug) {
+      if (videoIds.has(slug)) return NextResponse.json({ success: false, error: "This is a video template. Open it from the video templates collection." }, { status: 404 });
       const localMatch = snapshot.find((item) => item.id === slug);
       if (localMatch) {
         return NextResponse.json({ success: true, source: "indianmemetemplates", meme: publicMeme(localMatch) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
