@@ -17,9 +17,11 @@ const filters = [
   { key: "recent", label: "Recent" },
   { key: "name", label: "Name A to Z" },
 ];
-function sourceUrl(template: VideoTemplate) {
+function sourceUrl(template: VideoTemplate, fresh = false, referrer?: string) {
+  const page = referrer ?? template.sourcePage;
   return "/api/video-source?url=" + encodeURIComponent(template.url)
-    + (template.sourcePage ? "&referrer=" + encodeURIComponent(template.sourcePage) : "");
+    + (page ? "&referrer=" + encodeURIComponent(page) : "")
+    + (fresh ? "&fresh=1" : "");
 }
 
 function VideoPreview({ template }: { template: VideoTemplate }) {
@@ -32,6 +34,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
   const [videoSrc, setVideoSrc] = useState(sourceUrl(template));
   const [resolvedUrl, setResolvedUrl] = useState(template.url);
   const [refreshAttempted, setRefreshAttempted] = useState(false);
+  const [archiveFallbackTried, setArchiveFallbackTried] = useState(false);
   const [directFallbackTried, setDirectFallbackTried] = useState(false);
 
   useEffect(() => {
@@ -42,6 +45,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
     setFailed(false);
     setPosterFailed(false);
     setRefreshAttempted(false);
+    setArchiveFallbackTried(false);
     setDirectFallbackTried(false);
     setActive(false);
   }, [template.id, template.url]);
@@ -84,7 +88,17 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
 
   async function recoverVideo() {
     if (refreshAttempted) {
+      if (!archiveFallbackTried) {
+        // Some source hosts require the archive root instead of the article page
+        // as the hotlink referrer; retry through the same proxy with fresh bytes.
+        setArchiveFallbackTried(true);
+        setVideoSrc(sourceUrl({ ...template, url: resolvedUrl }, true, "https://indianmemetemplates.com/"));
+        setFailed(false);
+        setReady(false);
+        return;
+      }
       if (!directFallbackTried) {
+        // Last resort: let the browser request the original URL directly.
         setDirectFallbackTried(true);
         setVideoSrc(resolvedUrl);
         setFailed(false);
@@ -94,23 +108,25 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
       setFailed(true);
       return;
     }
+
     setRefreshAttempted(true);
     try {
       const response = await fetch("/api/video-templates?slug=" + encodeURIComponent(template.id) + "&refresh=1", { cache: "no-store" });
       const data = await response.json();
       const freshUrl = data?.template?.url as string | undefined;
-      if (response.ok && data?.success && freshUrl && freshUrl !== template.url) {
+      const freshPage = data?.template?.sourcePage as string | undefined;
+      if (response.ok && data?.success && freshUrl) {
         setResolvedUrl(freshUrl);
-        setVideoSrc(sourceUrl({ ...template, url: freshUrl }));
+        setVideoSrc(sourceUrl({ ...template, url: freshUrl, sourcePage: freshPage ?? template.sourcePage }, true));
         setFailed(false);
         setReady(false);
         return;
       }
     } catch {
-      // Try the source URL directly below if refreshing the catalog fails.
+      // Retry with a different valid referer if the archive refresh is unavailable.
     }
-    setDirectFallbackTried(true);
-    setVideoSrc(resolvedUrl);
+    setArchiveFallbackTried(true);
+    setVideoSrc(sourceUrl({ ...template, url: resolvedUrl }, true, "https://indianmemetemplates.com/"));
     setFailed(false);
     setReady(false);
   }
