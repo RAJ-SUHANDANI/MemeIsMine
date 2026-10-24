@@ -50,6 +50,9 @@ export default function TemplatesPage(){
  const [loadingTemplates,setLoadingTemplates]=useState(true);
  const [catalogError,setCatalogError]=useState("");
  const [seenIds,setSeenIds]=useState<string[]>([]);
+ const [indianPage,setIndianPage]=useState(1);
+ const [indianTotalPages,setIndianTotalPages]=useState(1);
+ const [loadingMore,setLoadingMore]=useState(false);
  useEffect(()=>{
   let alive=true;
   Promise.allSettled([
@@ -58,6 +61,11 @@ export default function TemplatesPage(){
   ]).then((results)=>{
    if(!alive)return;
    const pulled=results.flatMap((result)=>result.status==="fulfilled"&&result.value?.success&&Array.isArray(result.value.memes)?result.value.memes as MemeTemplate[]:[]);
+   const indianResult=results[1];
+   if(indianResult.status==="fulfilled"&&indianResult.value?.success){
+    setIndianPage(1);
+    setIndianTotalPages(Math.max(1,Number(indianResult.value.totalPages)||1));
+   }
    const unique=Array.from(new Map([...pulled,...starterMemes].map((item)=>[item.id,item])).values());
    const seen=readSeenTemplates();
    setAllTemplates(unique); setSeenIds(seen);
@@ -76,11 +84,32 @@ export default function TemplatesPage(){
   });
  },[]);
  function selectFilter(next:FilterKey){setFilter(next);setVisibleTemplates(pickTemplates(allTemplates,next,new Set(readSeenTemplates()),12));}
- function loadMore(){
+ async function loadMore(){
+  setLoadingMore(true);
   const excluded=new Set([...readSeenTemplates(),...visibleTemplates.map((item)=>item.id)]);
-  const more=pickTemplates(allTemplates,filter,excluded,12);
-  if(!more.length){setVisibleTemplates(pickTemplates(allTemplates,filter,new Set(),12));return;}
-  setVisibleTemplates((previous)=>[...previous,...more]);
+  let pool=[...allTemplates];
+  let nextPage=indianPage;
+  let more=pickTemplates(pool,filter,excluded,12);
+  try{
+   while(more.length<12&&nextPage<indianTotalPages){
+    nextPage+=1;
+    const response=await fetch("/api/indian-memes?page="+nextPage+"&limit=100&sort="+encodeURIComponent(filter==="surprise"?"popular":filter));
+    const data=await response.json();
+    if(!response.ok||!data.success||!Array.isArray(data.memes))break;
+    const byId=new Map([...pool,...(data.memes as MemeTemplate[])].map((item)=>[item.id,item]));
+    pool=Array.from(byId.values());
+    more=pickTemplates(pool,filter,excluded,12);
+   }
+  }catch{/* Use the templates already loaded when the source archive is unavailable. */}
+  setIndianPage(nextPage);
+  setAllTemplates(pool);
+  if(more.length){
+   setVisibleTemplates((previous)=>[...previous,...more]);
+  }else{
+   const cycle=pickTemplates(pool,filter,new Set(visibleTemplates.map((item)=>item.id)),12);
+   if(cycle.length)setVisibleTemplates((previous)=>[...previous,...cycle]);
+  }
+  setLoadingMore(false);
  }
  return <main className="paper-noise"><SiteHeader/>
   <section className="page-hero"><div className="container"><span className="eyebrow">A format for every flavour of chaos</span><h1>The meme <span>index.</span></h1><p>Browse by mood, situation, or the exact energy you’re trying to communicate.</p></div></section>
@@ -90,7 +119,7 @@ export default function TemplatesPage(){
    {catalogError&&<p className="control-help">{catalogError}</p>}
    {loadingTemplates&&<div className="template-loading"><span className="tiny-dot"/> Finding a fresh set of templates…</div>}
    {!loadingTemplates&&<div className="template-grid template-discovery-grid">{visibleTemplates.map((meme,index)=><MemeCard key={meme.id} meme={meme} index={index} onSeen={markSeen}/>)}</div>}
-   {!loadingTemplates&&<div className="section-footer"><button className="button button-paper" onClick={loadMore}>Show more templates <ArrowRight size={15}/></button></div>}
+   {!loadingTemplates&&<div className="section-footer"><button className="button button-paper" disabled={loadingMore} onClick={loadMore}>{loadingMore?"Finding more templates…":"Show more templates"} <ArrowRight size={15}/></button></div>
   </div></section>
   <section className="section"><div className="container"><div className="section-head"><div><span className="eyebrow">Pick your lane</span><h2 className="section-title">WHAT’S THE<br/><span className="serif-italic">SITUATION?</span></h2></div><p className="section-note">Choose a collection to open the library with a useful starting point.</p></div>
    <div className="template-category-grid">{groups.map((group,i)=><motion.article key={group.name} className={group.className} initial={reduce?false:{opacity:0,y:18,rotate:i%2?1:-1}} whileInView={{opacity:1,y:0,rotate:0}} whileHover={reduce?undefined:{y:-7,rotate:i%2?1.5:-1.5}} viewport={{once:true,amount:.1}} transition={{duration:.4,delay:i*.04}}><Link href={group.href}><div className="template-feature-head"><span>{group.tag}</span><group.icon size={23}/></div><h3>{group.name}<span>.</span></h3><p>{group.copy}</p><div className="template-feature-foot"><small>{group.count}</small><span className="feature-go"><ArrowUpRight size={18}/></span></div></Link></motion.article>)}</div>
