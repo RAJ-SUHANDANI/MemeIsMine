@@ -7,6 +7,8 @@ const USER_AGENT = "MemeIsMineTemplateIndex/1.0 (+https://github.com/RAJ-SUHANDA
 const OUTPUT = resolve("src/data/indian-meme-templates.json");
 const DELAY_MS = 1000;
 const MAX_PAGES = 500;
+const VERIFY_CONCURRENCY = 3;
+const VERIFY_DELAY_MS = 900;
 
 const sleep = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
 
@@ -66,6 +68,36 @@ function imageUrl(block) {
   }
   const unique = [...new Set(candidates)];
   return unique.find((url) => new URL(url).pathname.toLowerCase().endsWith(".gif")) ?? unique[0] ?? null;
+}
+function extractAnimatedMedia(html, base) {
+  const candidates = [];
+  for (const tag of html.match(/<(?:video|source|a)\\b[^>]*>/gi) ?? []) {
+    const raw = attr(tag, "src") ?? attr(tag, "href") ?? attr(tag, "data-src");
+    if (raw && /\\.(?:gif|mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(raw)) candidates.push(raw);
+  }
+  for (const tag of html.match(/<meta\\b[^>]*>/gi) ?? []) {
+    const property = attr(tag, "property") ?? attr(tag, "name") ?? "";
+    if (/og:video|twitter:player:stream|video:url/i.test(property)) {
+      const raw = attr(tag, "content");
+      if (raw) candidates.push(raw);
+    }
+  }
+  for (const raw of html.match(/https?:[^\\s"'<>\\\\]+?\\.(?:gif|mp4|webm|mov|m4v|ogv)(?:\\?[^\\s"'<>\\\\]*)?/gi) ?? []) candidates.push(raw.replace(/&amp;/g, "&"));
+  const found = [];
+  for (const raw of candidates) {
+    const safe = siteUrl(raw, base);
+    if (!safe || !/\\/wp-content\\/uploads\\//i.test(new URL(safe).pathname)) continue;
+    const ext = new URL(safe).pathname.toLowerCase().split(".").pop();
+    const type = ext === "gif" ? "gif" : ["mp4", "webm", "mov", "m4v", "ogv"].includes(ext ?? "") ? "video" : null;
+    if (type && !found.some((item) => item.url === safe)) found.push({ url: safe, type });
+  }
+  return found.find((item) => item.type === "video") ?? found.find((item) => item.type === "gif") ?? null;
+}
+function hasEmbeddedVideo(html) {
+  return /<video\\b/i.test(html)
+    || /<source\\b[^>]*src\\s*=\\s*["'][^"']+\\.(?:mp4|webm|mov|m4v|ogv|gif)(?:[?#"']|$)/i.test(html)
+    || /<meta\\b(?=[^>]*(?:property|name)=["'](?:og:video|twitter:player:stream|video:url)["'])/i.test(html)
+    || /<iframe\\b[^>]*src\\s*=\\s*["'][^"']*(?:youtube\\.com\\/embed|youtu\\.be\\/|vimeo\\.com\\/video|dailymotion\\.com\\/embed)/i.test(html);
 }
 function parseCards(html) {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
@@ -187,6 +219,11 @@ function archiveUrl(page) {
 
 async function main() {
   console.log("Checking source crawl rules and reading archive page 1...");
+  let previouslyVerifiedIds = new Set();
+  try {
+    const previousCatalog = JSON.parse(await readFile(OUTPUT, "utf8"));
+    previouslyVerifiedIds = new Set(previousCatalog.filter((item) => item.mediaType === "still-image").map((item) => item.id));
+  } catch { /* First run: source media for each template will be verified. */ }
   const firstHtml = await fetchPage(ARCHIVE, "/meme-templates/");
   const totalPages = discoverPageCount(firstHtml) ?? 170;
   if (totalPages > MAX_PAGES) throw new Error("The archive advertises more than " + MAX_PAGES + " pages; stopping for manual review.");
@@ -241,13 +278,53 @@ async function main() {
     if (page % 10 === 0 || page === totalPages) console.log("Scanned " + page + "/" + totalPages + " pages; collected " + all.size + " unique template records.");
   }
   if (all.size < 100) throw new Error("Only " + all.size + " records were collected. Refusing to replace the catalog with an incomplete result.");
-  const records = [...all.values()];
+  const rawRecords = [...all.values()];
+  const unverified = rawRecords.filter((item) => !previouslyVerifiedIds.has(item.id));
+  const rejectedVideoIds = new Set();
+  const discoveredPageVideos = new Map();
+  let verifyCursor = 0;
+  console.log("Verifying original post media for " + unverified.length + " previously unchecked image candidates (concurrency " + VERIFY_CONCURRENCY + ").");
+  await Promise.all(Array.from({ length: Math.min(VERIFY_CONCURRENCY, unverified.length) }, async () => {
+    while (verifyCursor < unverified.length) {
+      const index = verifyCursor++;
+      const item = unverified[index];
+      await sleep(VERIFY_DELAY_MS);
+      try {
+        const sourcePath = new URL(item.originalUrl).pathname;
+        const pageHtml = await fetchPage(item.originalUrl, sourcePath);
+        const media = extractAnimatedMedia(pageHtml, item.originalUrl);
+        if (media || hasEmbeddedVideo(pageHtml)) {
+          rejectedVideoIds.add(item.id);
+          if (media) discoveredPageVideos.set(item.id, {
+            id: item.id, name: item.name, url: media.url, posterUrl: item.url,
+            width: 0, height: 0, box_count: 2, category: "Video Memes",
+            description: "Add your own captions and export a video in the browser.",
+            source: "indianmemetemplates", originalUrl: item.originalUrl,
+            mediaType: media.type, publishedAt: item.publishedAt ?? null,
+            trending: item.trending ?? false, popularity: item.popularity ?? 0,
+          });
+        } else {
+          previouslyVerifiedIds.add(item.id);
+        }
+      } catch (error) {
+        // A temporary source failure should not erase a usable still image.
+        previouslyVerifiedIds.add(item.id);
+        console.warn("Could not verify original media for " + item.id + "; retaining its image candidate: " + (error instanceof Error ? error.message : "request failed"));
+      }
+      if ((index + 1) % 100 === 0 || index + 1 === unverified.length) console.log("Verified " + (index + 1) + "/" + unverified.length + " image candidates; excluded " + rejectedVideoIds.size + " video/animated posts.");
+    }
+  }));
+  const records = rawRecords
+    .filter((item) => !rejectedVideoIds.has(item.id))
+    .map((item) => ({ ...item, mediaType: "still-image" }));
+  if (records.length < 100) throw new Error("Only " + records.length + " verified still images remain. Refusing to overwrite the catalog.");
   const videosById = new Map(videoCatalog.map((item) => [item.id, item]));
+  for (const [id, item] of discoveredPageVideos) if (!videosById.has(id)) videosById.set(id, item);
   for (const [id, gif] of discoveredGifs) videosById.set(id, gif);
   await mkdir(dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, JSON.stringify(records, null, 2) + "\n", "utf8");
   await writeFile(videoCatalogPath, JSON.stringify([...videosById.values()], null, 2) + "\n", "utf8");
-  console.log("Saved " + records.length + " still image templates and promoted " + discoveredGifs.size + " native GIF templates into the animated catalog. Video archive slugs remain excluded from the still-image catalog. Media files were not downloaded or copied.");
+  console.log("Saved " + records.length + " verified still image templates; excluded " + rejectedVideoIds.size + " pages with video or animated media and promoted " + (discoveredGifs.size + discoveredPageVideos.size) + " native animated/video templates. Media files were not downloaded or copied.");
 }
 main().catch((error) => {
   console.error("Template catalog sync failed:", error instanceof Error ? error.message : error);
