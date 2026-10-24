@@ -69,6 +69,7 @@ function hasAnimatedContent(html: string): boolean {
   return /<video\b/i.test(html)
     || /<source\b[^>]*src\s*=\s*["'][^"']+\.(?:gif|mp4|webm|mov|m4v|ogv)(?:[?#"']|$)/i.test(html)
     || /<meta\b(?=[^>]*(?:property|name)=["'](?:og:video|twitter:player:stream|video:url)["'])/i.test(html)
+    || /https?:[^\s"'<>\\]+?\.(?:gif|mp4|webm|mov|m4v|ogv)(?:\?[^\s"'<>\\]*)?/i.test(html)
     || /<iframe\b[^>]*src\s*=\s*["'][^"']*(?:youtube\.com\/embed|youtu\.be\/|vimeo\.com\/video|dailymotion\.com\/embed)/i.test(html);
 }
 function isClearlyVideoPost(item: Pick<IndianTemplate, "id" | "name">): boolean {
