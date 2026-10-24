@@ -14,7 +14,7 @@ export function BrandLogo({ compact = false }: { compact?: boolean }) {
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const links = [{ href: "/explore", label: "Explore" }, { href: "/templates", label: "Templates" }, { href: "/how-it-works", label: "How it works" }, { href: "/about", label: "About" }];
+  const links = [{ href: "/explore", label: "Explore" }, { href: "/templates", label: "Templates" }, { href: "/video-templates", label: "Video templates" }, { href: "/how-it-works", label: "How it works" }, { href: "/about", label: "About" }];
   return <header className="site-header"><div className="header-inner">
     <BrandLogo/>
     <nav className="desktop-nav" aria-label="Main navigation">{links.map((link) => <Link key={link.href} href={link.href} className={pathname === link.href ? "nav-link active" : "nav-link"}>{link.label}</Link>)}</nav>
@@ -48,23 +48,36 @@ export function MemeCard({ meme, index = 0 }: { meme: MemeTemplate; index?: numb
   </motion.article>;
 }
 
-const floatingCards = [
-  { name: "Distracted Boyfriend", url: "https://i.imgflip.com/1ur9b0.jpg", className: "float-card float-card-one", caption: "ME / ONE MORE TAB", tilt: -8 },
-  { name: "Two Buttons", url: "https://i.imgflip.com/1g8my4.jpg", className: "float-card float-card-two", caption: "THE CHOICE IS YOURS", tilt: 7 },
-  { name: "Drake Hotline Bling", url: "https://i.imgflip.com/30b1gx.jpg", className: "float-card float-card-three", caption: "ABSOLUTELY NOT", tilt: 4 },
-  { name: "Woman Yelling at Cat", url: "https://i.imgflip.com/345v97.jpg", className: "float-card float-card-four", caption: "HEAR ME OUT", tilt: -4 },
+const floatingFallbacks = [
+  { id: "112126428", name: "Distracted Boyfriend", url: "https://i.imgflip.com/1ur9b0.jpg", category: "Classics", tilt: -8 },
+  { id: "87743020", name: "Two Buttons", url: "https://i.imgflip.com/1g8my4.jpg", category: "Relatable", tilt: 7 },
+  { id: "181913649", name: "Drake Hotline Bling", url: "https://i.imgflip.com/30b1gx.jpg", category: "Classics", tilt: 4 },
+  { id: "188390779", name: "Woman Yelling at Cat", url: "https://i.imgflip.com/345v97.jpg", category: "Reaction", tilt: -4 },
 ];
 
-export function FloatingGallery() {
+export function FloatingGallery({ memes = [] }: { memes?: MemeTemplate[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const drift = useTransform(scrollYProgress, [0, 1], [0, 95]);
-  return <div className="floating-gallery" ref={ref} aria-label="A floating collage of meme templates">
+  const cards = (memes.length ? memes.slice(0, 4) : floatingFallbacks).map((meme, index) => ({
+    id: meme.id,
+    name: meme.name,
+    url: meme.url,
+    category: meme.category ?? "Meme format",
+    tilt: [-8, 7, 4, -4][index % 4],
+    className: ["float-card float-card-one", "float-card float-card-two", "float-card float-card-three", "float-card float-card-four"][index % 4],
+    href: meme.source === "indianmemetemplates" ? "/create/" + encodeURIComponent(meme.id) + "?source=indian" : "/create/" + encodeURIComponent(meme.id),
+  }));
+  return <div className="floating-gallery" ref={ref} aria-label="A floating collage of randomly selected meme templates">
     <div className="gallery-orbit orbit-one"/><div className="gallery-orbit orbit-two"/>
     <motion.div className="gallery-stamp" style={reduce ? undefined : { y: drift, rotate: 10 }}><span>YOUR MEME.</span><strong>YOUR RULES.</strong><i>✳</i></motion.div>
-    {floatingCards.map((card, index) => <motion.div key={card.name} className={card.className} initial={{ opacity: 0, y: 32, rotate: card.tilt * 1.8 }} animate={{ opacity: 1, y: reduce ? 0 : [0, index % 2 ? -11 : 9, 0], rotate: card.tilt }} transition={{ opacity: { duration: .8, delay: .16 + index * .12 }, y: { duration: 5.5 + index * .65, repeat: reduce ? 0 : Infinity, ease: "easeInOut", delay: index * .12 }, rotate: { duration: .8, delay: .16 + index * .12 } }} whileHover={reduce ? undefined : { scale: 1.045, rotate: 0, z: 50, transition: { duration: .22 } }}>
-      <div className="float-card-top"><span className="tiny-dot"/><span>FORMAT NO. 0{index + 1}</span></div><div className="float-image"><img src={card.url} alt={card.name}/></div><div className="float-caption"><span>{card.caption}</span><b>↗</b></div>
+    {cards.map((card, index) => <motion.div key={card.id} className={card.className} initial={{ opacity: 0, y: 32, rotate: card.tilt * 1.8 }} animate={{ opacity: 1, y: reduce ? 0 : [0, index % 2 ? -11 : 9, 0], rotate: card.tilt }} transition={{ opacity: { duration: .8, delay: .16 + index * .12 }, y: { duration: 5.5 + index * .65, repeat: reduce ? 0 : Infinity, ease: "easeInOut", delay: index * .12 }, rotate: { duration: .8, delay: .16 + index * .12 } }} whileHover={reduce ? undefined : { scale: 1.045, rotate: 0, z: 50, transition: { duration: .22 } }}>
+      <Link href={card.href} className="float-card-link" aria-label={"Open " + card.name + " in the meme editor"}>
+        <div className="float-card-top"><span className="tiny-dot"/><span>FORMAT NO. 0{index + 1}</span></div>
+        <div className="float-image"><img src={card.url} alt={card.name} loading="eager"/></div>
+        <div className="float-caption"><span>{card.name}</span><b>↗</b></div>
+      </Link>
     </motion.div>)}
     <div className="gallery-marker marker-left">GOOD MEMES<br/>BETTER TIMING</div><div className="gallery-marker marker-right">MADE FOR<br/>THE GROUP CHAT</div>
   </div>;
