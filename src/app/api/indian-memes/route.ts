@@ -215,7 +215,9 @@ export async function GET(request: Request) {
     if (slug) {
       if (videoIds.has(slug)) return NextResponse.json({ success: false, error: "This is a video template. Open it from the video templates collection." }, { status: 404 });
       const localMatch = snapshot.find((item) => item.id === slug);
-      if (localMatch) {
+      // Only trust a cached slug immediately after its original post was checked.
+      // Older catalog entries can be image thumbnails of a video page.
+      if (localMatch && (localMatch as IndianTemplate & { mediaType?: string }).mediaType === "still-image") {
         return NextResponse.json({ success: true, source: "indianmemetemplates", meme: publicMeme(localMatch) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
       }
       if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) {
