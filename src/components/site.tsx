@@ -14,11 +14,11 @@ export function BrandLogo({ compact = false }: { compact?: boolean }) {
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const links = [{ href: "/explore", label: "Explore memes" }, { href: "/studio", label: "Your studio" }];
+  const links = [{ href: "/explore", label: "Explore" }, { href: "/templates", label: "Templates" }, { href: "/how-it-works", label: "How it works" }, { href: "/about", label: "About" }];
   return <header className="site-header"><div className="header-inner">
     <BrandLogo/>
-    <nav className="desktop-nav" aria-label="Main navigation">{links.map((link) => <Link key={link.href} href={link.href} className={pathname === link.href ? "nav-link active" : "nav-link"}>{link.label}</Link>)}<a href="/#how-it-works" className="nav-link">How it works</a></nav>
-    <div className="header-actions"><Link className="header-quiet" href="/studio">My drafts</Link><Link className="button button-dark header-cta" href="/explore">Make a meme <ArrowUpRight size={15}/></Link></div>
+    <nav className="desktop-nav" aria-label="Main navigation">{links.map((link) => <Link key={link.href} href={link.href} className={pathname === link.href ? "nav-link active" : "nav-link"}>{link.label}</Link>)}</nav>
+    <div className="header-actions"><Link className="header-quiet" href="/studio">Studio</Link><Link className="button button-dark header-cta" href="/explore">Make a meme <ArrowUpRight size={15}/></Link></div>
     <button className="mobile-menu-toggle" type="button" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((value) => !value)}>{open ? <X/> : <Menu/>}</button>
   </div>{open && <nav className="mobile-nav" aria-label="Mobile navigation">{links.map((link) => <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</Link>)}<a href="/#how-it-works" onClick={() => setOpen(false)}>How it works</a><Link href="/create/upload" onClick={() => setOpen(false)}>Upload your own</Link></nav>}</header>;
 }
@@ -41,7 +41,7 @@ export function MemeCard({ meme, index = 0 }: { meme: MemeTemplate; index?: numb
       <Link href={`/create/${meme.id}`} className="meme-card-image-link" aria-label={`Make a meme with ${meme.name}`}>
         <div className="meme-card-image"><img src={meme.url} alt={meme.name} loading={index < 4 ? "eager" : "lazy"}/><span className="card-open"><ArrowUpRight size={15}/></span></div>
       </Link>
-      <div className="meme-card-meta"><div><Link href={`/create/${meme.id}`} className="meme-card-name-link"><p className="meme-card-name">{meme.name}</p></Link><span className="meme-card-category">{meme.category ?? "Meme format"}</span></div><button className={saved ? "save-button is-saved" : "save-button"} type="button" onClick={toggleSaved} aria-label={saved ? "Remove from saved templates" : "Save template"} aria-pressed={saved}><Bookmark size={17} fill={saved ? "currentColor" : "none"} strokeWidth={1.8}/></button></div>
+      <div className="meme-card-meta"><div><Link href={`/create/${meme.id}`} className="meme-card-name-link"><p className="meme-card-name">{meme.name}</p></Link><span className="meme-card-category">{meme.category ?? "Meme format"} <a className="source-link" href={`https://imgflip.com/i/${meme.id}`} target="_blank" rel="noreferrer" title="Open original template" aria-label={`Open original template for ${meme.name}"} onClick={(event) => event.stopPropagation()}>↗</a></span></div><button className={saved ? "save-button is-saved" : "save-button"} type="button" onClick={toggleSaved} aria-label={saved ? "Remove from saved templates" : "Save template"} aria-pressed={saved}><Bookmark size={17} fill={saved ? "currentColor" : "none"} strokeWidth={1.8}/></button></div>
     </div>
   </motion.article>;
 }
