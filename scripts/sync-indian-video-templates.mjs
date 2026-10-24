@@ -169,8 +169,14 @@ async function main() {
   const homeRanks = new Map(extractPosts(homeHtml).map((post, index) => [post.id, Math.max(1, 1000 - index)]));
   const results = [];
   let completed = 0;
-  for (const post of posts.values()) {
-    await sleep(DELAY_MS);
+  const postList = [...posts.values()];
+  let cursor = 0;
+  async function processPosts() {
+    while (true) {
+      const index = cursor++;
+      if (index >= postList.length) return;
+      const post = postList[index];
+      await sleep(DELAY_MS);
     try {
       const html = await fetchHtml(post.originalUrl);
       const media = getMediaCandidates(html, post.originalUrl);
@@ -198,14 +204,16 @@ async function main() {
         description: "Add your own captions and export a video in the browser.",
         source: "indianmemetemplates", originalUrl: post.originalUrl,
         mediaType: mediaChoice.type, publishedAt: published, trending: trendingIds.has(post.id),
-        popularity: homeRanks.get(post.id) ?? (trendingIds.has(post.id) ? 100 : 0), originalOrder: completed,
+        popularity: homeRanks.get(post.id) ?? (trendingIds.has(post.id) ? 100 : 0), originalOrder: index,
       });
     } catch (error) {
       console.warn("Skipped " + post.originalUrl + ": " + (error instanceof Error ? error.message : "request failed"));
     }
-    completed++;
-    if (completed % 20 === 0) console.log("Checked " + completed + "/" + posts.size + " source pages; found " + results.length + " media templates.");
+      completed++;
+      if (completed % 20 === 0 || completed === postList.length) console.log("Checked " + completed + "/" + postList.length + " source pages; found " + results.length + " media templates.");
+    }
   }
+  await Promise.all(Array.from({ length: Math.min(4, postList.length) }, () => processPosts()));
   await mkdir(dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, JSON.stringify(results, null, 2) + "\n", "utf8");
   console.log("Saved " + results.length + " animated/video templates to " + OUTPUT + " (including direct MP4/WebM/MOV and GIF files). Media files were not copied.");
