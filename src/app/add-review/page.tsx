@@ -22,7 +22,8 @@ export default function AddReviewPage() {
       const next = [{ id: "review-" + Date.now(), name: cleanName, review: cleanReview, createdAt: new Date().toISOString() }, ...previous].slice(0, 100);
       localStorage.setItem(REVIEW_KEY, JSON.stringify(next));
       window.dispatchEvent(new Event("mim-reviews-updated"));
-      window.location.assign("/#reviews");
+      // Return home after the saved review is stored; the home page reads it on mount.
+      window.location.href = "/#reviews";
     } catch { setError("Your browser could not save this review. Check available site storage and try again."); }
   }
   return <main className="paper-noise"><SiteHeader/><section className="page-hero"><div className="container"><span className="eyebrow">Your words, your way</span><h1>Leave a <span>review.</span></h1><p>Tell us what you think of Meme Is Mine. Keep it kind, honest, and helpful for the next meme maker.</p></div></section>
