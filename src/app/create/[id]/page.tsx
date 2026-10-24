@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { ArrowLeft, Download, Eye, ImagePlus, Layers, Save, Type, Undo2, Redo2, Shapes, SlidersHorizontal, RotateCcw, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -9,7 +9,7 @@ import { starterMemes, type MemeTemplate } from "@/data/memes";
 type Draft = { id:string; templateId:string; name:string; url:string; topText:string; bottomText:string; fontSize:number; outline:boolean; updatedAt:string };
 const DRAFTS_KEY = "mim-drafts";
 export default function EditorPage() {
-  const params = useParams<{id:string}>(); const router = useRouter(); const id = params.id;
+  const params = useParams<{id:string}>(); const router = useRouter(); const searchParams = useSearchParams(); const draftId = searchParams.get("draft"); const id = params.id;
   const [catalog,setCatalog] = useState<MemeTemplate[]>(starterMemes); const [template,setTemplate] = useState<MemeTemplate|null>(null);
   const [topText,setTopText] = useState(id==="upload"?"YOUR TOP TEXT":"WHEN THE MEME HITS"); const [bottomText,setBottomText] = useState(id==="upload"?"YOUR BOTTOM TEXT":"JUST RIGHT");
   const [fontSize,setFontSize] = useState(38); const [font,setFont] = useState("Impact"); const [textColor,setTextColor] = useState("#ffffff");
@@ -22,8 +22,18 @@ export default function EditorPage() {
   useEffect(()=>{
     if(id==="upload"){setTemplate(null);return}
     const found=catalog.find((item)=>item.id===id)??starterMemes.find((item)=>item.id===id)??null;
-    if(found){setTemplate(found);setTopText(found.name.toUpperCase());setBottomText("MADE IT MINE")}
-  },[id,catalog]);
+    if(found){setTemplate(found);if(!draftId){setTopText(found.name.toUpperCase());setBottomText("MADE IT MINE")}}
+  },[id,catalog,draftId]);
+  useEffect(()=>{
+    if(!draftId)return;
+    try {
+      const stored:Draft[]=JSON.parse(localStorage.getItem(DRAFTS_KEY)??"[]");
+      const draft=stored.find((item)=>item.id===draftId);
+      if(!draft)return;
+      if(draft.templateId==="upload"&&draft.url.startsWith("data:"))setUploadedUrl(draft.url);
+      setTopText(draft.topText);setBottomText(draft.bottomText);setFontSize(draft.fontSize??38);setOutline(draft.outline??true);setSaved(true);
+    } catch { /* Ignore unavailable local drafts. */ }
+  },[draftId]);
   const currentUrl=uploadedUrl??template?.url??null;
   const safeImageUrl=useMemo(()=>currentUrl&&!uploadedUrl?`/api/image?url=${encodeURIComponent(currentUrl)}`:currentUrl,[currentUrl,uploadedUrl]);
 
@@ -64,9 +74,11 @@ export default function EditorPage() {
   function handleImageUpload(event:ChangeEvent<HTMLInputElement>){
     const file=event.target.files?.[0];if(!file)return;
     if(!file.type.startsWith("image/")){showNotice("Please choose an image file.");return}
-    if(file.size>12*1024*1024){showNotice("Choose an image smaller than 12 MB.");return}
-    if(uploadedUrl?.startsWith("blob:"))URL.revokeObjectURL(uploadedUrl);
-    setUploadedUrl(URL.createObjectURL(file));setTemplate(null);showNotice("Your image is on the canvas.");
+    if(file.size>2.5*1024*1024){showNotice("Choose an image smaller than 2.5 MB so it can be saved locally.");return}
+    const reader=new FileReader();
+    reader.onload=()=>{if(typeof reader.result==="string"){setUploadedUrl(reader.result);setTemplate(null);setSaved(false);showNotice("Your image is on the canvas.")}};
+    reader.onerror=()=>showNotice("This image could not be read.");
+    reader.readAsDataURL(file);
   }
 
   return <main className="paper-noise editor-page"><SiteHeader/>
