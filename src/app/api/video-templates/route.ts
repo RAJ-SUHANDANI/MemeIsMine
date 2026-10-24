@@ -83,13 +83,14 @@ function extractMedia(html: string, base: string): { url: string; kind: MediaKin
   }
   for (const value of html.match(/https?:[^\s"'<>\\]+?\.(?:gif|mp4|webm|mov|m4v|ogv)(?:\?[^\s"'<>\\]*)?/gi) ?? []) candidates.push(value.replace(/&amp;/g, "&"));
   const unique = [...new Set(candidates)];
+  const found: { url: string; kind: MediaKind }[] = [];
   for (const raw of unique) {
     const safe = allowedSourceUrl(decodeEntities(raw), base);
     if (!safe) continue;
     const kind = mediaType(safe);
-    if (kind) return { url: safe, kind };
+    if (kind && !found.some((item) => item.url === safe)) found.push({ url: safe, kind });
   }
-  return null;
+  return found.find((item) => item.kind === "gif") ?? found[0] ?? null;
 }
 function extractPosts(html: string): { id: string; name: string; originalUrl: string; posterUrl: string | null; index: number }[] {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
