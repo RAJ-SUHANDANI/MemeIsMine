@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowLeft, ArrowRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff,
+  ArrowLeft, ArrowRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff, Save,
   ImagePlus, Move, SlidersHorizontal, Trash2, Type, Video, Volume2, VolumeX
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -113,7 +113,20 @@ export default function VideoEditorPage() {
   const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const ffmpegRef = useRef<import("@ffmpeg/ffmpeg").FFmpeg | null>(null);
   const [notice, setNotice] = useState("");
+  const [draftSaved, setDraftSaved] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(900);
+  function saveVideoDraft() {
+    if (!template) { setNotice("Wait for the video template to load before saving."); return; }
+    try {
+      const existing = JSON.parse(localStorage.getItem("mim-video-drafts") ?? "[]");
+      const drafts = Array.isArray(existing) ? existing : [];
+      const currentId = new URLSearchParams(window.location.search).get("draft");
+      const draft = { id: currentId ?? "video-draft-" + Date.now(), templateId, name: template.name, url: template.posterUrl || template.url, mediaType: template.mediaType, layers: layersRef.current, width, height, fit, seconds, brightness, contrast, saturation, grayscale, playbackSpeed, updatedAt: new Date().toISOString() };
+      localStorage.setItem("mim-video-drafts", JSON.stringify([draft, ...drafts.filter((item: {id?: string}) => item.id !== draft.id)].slice(0, 30)));
+      setDraftSaved(true);
+      setNotice("Video draft saved to your studio on this device.");
+    } catch { setNotice("Could not save this draft. Try removing large image overlays and saving again."); }
+  }
   const [drag, setDrag] = useState<DragInfo>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -394,8 +407,8 @@ export default function VideoEditorPage() {
   return <main className="paper-noise editor-page video-editor-page"><SiteHeader/>
     <div className="editor-topbar">
       <div className="editor-crumb"><Link href="/video-templates" aria-label="Back to video templates"><ArrowLeft size={16}/></Link><span>/</span><Link href="/video-templates">Video templates</Link><span>/</span><strong>{template?.name ?? "Video editor"}</strong></div>
-      <div className="saved-indicator">{template ? (template.mediaType === "gif" ? "Animated GIF source" : "Video source") : "Loading template"}</div>
-      <div className="editor-top-actions"><label className="video-duration-control">Export length<select value={seconds} onChange={(event) => setSeconds(Number(event.target.value))}><option value={3}>3 sec</option><option value={5}>5 sec</option><option value={8}>8 sec</option><option value={12}>12 sec</option><option value={15}>15 sec</option></select></label>{template?.mediaType === "video" && <label className="video-duration-control">Speed<select value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value))}><option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={2}>2×</option></select></label>}<button className="button button-paper button-small" onClick={() => exportVideo("webm")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button><button className="button button-dark button-small" onClick={() => exportVideo("mp4")} disabled={busy || !template}><Download size={14}/> Export MP4</button></div>
+      <div className="saved-indicator">{draftSaved ? "Draft saved locally" : template ? (template.mediaType === "gif" ? "Animated GIF source" : "Video source") : "Loading template"}</div>
+      <div className="editor-top-actions"><label className="video-duration-control">Export length<select value={seconds} onChange={(event) => setSeconds(Number(event.target.value))}><option value={3}>3 sec</option><option value={5}>5 sec</option><option value={8}>8 sec</option><option value={12}>12 sec</option><option value={15}>15 sec</option></select></label>{template?.mediaType === "video" && <label className="video-duration-control">Speed<select value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value))}><option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={2}>2×</option></select></label>}<button className="button button-paper button-small" onClick={saveVideoDraft} disabled={!template}><Save size={14}/> Save to studio</button><button className="button button-paper button-small" onClick={() => exportVideo("webm")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button><button className="button button-dark button-small" onClick={() => exportVideo("mp4")} disabled={busy || !template}><Download size={14}/> Export MP4</button></div>
     </div>
     {error && <section className="container section"><div className="empty-state"><Clapperboard size={28}/><h2>That template is not ready.</h2><p>{error}</p><Link href="/video-templates" className="button button-dark button-small">Back to video templates <ArrowRight size={14}/></Link></div></section>}
     {!error && <div className="editor-workspace editor-workspace-upgraded video-editor-workspace">
@@ -440,7 +453,7 @@ export default function VideoEditorPage() {
         </>}
         {selectedImage && <><div className="control-group"><label className="control-label" htmlFor="video-overlay-name">Layer name</label><input id="video-overlay-name" className="editor-input" value={selectedImage.name} onChange={(event) => updateLayer(selectedImage.id,{name:event.target.value})}/></div><div className="control-group"><label className="control-label" htmlFor="video-overlay-opacity">Opacity <span>{Math.round(selectedImage.opacity*100)}%</span></label><input id="video-overlay-opacity" className="editor-range" type="range" min="0" max="1" step=".05" value={selectedImage.opacity} onChange={(event) => updateLayer(selectedImage.id,{opacity:Number(event.target.value)})}/></div></>}
         {selected && <><div className="sidebar-divider"/><div className="panel-label">Transform</div><div className="control-group"><label className="control-label" htmlFor="video-layer-rotation">Rotation <span>{selected.rotation}°</span></label><input id="video-layer-rotation" className="editor-range" type="range" min="-180" max="180" value={selected.rotation} onChange={(event) => updateLayer(selected.id,{rotation:Number(event.target.value)})}/></div><div className="dimension-inputs"><label>X<input type="number" min="0" max="100" value={Math.round(selected.x)} onChange={(event) => updateLayer(selected.id,{x:Math.max(0,Math.min(100,Number(event.target.value)))})}/></label><label>Y<input type="number" min="0" max="100" value={Math.round(selected.y)} onChange={(event) => updateLayer(selected.id,{y:Math.max(0,Math.min(100,Number(event.target.value)))})}/></label></div><div className="control-group"><label className="control-label" htmlFor="video-layer-width">Width <span>{Math.round(selected.w)}%</span></label><input id="video-layer-width" className="editor-range" type="range" min="6" max="100" value={selected.w} onChange={(event) => updateLayer(selected.id,{w:Number(event.target.value)})}/></div><div className="inspector-toggle-row"><label htmlFor="video-layer-visible">Visible</label><input id="video-layer-visible" type="checkbox" checked={selected.opacity>0} onChange={(event) => updateLayer(selected.id,{opacity:event.target.checked?1:0})}/></div><div className="editor-object-actions"><button className="button button-paper button-small" onClick={duplicateLayer}><Copy size={14}/> Duplicate</button><button className="button button-paper button-small" onClick={deleteLayer}><Trash2 size={14}/> Delete</button></div></>}
-        <div className="sidebar-divider"/><button className="button button-paper editor-full-button" onClick={() => exportVideo("webm")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button><button className="button button-dark editor-full-button" onClick={() => exportVideo("mp4")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export MP4"}</button>
+        <div className="sidebar-divider"/><button className="button button-paper editor-full-button" onClick={saveVideoDraft} disabled={!template}><Save size={14}/> Save to studio</button><button className="button button-paper editor-full-button" onClick={() => exportVideo("webm")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button><button className="button button-dark editor-full-button" onClick={() => exportVideo("mp4")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export MP4"}</button>
       </aside>
     </div>}
     {notice && <div className="editor-toast"><div className="toast">{notice}</div></div>}
