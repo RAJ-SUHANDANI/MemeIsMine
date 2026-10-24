@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import type { MemeTemplate } from "@/data/memes";
 
 export function BrandLogo({ compact = false }: { compact?: boolean }) {
-  return <Link href="/" className="brand-lockup" aria-label="Meme Is Mine home"><span className="brand-mark-wrap"><img src="/mim-mark.svg" alt="" className="brand-mark"/></span>{!compact && <span className="brand-wordmark">Meme Is <em>Mine</em><i>.</i></span>}</Link>;
+  return <Link href="/" className={compact ? "brand-lockup brand-lockup-compact" : "brand-lockup"} aria-label="Meme Is Mine home"><img src={compact ? "/mim-mark.svg" : "/meme-is-mine-logo.svg"} alt="" className={compact ? "brand-mark" : "brand-full-logo"}/></Link>;
 }
 
 export function SiteHeader() {
