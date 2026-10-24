@@ -133,6 +133,7 @@ export default function VideoEditorPage() {
   }
   function onDragStart(event: ReactPointerEvent<HTMLElement>, layer: Layer, mode: "move" | "resize" = "move") {
     event.preventDefault(); event.stopPropagation();
+    stageRef.current?.setPointerCapture(event.pointerId);
     setSelectedId(layer.id);
     setDrag({ id: layer.id, mode, clientX: event.clientX, clientY: event.clientY, x: layer.x, y: layer.y, w: layer.w, h: layer.h });
   }
@@ -212,7 +213,6 @@ export default function VideoEditorPage() {
           const w = layer.w / 100 * width; const h = layer.h / 100 * height;
           ctx.save(); ctx.globalAlpha = layer.opacity; ctx.translate(x, y); ctx.rotate(layer.rotation * Math.PI / 180);
           if (layer.kind === "image") {
-            const image = new Image(); image.src = layer.src;
             const cached = overlayCache.get(layer.src);
             if (cached && cached.complete && cached.naturalWidth) {
               const scale = Math.min(w / cached.naturalWidth, h / cached.naturalHeight);
