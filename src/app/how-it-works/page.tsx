@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site";
 export default function HowItWorksPage(){
  const reduce=useReducedMotion();
  const steps=[
-  {number:"01",title:"Find a format",body:"Search the template library or browse by the kind of moment you’re trying to capture. Classics, reaction images, absurd formats—start with the right raw material.",icon:Layers3,detail:"SEARCH · FILTER · PICK"},
+  {number:"01",title:"Find a format",body:"Search the template library or browse by the kind of moment you’re trying to capture. Classics, reaction images, absurd formats. Start with the right raw material.",icon:Layers3,detail:"SEARCH · FILTER · PICK"},
   {number:"02",title:"Make it yours",body:"Open the editor and write your own captions. Adjust size, typeface, colour, alignment, and outline while the canvas updates live.",icon:Type,detail:"CAPTION · TUNE · PREVIEW"},
   {number:"03",title:"Bring your own",body:"Have a better image? Upload a JPG, PNG, or WebP from your device and use the same editor controls on your own picture.",icon:ImagePlus,detail:"UPLOAD · PERSONALISE"},
   {number:"04",title:"Save or send",body:"Download a 1080 × 1080 PNG directly from the browser or save a draft to continue later on the same device.",icon:Download,detail:"EXPORT · SAVE · SHARE"},
