@@ -16,6 +16,9 @@ type IndianTemplate = {
   description: string;
   source: "indianmemetemplates";
   originalUrl: string;
+  publishedAt?: string | null;
+  trending?: boolean;
+  popularity?: number;
 };
 
 function decodeEntities(value: string): string {
@@ -100,11 +103,14 @@ function totalPagesFrom(html: string, fallback: number): number {
   }
   return candidates.length ? Math.max(...candidates) : fallback;
 }
-function archiveUrl(page: number, query: string): string {
-  if (!query) return page <= 1 ? ARCHIVE : ARCHIVE + "page/" + page + "/";
-  const url = new URL(page <= 1 ? "/" : "/page/" + page + "/", SITE);
-  url.searchParams.set("s", query);
-  return url.toString();
+function archiveUrl(page: number, query: string, sort: string): string {
+  if (query) {
+    const url = new URL(page <= 1 ? "/" : "/page/" + page + "/", SITE);
+    url.searchParams.set("s", query);
+    return url.toString();
+  }
+  if (sort === "trending") return page <= 1 ? SITE + "/category/trending/" : SITE + "/category/trending/page/" + page + "/";
+  return page <= 1 ? ARCHIVE : ARCHIVE + "page/" + page + "/";
 }
 let robotsRulesCache: Promise<{ agents: string[]; rules: { type: string; path: string }[] }[]> | null = null;
 async function robotsRules() {
@@ -167,6 +173,7 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const slug = (params.get("slug") ?? "").trim().replace(/^\/+|\/+$/g, "");
   const query = (params.get("q") ?? "").trim().slice(0, 120);
+  const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
   const snapshot = snapshotData as IndianTemplate[];
@@ -198,7 +205,16 @@ export async function GET(request: Request) {
     }
 
     if (snapshot.length) {
-      const filtered = query ? snapshot.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())) : snapshot;
+      let filtered = query ? snapshot.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())) : [...snapshot];
+      if (sort === "trending") {
+        const trending = filtered.filter((item) => item.trending);
+        if (trending.length) filtered = trending;
+        filtered = [...filtered].sort((a, b) => Number(b.trending) - Number(a.trending) || (b.popularity ?? 0) - (a.popularity ?? 0));
+      } else if (sort === "recent") {
+        filtered = [...filtered].sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
+      } else if (sort === "popular") {
+        filtered = [...filtered].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+      }
       const totalItems = filtered.length;
       const totalPages = Math.max(1, Math.ceil(totalItems / limit));
       const memes = filtered.slice((page - 1) * limit, page * limit);
@@ -211,7 +227,7 @@ export async function GET(request: Request) {
       }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
     }
 
-    const url = archiveUrl(page, query);
+    const url = archiveUrl(page, query, sort);
     const { html, response } = await fetchHtml(url);
     if (!response.ok) {
       return NextResponse.json({
@@ -221,7 +237,7 @@ export async function GET(request: Request) {
     }
     const memes = extractCards(html);
     const title = plainText(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "");
-    const totalPages = totalPagesFrom(html, query ? 1 : 170);
+    const totalPages = totalPagesFrom(html, query ? 1 : sort === "trending" ? 5 : 170);
     if (!memes.length) {
       return NextResponse.json({ success: false, error: "No template cards were found on the source page.", page, totalPages, upstreamTitle: title }, { status: 502 });
     }
