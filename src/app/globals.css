@@ -115,6 +115,8 @@
 .canvas-stage-shell{width:100%;display:flex;align-items:center;justify-content:center;min-height:230px}
 .editor-canvas-stage{position:relative;width:min(100%,680px);max-height:70vh;overflow:hidden;isolation:isolate;border:1px solid rgba(21,21,21,.2);box-shadow:0 22px 48px rgba(54,43,26,.15),0 3px 0 rgba(21,21,21,.08);touch-action:pan-y;user-select:none}
 .editor-base-image{position:absolute;inset:0;width:100%;height:100%;object-position:center;pointer-events:none;user-select:none}
+.editor-video-loading-poster{z-index:2;pointer-events:none}
+.editor-video-loading-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#151515;color:#f5f0e7;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
 .editor-no-image{position:absolute;inset:0;justify-content:center;background:transparent}
 .editor-object{position:absolute;display:flex;align-items:center;justify-content:center;min-width:18px;min-height:14px;cursor:grab;touch-action:none;user-select:none;transform-origin:center center;border:1px solid transparent}
 .editor-object:active{cursor:grabbing}
