@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/sync-indian-meme-templates.mjs"
+      - "scripts/sync-indian-video-templates.mjs"
       - ".github/workflows/sync-indian-meme-templates.yml"
   workflow_dispatch:
   schedule:
@@ -30,16 +31,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Collect template metadata
+      - name: Collect animated video templates
+        run: node scripts/sync-indian-video-templates.mjs
+      - name: Collect still image templates
         run: node scripts/sync-indian-meme-templates.mjs
-      - name: Commit updated catalog
+      - name: Commit updated catalogs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/indian-meme-templates.json
+          git add src/data/indian-meme-templates.json src/data/indian-video-templates.json
           if git diff --cached --quiet; then
-            echo "Template catalog has no changes."
+            echo "Template catalogs have no changes."
           else
-            git commit -m "Update Indian meme template catalog"
+            git commit -m "Update Indian meme template catalogs"
             git push origin main
           fi
