@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 
 const ALLOWED_HOSTS = new Set(["indianmemetemplates.com", "www.indianmemetemplates.com"]);
 const MEDIA_PATH = /\/wp-content\/uploads\//i;
-const MEDIA_FILE = /\.gif$/i;
+const MEDIA_FILE = /\.(gif|mp4|webm|mov|m4v|ogv)$/i;
+function mediaContentType(path: string, fallback: string | null) {
+  const ext = path.toLowerCase().split(".").pop();
+  const known: Record<string, string> = { gif: "image/gif", mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", m4v: "video/x-m4v", ogv: "video/ogg" };
+  return ext ? known[ext] ?? fallback ?? "application/octet-stream" : fallback ?? "application/octet-stream";
+}
 
 async function handle(request: Request) {
   const incoming = new URL(request.url);
@@ -11,7 +16,7 @@ async function handle(request: Request) {
   let target: URL;
   try { target = new URL(raw); } catch { return NextResponse.json({ error: "Invalid media URL." }, { status: 400 }); }
   if (target.protocol !== "https:" || !ALLOWED_HOSTS.has(target.hostname) || !MEDIA_PATH.test(target.pathname) || !MEDIA_FILE.test(target.pathname)) {
-    return NextResponse.json({ error: "Only GIF files from the approved template archive are supported." }, { status: 400 });
+    return NextResponse.json({ error: "Only GIF and video files from the template archive are supported." }, { status: 400 });
   }
   try {
     const headers = new Headers({ "User-Agent": "MemeIsMineVideoEditor/1.0", "Accept": "image/gif, */*" });
@@ -22,7 +27,7 @@ async function handle(request: Request) {
       return NextResponse.json({ error: "The source media is unavailable right now.", status: upstream.status }, { status: upstream.status === 404 ? 404 : 502 });
     }
     const outHeaders = new Headers();
-    outHeaders.set("Content-Type", upstream.headers.get("content-type") ?? "image/gif");
+    outHeaders.set("Content-Type", mediaContentType(target.pathname, upstream.headers.get("content-type")));
     outHeaders.set("Cache-Control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400");
     outHeaders.set("X-Content-Type-Options", "nosniff");
     for (const name of ["content-length", "content-range", "accept-ranges", "last-modified", "etag"]) {
