@@ -18,7 +18,7 @@ export default function AboutPage(){
       <h2 className="page-display">I LIKE BUILDING<br/>THINGS THAT<br/><em>FEEL ALIVE.</em></h2>
       <p className="about-intro">I’m <strong>Raj Suhandani</strong>, a web developer who enjoys turning ideas into thoughtful, useful digital experiences.</p>
       <p>I’m interested in the space where web development meets thoughtful product design: clear interfaces, useful full stack systems, creative coding, and small details that make a digital product feel cared for.</p>
-      <p>Meme Is Mine is my take on a meme-making studio that feels like an internet culture brand—not just another utility page. I wanted the experience to be playful, expressive, and genuinely useful, from finding a format to downloading the final meme.</p>
+      <p>Meme Is Mine is my take on a meme creation studio built for internet culture, rather than another utility page. I wanted the experience to be playful, expressive, and genuinely useful, from finding a format to downloading the final meme.</p>
       <p className="about-muted">Outside this project, I build independent web apps, explore interactive interfaces, and work with technologies including React, Next.js, TypeScript, and motion/3D tools. I’ve also worked on content planning and brand communication.</p>
       <div className="about-actions"><a className="button button-dark" href="https://rajsuhandani.vercel.app/" target="_blank" rel="noreferrer">Visit my portfolio <ArrowUpRight size={16}/></a><a className="text-link" href="https://github.com/RAJ-SUHANDANI" target="_blank" rel="noreferrer">Explore my GitHub <Github size={15}/></a></div>
     </motion.div>
