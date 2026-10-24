@@ -121,6 +121,28 @@ async function fetchHtml(url) {
   }
   throw new Error("The source site rate limited repeated requests for " + url);
 }
+async function verifyMediaUrl(url) {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "User-Agent": USER_AGENT,
+        "Accept": "video/*, image/gif, */*;q=0.8",
+        "Referer": SITE + "/",
+        "Range": "bytes=0-1",
+      },
+      signal: AbortSignal.timeout(12000),
+    });
+    const type = (response.headers.get("content-type") ?? "").toLowerCase();
+    const usable = (response.ok || response.status === 206)
+      && !type.includes("text/html")
+      && !type.includes("application/json");
+    await response.body?.cancel().catch(() => undefined);
+    return usable;
+  } catch {
+    return false;
+  }
+}
 function archiveUrl(page) { return page === 1 ? ARCHIVE : ARCHIVE + "page/" + page + "/"; }
 function discoverPages(html) {
   const nums = [];
@@ -153,14 +175,23 @@ async function main() {
       const html = await fetchHtml(post.originalUrl);
       const media = getMediaCandidates(html, post.originalUrl);
       if (!media.length) continue;
+      // Some archive posts retain stale media URLs. Probe a tiny byte range and
+      // try the next source candidate instead of publishing a broken template.
+      const orderedMedia = [...media.filter((item) => item.type === "video"), ...media.filter((item) => item.type === "gif")];
+      let mediaChoice = null;
+      for (const candidate of orderedMedia) {
+        if (await verifyMediaUrl(candidate.url)) { mediaChoice = candidate; break; }
+      }
+      if (!mediaChoice) {
+        console.warn("Skipped " + post.id + ": no reachable GIF/video media URL.");
+        continue;
+      }
       const ogTitle = html.match(/<meta\b(?=[^>]*property=["']og:title["'])[^>]*>/i)?.[0];
       const heading = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1];
       const timeTag = html.match(/<time\b[^>]*datetime=["']([^"']+)["']/i)?.[1];
       const publishedMeta = html.match(/<meta\b(?=[^>]*(?:property|name)=["']article:published_time["'])[^>]*>/i)?.[0];
       const published = timeTag ?? (publishedMeta ? attr(publishedMeta, "content") : null);
       const name = plainText(heading ?? (ogTitle ? attr(ogTitle, "content") ?? post.name : post.name));
-      const mediaChoice = media.find((item) => item.type === "video") ?? media.find((item) => item.type === "gif");
-      if (!mediaChoice) continue;
       results.push({
         id: post.id, name, url: mediaChoice.url, posterUrl: post.posterUrl ?? (mediaChoice.type === "gif" ? mediaChoice.url : ""),
         width: 0, height: 0, box_count: 2, category: "Video Memes",
