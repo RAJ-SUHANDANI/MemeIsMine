@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, Download, Film, Search, Sparkles, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clapperboard, Download, Film, Search, Sparkles, Video } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
 type VideoTemplate = {
   id: string; name: string; url: string; posterUrl: string; category: string;
-  source: string; originalUrl: string; mediaType: "gif" | "video"; publishedAt: string | null;
+  mediaType: "gif" | "video"; publishedAt: string | null;
   trending: boolean; popularity: number;
 };
 const filters = [
@@ -76,14 +76,14 @@ export default function VideoTemplatesPage() {
         <label className="search-wrap"><Search size={16}/><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Search video memes…" aria-label="Search video templates"/></label>
         <div className="filter-row" role="group" aria-label="Filter video templates">{filters.map((item) => <button key={item.key} className={filter === item.key ? "filter-pill active" : "filter-pill"} onClick={() => chooseFilter(item.key)}>{item.label}</button>)}</div>
       </div>
-      {error && <div className="archive-message"><p>{error}</p><a href="https://indianmemetemplates.com/category/videos/" target="_blank" rel="noreferrer" className="text-link">Open the original video archive <ArrowUpRight size={14}/></a></div>}
-      {!loading && !error && templates.length === 0 && <div className="video-empty-state"><div className="video-empty-icon"><Clapperboard size={28}/></div><h2>The motion catalog is syncing.</h2><p>Video templates are indexed separately from still image templates. When the source archive exposes a direct GIF or video file and allows indexing, it will appear here.</p><div className="video-empty-actions"><a className="button button-dark" href="https://indianmemetemplates.com/category/videos/" target="_blank" rel="noreferrer">Browse source archive <ArrowUpRight size={15}/></a><Link className="button button-paper" href="/templates">Browse image templates <ArrowRight size={15}/></Link></div></div>}
+      {error && <div className="archive-message"><p>{error}</p></div>}
+      {!loading && !error && templates.length === 0 && <div className="video-empty-state"><div className="video-empty-icon"><Clapperboard size={28}/></div><h2>The motion catalog is syncing.</h2><p>Video clips are kept in their original format. New templates will appear here as the video catalog refreshes.</p><div className="video-empty-actions"><Link className="button button-paper" href="/templates">Browse image templates <ArrowRight size={15}/></Link></div></div>}
       {templates.length > 0 && <div className="video-template-grid">{templates.map((template, index) => <motion.article key={template.id} className="video-template-card" initial={reduce ? false : { opacity: 0, y: 18, rotate: index % 2 ? 1 : -1 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: .08 }} transition={{ duration: .35, delay: Math.min(index % 6, 5) * .035 }} whileHover={reduce ? undefined : { y: -6, rotate: index % 2 ? 1 : -1 }}>
         <Link className="video-template-preview" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}>
           {template.mediaType === "gif" ? <img src={sourceUrl(template)} alt={template.name} loading={index < 4 ? "eager" : "lazy"}/> : <video src={sourceUrl(template)} poster={template.posterUrl} muted loop autoPlay={index < 4} playsInline preload={index < 4 ? "metadata" : "none"} aria-label={template.name}/>}
           <span className="video-kind-pill">{template.mediaType === "gif" ? "GIF" : "VIDEO"}</span><span className="video-edit-cue"><Sparkles size={13}/> Edit this template <ArrowUpRight size={14}/></span>
         </Link>
-        <div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category}</span></div><a href={template.originalUrl} target="_blank" rel="noreferrer" className="video-original-link" title="Open original page" aria-label={"Open original page for " + template.name}><ArrowUpRight size={15}/></a></div>
+        <div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category}</span></div></div>
       </motion.article>)}</div>}
       {totalPages > 1 && <div className="archive-pagination"><button className="button button-paper button-small" disabled={loading || page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}><ArrowLeft size={14}/> Previous</button><span>Page <strong>{page}</strong> of {totalPages}</span><button className="button button-dark button-small" disabled={loading || page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next page <ArrowRight size={14}/></button></div>}
     </section>
