@@ -43,7 +43,10 @@ function allowedSourceUrl(raw: string | null, base = SITE): string | null {
   } catch { return null; }
 }
 function mediaType(url: string): MediaKind | null {
-  return new URL(url).pathname.toLowerCase().endsWith(".gif") ? "gif" : null;
+  const path = new URL(url).pathname.toLowerCase();
+  if (path.endsWith(".gif")) return "gif";
+  if (/\.(mp4|webm|mov|m4v|ogv)$/.test(path)) return "video";
+  return null;
 }
 function extractPoster(html: string, base: string): string | null {
   const meta = html.match(/<meta\b(?=[^>]*(?:property|name)=["'](?:og:image|twitter:image)["'])[^>]*>/i)?.[0];
@@ -149,11 +152,14 @@ export async function GET(request: Request) {
   const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
-  const catalog = (videoCatalog as VideoTemplate[]).filter((item) => item.mediaType === "gif" && /\.gif(?:[?#]|$)/i.test(item.url));
+  const catalog = (videoCatalog as VideoTemplate[]).filter((item) => {
+    const path = (() => { try { return new URL(item.url).pathname.toLowerCase(); } catch { return ""; } })();
+    return item.mediaType === "gif" ? path.endsWith(".gif") : item.mediaType === "video" && /\.(mp4|webm|mov|m4v|ogv)$/.test(path);
+  });
 
   if (slug) {
     const item = catalog.find((template) => template.id === slug);
-    if (item) return NextResponse.json({ success: true, source: "indianmemetemplates", template: item }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+    if (item) return NextResponse.json({ success: true, template: item }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
     try {
       const originalUrl = SITE + "/" + slug + "/";
@@ -161,7 +167,7 @@ export async function GET(request: Request) {
       if (!response.ok) return NextResponse.json({ success: false, error: "Template page is unavailable.", status: response.status }, { status: 502 });
       const html = await response.text();
       const media = extractMedia(html, originalUrl);
-      if (!media) return NextResponse.json({ success: false, error: "This page does not expose a direct GIF file. Static images and MP4 clips are not listed in this collection." }, { status: 404 });
+      if (!media) return NextResponse.json({ success: false, error: "This page does not expose a direct GIF file. Static images are not listed in this collection." }, { status: 404 });
       const posterUrl = extractPoster(html, originalUrl) ?? media.url;
       const template: VideoTemplate = {
         id: slug, name: plainText(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? slug.replace(/-/g, " ")),
@@ -169,7 +175,7 @@ export async function GET(request: Request) {
         description: "Animate your own text and export a new video from the browser.",
         source: "indianmemetemplates", originalUrl, mediaType: media.kind, publishedAt: null, trending: false, popularity: 0,
       };
-      return NextResponse.json({ success: true, source: "indianmemetemplates", template }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+      return NextResponse.json({ success: true, template }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     } catch (error) {
       return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Could not load this template." }, { status: 502 });
     }
@@ -184,7 +190,7 @@ export async function GET(request: Request) {
   const totalPages = Math.max(1, Math.ceil(totalItems / limit));
   const results = items.slice((page - 1) * limit, page * limit);
   return NextResponse.json({
-    success: true, source: "indianmemetemplates", collection: "video-templates",
+    success: true, collection: "video-templates",
     query: query || null, sort, page, limit, count: results.length, totalItems, totalPages,
     hasPreviousPage: page > 1, hasNextPage: page < totalPages,
     templates: results,
