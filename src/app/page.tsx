@@ -7,21 +7,50 @@ import { useEffect, useState } from "react";
 import { SiteHeader, MemeCard, FloatingGallery } from "@/components/site";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
 
+type HomeVideoTemplate = {
+  id: string; name: string; url: string; posterUrl: string; mediaType: "gif" | "video";
+  category?: string; trending?: boolean; sourcePage?: string;
+};
+function homeVideoSource(template: HomeVideoTemplate) {
+  return "/api/video-source?url=" + encodeURIComponent(template.url)
+    + (template.sourcePage ? "&referrer=" + encodeURIComponent(template.sourcePage) : "");
+}
 export default function HomePage() {
   const [memes, setMemes] = useState<MemeTemplate[]>(starterMemes.slice(0, 4));
+  const [videoTemplates, setVideoTemplates] = useState<HomeVideoTemplate[]>([]);
   const reduce = useReducedMotion();
   useEffect(() => {
     let alive = true;
-    const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
-    Promise.allSettled([
-      fetch("/api/memes?limit=100").then((res) => res.json()),
-      fetch("/api/indian-memes?page=1&limit=100").then((res) => res.json()),
-    ]).then((results) => {
-      if (!alive) return;
-      const combined = results.flatMap((result) => result.status === "fulfilled" && result.value?.success && Array.isArray(result.value.memes) ? result.value.memes as MemeTemplate[] : []);
-      const unique = Array.from(new Map([...combined, ...starterMemes].map((item) => [item.id, item])).values());
-      setMemes(shuffle(unique).slice(0, 4));
-    }).catch(() => { if (alive) setMemes(shuffle(starterMemes).slice(0, 4)); });
+    const shuffle = <T,>(items: T[]) => {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index--) {
+        const target = Math.floor(Math.random() * (index + 1));
+        [result[index], result[target]] = [result[target], result[index]];
+      }
+      return result;
+    };
+    fetch("/api/memes?limit=100")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data?.success || !Array.isArray(data.memes)) throw new Error("Imgflip memes are unavailable.");
+        return data.memes as MemeTemplate[];
+      })
+      .then((imgflipMemes) => {
+        if (!alive) return;
+        // Never mix the Indian archive into the image cards; they are Imgflip-only.
+        const source = imgflipMemes.length ? imgflipMemes : starterMemes;
+        const unique = Array.from(new Map(source.map((item) => [item.id, item])).values());
+        setMemes(shuffle(unique).slice(0, 4));
+      })
+      .catch(() => { if (alive) setMemes(shuffle(starterMemes).slice(0, 4)); });
+    fetch("/api/video-templates?limit=4&sort=popular")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data?.success || !Array.isArray(data.templates)) throw new Error("Video templates are unavailable.");
+        return data.templates as HomeVideoTemplate[];
+      })
+      .then((items) => { if (alive) setVideoTemplates(items.slice(0, 4)); })
+      .catch(() => { if (alive) setVideoTemplates([]); });
     return () => { alive = false; };
   }, []);
   return <main className="paper-noise">
@@ -43,6 +72,17 @@ export default function HomePage() {
       <div className="section-footer"><Link href="/explore" className="text-link">Explore all templates <ArrowRight size={15}/></Link></div>
     </div></section>
 
+
+    <section className="section home-video-section" id="video-templates"><div className="container">
+      <div className="section-head"><div><span className="eyebrow">The memes that move</span><h2 className="section-title">Bring the joke<br/><span className="serif-italic">to life.</span></h2></div><p className="section-note">Real video clips and animated reactions, ready for your captions. Start with a moving template, then tweak it in the browser.</p></div>
+      {videoTemplates.length > 0 ? <div className="video-template-grid home-video-grid">{videoTemplates.map((template, index) => <motion.article key={template.id} className="video-template-card" initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .12 }} transition={{ duration: .35, delay: index * .05 }} whileHover={reduce ? undefined : { y: -5 }}><div className="video-template-preview">
+        <Link className="video-template-media-link" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}>
+          {template.mediaType === "gif" ? <img src={homeVideoSource(template)} alt={template.name} loading="lazy"/> : <video src={homeVideoSource(template)} poster={template.posterUrl || undefined} muted autoPlay loop playsInline preload="metadata" aria-label={template.name}/>}
+        </Link>
+        <span className="video-kind-pill">{template.mediaType === "gif" ? "GIF" : "VIDEO"}</span><Link className="video-edit-cue video-edit-cue-video" href={"/video-editor/" + encodeURIComponent(template.id)}><Sparkles size={13}/> Edit this template <ArrowUpRight size={14}/></Link>
+      </div><div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category ?? "Video Memes"}</span></div></div></motion.article>)}</div> : <p className="control-help">Browse the full motion collection to find a video template.</p>}
+      <div className="section-footer"><Link href="/video-templates" className="text-link">Explore all video templates <ArrowRight size={15}/></Link></div>
+    </div></section>
 
     <section className="section section-dark"><div className="container dark-layout">
       <motion.div initial={reduce ? false : { opacity: 0, x: -18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .55 }}>
