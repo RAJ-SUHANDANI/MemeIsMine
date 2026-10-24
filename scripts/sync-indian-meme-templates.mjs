@@ -7,8 +7,8 @@ const USER_AGENT = "MemeIsMineTemplateIndex/1.0 (+https://github.com/RAJ-SUHANDA
 const OUTPUT = resolve("src/data/indian-meme-templates.json");
 const DELAY_MS = 1000;
 const MAX_PAGES = 500;
-const VERIFY_CONCURRENCY = 3;
-const VERIFY_DELAY_MS = 900;
+const VERIFY_CONCURRENCY = 5;
+const VERIFY_DELAY_MS = 250;
 
 const sleep = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
 
@@ -312,9 +312,8 @@ async function main() {
           previouslyVerifiedIds.add(item.id);
         }
       } catch (error) {
-        // A temporary source failure should not erase a usable still image.
-        previouslyVerifiedIds.add(item.id);
-        console.warn("Could not verify original media for " + item.id + "; retaining its image candidate: " + (error instanceof Error ? error.message : "request failed"));
+        // Keep the candidate for this run, but do not mark it verified: a future sync retries it.
+        console.warn("Could not verify original media for " + item.id + "; retaining temporarily and retrying on a later sync: " + (error instanceof Error ? error.message : "request failed"));
       }
       if ((index + 1) % 100 === 0 || index + 1 === unverified.length) console.log("Verified " + (index + 1) + "/" + unverified.length + " image candidates; excluded " + rejectedVideoIds.size + " video/animated posts.");
     }
