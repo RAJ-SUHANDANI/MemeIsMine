@@ -33,6 +33,23 @@ export default function HomePage() {
       <div className="template-grid">{memes.map((meme, index) => <MemeCard key={meme.id} meme={meme} index={index}/>)}</div>
       <div className="section-footer"><Link href="/explore" className="text-link">Explore all templates <ArrowRight size={15}/></Link></div>
     </div></section>
+    <section className="section about-teaser" id="about">
+      <div className="container about-teaser-grid">
+        <motion.div className="teaser-photo-wrap" initial={reduce?false:{opacity:0,x:-20,rotate:-2}} whileInView={{opacity:1,x:0,rotate:0}} viewport={{once:true,amount:.2}} transition={{duration:.5}}>
+          <div className="teaser-photo-label"><span>THE MAKER / 001</span><span>BHAVNAGAR, INDIA</span></div>
+          <img src="/raj-suhandani-portrait.webp" alt="Raj Manish Suhandani, creator of Meme Is Mine" width="800" height="1000" loading="lazy"/>
+          <div className="teaser-photo-foot"><span>MADE WITH INTENT.</span><span>✳</span></div>
+        </motion.div>
+        <motion.div className="teaser-copy" initial={reduce?false:{opacity:0,x:20}} whileInView={{opacity:1,x:0}} viewport={{once:true,amount:.2}} transition={{duration:.5}}>
+          <span className="eyebrow">Independent project / made by Raj</span>
+          <h2 className="section-title">A BIT OF<br/>INTERNET CHAOS.<br/><span className="serif-italic">A LOT OF CRAFT.</span></h2>
+          <p>Meme Is Mine is built by <strong>Raj Suhandani</strong>, an ICT engineering student and developer based in Bhavnagar, India. I wanted a meme maker that felt like a proper creative product: playful to explore, thoughtful to use, and quick to share from.</p>
+          <p>It’s an independent project shaped by my interest in frontend engineering, motion, and digital experiences that have a little personality.</p>
+          <div className="teaser-actions"><Link href="/about" className="button button-dark">Meet the maker <ArrowUpRight size={16}/></Link><a href="https://rajsuhandani.vercel.app/" target="_blank" rel="noreferrer" className="text-link">My portfolio <ArrowRight size={15}/></a></div>
+        </motion.div>
+      </div>
+    </section>
+
     <section className="section section-dark"><div className="container dark-layout">
       <motion.div initial={reduce ? false : { opacity: 0, x: -18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .55 }}>
         <span className="eyebrow">Your sense of humour, in full control</span><h2 className="section-title">A little chaos.<br/><span>A lot of control.</span></h2>
