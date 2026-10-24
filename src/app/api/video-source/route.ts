@@ -28,62 +28,56 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "Only GIF and video files from the template archive are supported." }, { status: 400 });
   }
   try {
-    const referrers = [...new Set([
-      referrer,
-      "https://indianmemetemplates.com/",
-      "https://www.indianmemetemplates.com/",
-      "https://indianmemetemplates.com",
-    ])];
     const range = request.headers.get("range");
     let upstream: Response | null = null;
     let upstreamStatus = 502;
     let lastFailure = "The upstream host did not return a media response.";
 
-    // Try both canonical hostnames. Some archive/CDN configurations serve the
-    // same upload on one hostname but intermittently fail on the other.
-    const targetUrls = [...new Set([
-      target.toString(),
-      target.hostname === "indianmemetemplates.com"
-        ? target.toString().replace("https://indianmemetemplates.com/", "https://www.indianmemetemplates.com/")
-        : target.toString().replace("https://www.indianmemetemplates.com/", "https://indianmemetemplates.com/"),
-    ])];
+    const alternateUrl = target.hostname === "indianmemetemplates.com"
+      ? target.toString().replace("https://indianmemetemplates.com/", "https://www.indianmemetemplates.com/")
+      : target.toString().replace("https://www.indianmemetemplates.com/", "https://indianmemetemplates.com/");
+    // Keep the proxy inside Vercel's request budget: try the page's exact
+    // source first, then one canonical-host fallback instead of a long series
+    // of 20-second retries that can be terminated by the platform.
+    const attempts = [
+      { url: target.toString(), referrer },
+      { url: alternateUrl, referrer: "https://indianmemetemplates.com/" },
+    ];
 
-    for (const targetUrl of targetUrls) {
-      for (const currentReferrer of referrers) {
-        const headers = new Headers({
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-          "Accept": "video/mp4, video/webm, video/ogg, video/*;q=0.9, image/gif;q=0.8, */*;q=0.5",
-          "Referer": currentReferrer,
-          "Accept-Encoding": "identity",
+    for (const attempt of attempts) {
+      const headers = new Headers({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "video/mp4, video/webm, video/ogg, video/*;q=0.9, image/gif;q=0.8, */*;q=0.5",
+        "Referer": attempt.referrer,
+        "Origin": "https://indianmemetemplates.com",
+        "Accept-Encoding": "identity",
+      });
+      if (range) headers.set("Range", range);
+
+      let candidate: Response;
+      try {
+        candidate = await fetch(attempt.url, {
+          method: request.method === "HEAD" ? "HEAD" : "GET",
+          headers,
+          cache: "no-store",
+          redirect: "follow",
+          signal: AbortSignal.timeout(3500),
         });
-        if (range) headers.set("Range", range);
-
-        let candidate: Response;
-        try {
-          candidate = await fetch(targetUrl, {
-            method: request.method === "HEAD" ? "HEAD" : "GET",
-            headers,
-            cache: "no-store",
-            redirect: "follow",
-            signal: AbortSignal.timeout(20000),
-          });
-        } catch (error) {
-          lastFailure = error instanceof Error ? error.message : "Network error while contacting the source host.";
-          continue;
-        }
-
-        upstreamStatus = candidate.status;
-        const contentType = (candidate.headers.get("content-type") ?? "").toLowerCase();
-        const isRealMedia = !contentType.includes("text/html") && !contentType.includes("application/json");
-        if ((candidate.ok || candidate.status === 206) && isRealMedia) {
-          upstream = candidate;
-          break;
-        }
-
-        lastFailure = "Source returned HTTP " + candidate.status + (contentType ? " (" + contentType + ")" : "");
-        await candidate.body?.cancel().catch(() => undefined);
+      } catch (error) {
+        lastFailure = error instanceof Error ? error.message : "Network error while contacting the source host.";
+        continue;
       }
-      if (upstream) break;
+
+      upstreamStatus = candidate.status;
+      const contentType = (candidate.headers.get("content-type") ?? "").toLowerCase();
+      const isRealMedia = !contentType.includes("text/html") && !contentType.includes("application/json");
+      if ((candidate.ok || candidate.status === 206) && isRealMedia) {
+        upstream = candidate;
+        break;
+      }
+
+      lastFailure = "Source returned HTTP " + candidate.status + (contentType ? " (" + contentType + ")" : "");
+      await candidate.body?.cancel().catch(() => undefined);
     }
     if (!upstream) {
       return NextResponse.json(
@@ -101,8 +95,8 @@ async function handle(request: Request) {
       if (value) outHeaders.set(name, value);
     }
     return new NextResponse(request.method === "HEAD" ? null : upstream.body, { status: upstream.status, headers: outHeaders });
-  } catch {
-    return NextResponse.json({ error: "Could not retrieve the media file." }, { status: 502 });
+  } catch (error) {
+    return NextResponse.json({ error: "Could not retrieve the media file.", detail: error instanceof Error ? error.message : "Unknown media proxy error." }, { status: 502 });
   }
 }
 export async function GET(request: Request) { return handle(request); }
