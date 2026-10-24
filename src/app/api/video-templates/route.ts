@@ -90,7 +90,7 @@ function extractMedia(html: string, base: string): { url: string; kind: MediaKin
     const kind = mediaType(safe);
     if (kind && !found.some((item) => item.url === safe)) found.push({ url: safe, kind });
   }
-  return found.find((item) => item.kind === "gif") ?? null;
+  return found.find((item) => item.kind === "video") ?? found.find((item) => item.kind === "gif") ?? null;
 }
 function extractPosts(html: string): { id: string; name: string; originalUrl: string; posterUrl: string | null; index: number }[] {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
@@ -109,6 +109,10 @@ function extractPosts(html: string): { id: string; name: string; originalUrl: st
     posts.push({ id, name, originalUrl: url.toString(), posterUrl: extractPoster(block, SITE), index: posts.length });
   }
   return posts;
+}
+function publicTemplate(item: VideoTemplate) {
+  const { source: _source, originalUrl: _originalUrl, ...publicItem } = item;
+  return publicItem;
 }
 function parseRobots(text: string): { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] {
   const groups: { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] = [];
@@ -159,7 +163,7 @@ export async function GET(request: Request) {
 
   if (slug) {
     const item = catalog.find((template) => template.id === slug);
-    if (item) return NextResponse.json({ success: true, template: item }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+    if (item) return NextResponse.json({ success: true, template: publicTemplate(item) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
     try {
       const originalUrl = SITE + "/" + slug + "/";
@@ -175,7 +179,7 @@ export async function GET(request: Request) {
         description: "Animate your own text and export a new video from the browser.",
         source: "indianmemetemplates", originalUrl, mediaType: media.kind, publishedAt: null, trending: false, popularity: 0,
       };
-      return NextResponse.json({ success: true, template }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+      return NextResponse.json({ success: true, template: publicTemplate(template) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     } catch (error) {
       return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Could not load this template." }, { status: 502 });
     }
@@ -193,7 +197,7 @@ export async function GET(request: Request) {
     success: true, collection: "video-templates",
     query: query || null, sort, page, limit, count: results.length, totalItems, totalPages,
     hasPreviousPage: page > 1, hasNextPage: page < totalPages,
-    templates: results,
+    templates: results.map(publicTemplate),
     syncedAt: null,
   }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
 }
