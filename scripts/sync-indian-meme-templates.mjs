@@ -5,7 +5,7 @@ const SITE = "https://indianmemetemplates.com";
 const ARCHIVE = SITE + "/meme-templates/";
 const USER_AGENT = "MemeIsMineTemplateIndex/1.0 (+https://github.com/RAJ-SUHANDANI/MemeIsMine)";
 const OUTPUT = resolve("src/data/indian-meme-templates.json");
-const DELAY_MS = 900;
+const DELAY_MS = 1000;
 const MAX_PAGES = 500;
 
 const sleep = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
