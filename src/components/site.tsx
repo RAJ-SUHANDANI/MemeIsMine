@@ -24,7 +24,7 @@ export function SiteHeader() {
 }
 
 const BOOKMARKS_KEY = "mim-bookmarks";
-export function MemeCard({ meme, index = 0 }: { meme: MemeTemplate; index?: number }) {
+export function MemeCard({ meme, index = 0, onSeen }: { meme: MemeTemplate; index?: number; onSeen?: (id: string) => void }) {
   const [saved, setSaved] = useState(false);
   useEffect(() => { try { const ids: string[] = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) ?? "[]"); setSaved(ids.includes(meme.id)); } catch { /* Ignore malformed local data. */ } }, [meme.id]);
   function toggleSaved(event: MouseEvent<HTMLButtonElement>) {
@@ -38,7 +38,7 @@ export function MemeCard({ meme, index = 0 }: { meme: MemeTemplate; index?: numb
   }
   const editorHref = meme.source === "indianmemetemplates" ? "/create/" + encodeURIComponent(meme.id) + "?source=indian" : "/create/" + meme.id;
   const sourceUrl = meme.originalUrl ?? "https://imgflip.com/i/" + meme.id;
-  return <motion.article className="meme-card" initial={{ opacity: 0, y: 18, rotate: index % 2 ? 1.2 : -1.2 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: .12 }} transition={{ duration: .42, delay: Math.min(index % 5, 4) * .045, ease: [.22, 1, .36, 1] }} whileHover={{ y: -7, rotate: index % 2 ? 1.5 : -1.5, scale: 1.015 }}>
+  return <motion.article className="meme-card" initial={{ opacity: 0, y: 18, rotate: index % 2 ? 1.2 : -1.2 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: .12 }} onViewportEnter={() => onSeen?.(meme.id)} transition={{ duration: .42, delay: Math.min(index % 5, 4) * .045, ease: [.22, 1, .36, 1] }} whileHover={{ y: -7, rotate: index % 2 ? 1.5 : -1.5, scale: 1.015 }}>
     <div className="meme-card-link">
       <Link href={editorHref} className="meme-card-image-link" aria-label={`Make a meme with ${meme.name}`}>
         <div className="meme-card-image"><img src={meme.url} alt={meme.name} loading={index < 4 ? "eager" : "lazy"}/><span className="card-open"><ArrowUpRight size={15}/></span></div>
