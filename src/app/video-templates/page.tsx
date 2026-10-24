@@ -16,6 +16,7 @@ const filters = [
   { key: "trending", label: "Trending" },
   { key: "recent", label: "Recent" },
   { key: "name", label: "Name A to Z" },
+  { key: "surprise", label: "Surprise me" },
 ];
 function sourceUrl(template: VideoTemplate, fresh = false, referrer?: string) {
   const page = referrer ?? template.sourcePage;
@@ -182,6 +183,7 @@ export default function VideoTemplatesPage() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [surpriseSeed, setSurpriseSeed] = useState(() => Math.floor(Math.random() * 2147483647));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -194,6 +196,7 @@ export default function VideoTemplatesPage() {
     setLoading(true);
     setError("");
     const params = new URLSearchParams({ page: String(page), limit: "24", sort: filter });
+    if (filter === "surprise") params.set("seed", String(surpriseSeed));
     if (debouncedQuery) params.set("q", debouncedQuery);
     fetch("/api/video-templates?" + params.toString(), { signal: controller.signal })
       .then(async (response) => {
@@ -210,8 +213,12 @@ export default function VideoTemplatesPage() {
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; controller.abort(); };
-  }, [page, filter, debouncedQuery]);
-  function chooseFilter(key: string) { setFilter(key); setPage(1); }
+  }, [page, filter, debouncedQuery, surpriseSeed]);
+  function chooseFilter(key: string) {
+    setFilter(key);
+    setPage(1);
+    if (key === "surprise") setSurpriseSeed((seed) => (seed + 104729) % 2147483647);
+  }
   return <main className="paper-noise video-templates-page">
     <SiteHeader/>
     <section className="page-hero video-hero"><div className="container video-hero-grid">
