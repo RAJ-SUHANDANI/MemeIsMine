@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, Download, Film, Search, Sparkles, Video, Volume2, VolumeX } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -46,7 +46,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
     }
   }, [template.url, muted]);
 
-  function toggleMute(event: React.MouseEvent<HTMLButtonElement>) {
+  function toggleMute(event: ReactMouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
     const video = videoRef.current;
