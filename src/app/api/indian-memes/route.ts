@@ -86,10 +86,10 @@ function extractCards(html: string): IndianTemplate[] {
     const originalUrl = allowedSiteUrl(decodeEntities(heading[2]));
     const name = plainText(heading[3]);
     if (!originalUrl || !name || originalUrl.includes("/category/") || originalUrl.includes("/tag/")) continue;
+    const slug = new URL(originalUrl).pathname.split("/").filter(Boolean).pop();
+    if (!slug || found.has(slug) || isClearlyVideoPost({ id: slug, name })) continue;
     const image = getImageUrl(block);
     if (!image) continue;
-    const slug = new URL(originalUrl).pathname.split("/").filter(Boolean).pop();
-    if (!slug || found.has(slug)) continue;
     found.set(slug, {
       id: slug, name, url: image, width: 0, height: 0, box_count: 2,
       category: "Indian Memes", description: "Open the original page for template details and download options.",
@@ -203,9 +203,14 @@ export async function GET(request: Request) {
   const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
-  const videoIds = new Set((videoCatalog as { id: string; url: string }[]).map((item) => item.id));
+  const videos = videoCatalog as { id: string; url: string; posterUrl?: string; originalUrl?: string; name?: string }[];
+  const videoIds = new Set(videos.map((item) => item.id));
+  const videoPages = new Set(videos.map((item) => item.originalUrl).filter(Boolean).map((value) => value!.replace(/\/+$/, "").toLowerCase()));
+  const videoPosterUrls = new Set(videos.map((item) => item.posterUrl).filter(Boolean).map((value) => value!.split("?")[0].toLowerCase()));
   const snapshot = (snapshotData as IndianTemplate[]).filter((item) =>
     !videoIds.has(item.id)
+    && !videoPages.has(item.originalUrl.replace(/\/+$/, "").toLowerCase())
+    && !videoPosterUrls.has(item.url.split("?")[0].toLowerCase())
     && !/\.(gif|mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.url)
     && !isClearlyVideoPost(item)
     && (item as IndianTemplate & { mediaType?: string }).mediaType !== "video"
