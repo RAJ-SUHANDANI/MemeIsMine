@@ -140,6 +140,8 @@ async function main() {
   }
   const trendHtml = await fetchHtml(SITE + "/category/trending/");
   const trendingIds = new Set(extractPosts(trendHtml).map((post) => post.id));
+  const homeHtml = await fetchHtml(SITE + "/");
+  const homeRanks = new Map(extractPosts(homeHtml).map((post, index) => [post.id, Math.max(1, 1000 - index)]));
   const results = [];
   let completed = 0;
   for (const post of posts.values()) {
@@ -161,7 +163,7 @@ async function main() {
         description: "Add your own captions and export a video in the browser.",
         source: "indianmemetemplates", originalUrl: post.originalUrl,
         mediaType: mediaChoice.type, publishedAt: published, trending: trendingIds.has(post.id),
-        popularity: trendingIds.has(post.id) ? 100 : 0, originalOrder: completed,
+        popularity: homeRanks.get(post.id) ?? (trendingIds.has(post.id) ? 100 : 0), originalOrder: completed,
       });
     } catch (error) {
       console.warn("Skipped " + post.originalUrl + ": " + (error instanceof Error ? error.message : "request failed"));
