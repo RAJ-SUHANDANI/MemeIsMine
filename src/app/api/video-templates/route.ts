@@ -163,6 +163,10 @@ export async function GET(request: Request) {
 
   if (slug) {
     const item = catalog.find((template) => template.id === slug);
+    const refreshSource = params.get("refresh") === "1";
+    if (item && !refreshSource) return NextResponse.json({ success: true, template: publicTemplate(item) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+    if (!/^[a-zA-Z0-9%._~!  if (slug) {
+    const item = catalog.find((template) => template.id === slug);
     if (item) return NextResponse.json({ success: true, template: publicTemplate(item) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
     try {
@@ -181,6 +185,30 @@ export async function GET(request: Request) {
       };
       return NextResponse.json({ success: true, template: publicTemplate(template) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     } catch (error) {
+      return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Could not load this template." }, { status: 502 });
+    }
+  }'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
+    try {
+      const originalUrl = item?.originalUrl ?? SITE + "/" + slug + "/";
+      const response = await fetchSource(originalUrl);
+      if (!response.ok) {
+        if (item) return NextResponse.json({ success: true, template: publicTemplate(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
+        return NextResponse.json({ success: false, error: "Template page is unavailable.", status: response.status }, { status: 502 });
+      }
+      const html = await response.text();
+      const media = extractMedia(html, originalUrl);
+      if (!media) {
+        if (item) return NextResponse.json({ success: true, template: publicTemplate(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
+        return NextResponse.json({ success: false, error: "This page does not expose a direct GIF/video file. Static images are not listed in this collection." }, { status: 404 });
+      }
+      const posterUrl = extractPoster(html, originalUrl) ?? (media.kind === "gif" ? media.url : item?.posterUrl ?? "");
+      const template: VideoTemplate = {
+        ...(item ?? { id: slug, name: plainText(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? slug.replace(/-/g, " ")), width: 0, height: 0, box_count: 2, category: "Video Memes", description: "Animate your own text and export a new video from the browser.", source: "indianmemetemplates" as const, publishedAt: null, trending: false, popularity: 0 }),
+        url: media.url, posterUrl, originalUrl, mediaType: media.kind,
+      };
+      return NextResponse.json({ success: true, template: publicTemplate(template) }, { headers: { "Cache-Control": refreshSource ? "no-store" : "public, s-maxage=21600, stale-while-revalidate=86400" } });
+    } catch (error) {
+      if (item) return NextResponse.json({ success: true, template: publicTemplate(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
       return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Could not load this template." }, { status: 502 });
     }
   }
