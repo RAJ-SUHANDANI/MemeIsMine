@@ -50,28 +50,32 @@ export default function TemplatesPage(){
  const [loadingTemplates,setLoadingTemplates]=useState(true);
  const [catalogError,setCatalogError]=useState("");
  const [seenIds,setSeenIds]=useState<string[]>([]);
- const [indianPage,setIndianPage]=useState(1);
- const [indianTotalPages,setIndianTotalPages]=useState(1);
  const [loadingMore,setLoadingMore]=useState(false);
  useEffect(()=>{
   let alive=true;
-  Promise.allSettled([
-   fetch("/api/memes?limit=100").then((response)=>response.json()),
-   fetch("/api/indian-memes?page=1&limit=100").then((response)=>response.json()),
-  ]).then((results)=>{
-   if(!alive)return;
-   const pulled=results.flatMap((result)=>result.status==="fulfilled"&&result.value?.success&&Array.isArray(result.value.memes)?result.value.memes as MemeTemplate[]:[]);
-   const indianResult=results[1];
-   if(indianResult.status==="fulfilled"&&indianResult.value?.success){
-    setIndianPage(1);
-    setIndianTotalPages(Math.max(1,Number(indianResult.value.totalPages)||1));
-   }
-   const unique=Array.from(new Map([...pulled,...starterMemes].map((item)=>[item.id,item])).values());
-   const seen=readSeenTemplates();
-   setAllTemplates(unique); setSeenIds(seen);
-   setVisibleTemplates(pickTemplates(unique,"surprise",new Set(seen),12));
-   if(!pulled.length)setCatalogError("Showing the starter collection while the larger template catalogs are unavailable.");
-  }).catch(()=>{if(alive){setCatalogError("Showing the starter collection while the larger template catalogs are unavailable.");setVisibleTemplates(pickTemplates(starterMemes,"surprise",new Set(readSeenTemplates()),12));}})
+  fetch("/api/memes?limit=100")
+   .then(async(response)=>{
+    const data=await response.json();
+    if(!response.ok||!data?.success||!Array.isArray(data.memes))throw new Error("Imgflip templates are temporarily unavailable.");
+    return data.memes as MemeTemplate[];
+   })
+   .then((pulled)=>{
+    if(!alive)return;
+    // The /templates page is intentionally Imgflip-only. Indian archive images
+    // (including video posters) belong in separate collections, not this index.
+    const unique=Array.from(new Map([...starterMemes,...pulled].map((item)=>[item.id,item])).values());
+    const seen=readSeenTemplates();
+    setAllTemplates(unique); setSeenIds(seen);
+    setVisibleTemplates(pickTemplates(unique,"surprise",new Set(seen),12));
+    if(!pulled.length)setCatalogError("Showing the bundled Imgflip collection while the API is unavailable.");
+   })
+   .catch(()=>{
+    if(!alive)return;
+    const seen=readSeenTemplates();
+    setAllTemplates(starterMemes); setSeenIds(seen);
+    setVisibleTemplates(pickTemplates(starterMemes,"surprise",new Set(seen),12));
+    setCatalogError("Showing the bundled Imgflip collection while the API is unavailable.");
+   })
    .finally(()=>{if(alive)setLoadingTemplates(false);});
   return()=>{alive=false;};
  },[]);
@@ -84,31 +88,13 @@ export default function TemplatesPage(){
   });
  },[]);
  function selectFilter(next:FilterKey){setFilter(next);setVisibleTemplates(pickTemplates(allTemplates,next,new Set(readSeenTemplates()),12));}
- async function loadMore(){
+ function loadMore(){
   setLoadingMore(true);
-  const excluded=new Set([...readSeenTemplates(),...visibleTemplates.map((item)=>item.id)]);
-  let pool=[...allTemplates];
-  let nextPage=indianPage;
-  let more=pickTemplates(pool,filter,excluded,12);
-  try{
-   while(more.length<12&&nextPage<indianTotalPages){
-    nextPage+=1;
-    const response=await fetch("/api/indian-memes?page="+nextPage+"&limit=100&sort="+encodeURIComponent(filter==="surprise"?"popular":filter));
-    const data=await response.json();
-    if(!response.ok||!data.success||!Array.isArray(data.memes))break;
-    const byId=new Map([...pool,...(data.memes as MemeTemplate[])].map((item)=>[item.id,item]));
-    pool=Array.from(byId.values());
-    more=pickTemplates(pool,filter,excluded,12);
-   }
-  }catch{/* Use the templates already loaded when the source archive is unavailable. */}
-  setIndianPage(nextPage);
-  setAllTemplates(pool);
-  if(more.length){
-   setVisibleTemplates((previous)=>[...previous,...more]);
-  }else{
-   const cycle=pickTemplates(pool,filter,new Set(visibleTemplates.map((item)=>item.id)),12);
-   if(cycle.length)setVisibleTemplates((previous)=>[...previous,...cycle]);
-  }
+  const currentlyShown=new Set(visibleTemplates.map((item)=>item.id));
+  const excluded=new Set([...readSeenTemplates(),...currentlyShown]);
+  const ranked=pickTemplates(allTemplates,filter,excluded,allTemplates.length);
+  const more=ranked.filter((item)=>!currentlyShown.has(item.id)).slice(0,12);
+  if(more.length)setVisibleTemplates((previous)=>[...previous,...more]);
   setLoadingMore(false);
  }
  return <main className="paper-noise"><SiteHeader/>
@@ -119,7 +105,7 @@ export default function TemplatesPage(){
    {catalogError&&<p className="control-help">{catalogError}</p>}
    {loadingTemplates&&<div className="template-loading"><span className="tiny-dot"/> Finding a fresh set of templates…</div>}
    {!loadingTemplates&&<div className="template-grid template-discovery-grid">{visibleTemplates.map((meme,index)=><MemeCard key={meme.id} meme={meme} index={index} onSeen={markSeen}/>)}</div>}
-   {!loadingTemplates&&<div className="section-footer"><button className="button button-paper" disabled={loadingMore} onClick={loadMore}>{loadingMore?"Finding more templates…":"Show more templates"} <ArrowRight size={15}/></button></div>}
+   {!loadingTemplates&&<div className="section-footer"><button className="button button-paper" disabled={loadingMore||visibleTemplates.length>=allTemplates.length} onClick={loadMore}>{loadingMore?"Finding more templates…":visibleTemplates.length>=allTemplates.length?"All Imgflip templates shown":"Show more templates"} <ArrowRight size={15}/></button></div>}
   </div></section>
   <section className="section"><div className="container"><div className="section-head"><div><span className="eyebrow">Pick your lane</span><h2 className="section-title">WHAT’S THE<br/><span className="serif-italic">SITUATION?</span></h2></div><p className="section-note">Choose a collection to open the library with a useful starting point.</p></div>
    <div className="template-category-grid">{groups.map((group,i)=><motion.article key={group.name} className={group.className} initial={reduce?false:{opacity:0,y:18,rotate:i%2?1:-1}} whileInView={{opacity:1,y:0,rotate:0}} whileHover={reduce?undefined:{y:-7,rotate:i%2?1.5:-1.5}} viewport={{once:true,amount:.1}} transition={{duration:.4,delay:i*.04}}><Link href={group.href}><div className="template-feature-head"><span>{group.tag}</span><group.icon size={23}/></div><h3>{group.name}<span>.</span></h3><p>{group.copy}</p><div className="template-feature-foot"><small>{group.count}</small><span className="feature-go"><ArrowUpRight size={18}/></span></div></Link></motion.article>)}</div>
