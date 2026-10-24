@@ -35,12 +35,12 @@ function pickTemplates(items:MemeTemplate[],mode:FilterKey,excluded:Set<string>,
  return [...fresh,...seen].slice(0,Math.min(count,items.length));
 }
 const groups=[
- {name:"Classics",tag:"THE TIMELESS ONES",copy:"Formats that have lived through a thousand group chats and somehow still work.",icon:Flame,count:"EVERGREEN",href:"/explore?category=Classics",className:"template-feature red"},
- {name:"Reaction images",tag:"SAY IT WITHOUT SAYING IT",copy:"The exact facial expression for when words are not doing the job.",icon:MessageCircle,count:"INSTANT CONTEXT",href:"/explore?category=Reaction",className:"template-feature ink"},
- {name:"Relatable",tag:"SUSPICIOUSLY SPECIFIC",copy:"For missed deadlines, bad decisions, tiny wins, and being a person online.",icon:Heart,count:"VERY YOU",href:"/explore?category=Relatable",className:"template-feature paper"},
- {name:"Animals",tag:"CREATURES WITH RANGE",copy:"Cats, dogs, and other expressive icons of the internet.",icon:Cat,count:"PURE EXPRESSION",href:"/explore?category=Animals",className:"template-feature green"},
- {name:"Absurd",tag:"LOGIC HAS LEFT THE CHAT",copy:"For thoughts that took a strange turn and refuse to come back.",icon:Brain,count:"UNHINGED",href:"/explore?category=Absurd",className:"template-feature lilac"},
- {name:"Work & study",tag:"PROFESSIONALLY DISTRACTED",copy:"Meetings, deadlines, studying, and pretending the tab is work.",icon:BriefcaseBusiness,count:"OFFICE FUEL",href:"/explore?category=Work",className:"template-feature ink"},
+ {name:"Classics",tag:"THE TIMELESS ONES",copy:"Formats that have lived through a thousand group chats and somehow still work.",icon:Flame,count:"EVERGREEN",href:"/explore?source=mine&category=Classics",className:"template-feature red"},
+ {name:"Reaction images",tag:"SAY IT WITHOUT SAYING IT",copy:"The exact facial expression for when words are not doing the job.",icon:MessageCircle,count:"INSTANT CONTEXT",href:"/explore?source=mine&category=Reaction",className:"template-feature ink"},
+ {name:"Relatable",tag:"SUSPICIOUSLY SPECIFIC",copy:"For missed deadlines, bad decisions, tiny wins, and being a person online.",icon:Heart,count:"VERY YOU",href:"/explore?source=mine&category=Relatable",className:"template-feature paper"},
+ {name:"Animals",tag:"CREATURES WITH RANGE",copy:"Cats, dogs, and other expressive icons of the internet.",icon:Cat,count:"PURE EXPRESSION",href:"/explore?source=mine&category=Animals",className:"template-feature green"},
+ {name:"Absurd",tag:"LOGIC HAS LEFT THE CHAT",copy:"For thoughts that took a strange turn and refuse to come back.",icon:Brain,count:"UNHINGED",href:"/explore?source=mine&category=Absurd",className:"template-feature lilac"},
+ {name:"Work & study",tag:"PROFESSIONALLY DISTRACTED",copy:"Meetings, deadlines, studying, and pretending the tab is work.",icon:BriefcaseBusiness,count:"OFFICE FUEL",href:"/explore?source=mine&category=Work",className:"template-feature ink"},
 ];
 export default function TemplatesPage(){
  const reduce=useReducedMotion();
