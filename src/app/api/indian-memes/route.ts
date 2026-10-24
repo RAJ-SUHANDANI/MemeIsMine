@@ -103,7 +103,54 @@ function archiveUrl(page: number, query: string): string {
   url.searchParams.set("s", query);
   return url.toString();
 }
+let robotsRulesCache: Promise<{ agents: string[]; rules: { type: string; path: string }[] }[]> | null = null;
+async function robotsRules() {
+  if (!robotsRulesCache) {
+    robotsRulesCache = (async () => {
+      const response = await fetch(SITE + "/robots.txt", {
+        headers: { "User-Agent": USER_AGENT, "Accept": "text/plain,*/*" },
+        next: { revalidate: 21600 },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (response.status === 404) return [];
+      if (!response.ok) throw new Error("The source robots.txt could not be checked.");
+      const groups: { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] = [];
+      let group: { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean } | null = null;
+      for (const rawLine of (await response.text()).split(/\\r?\\n/)) {
+        const line = rawLine.split("#")[0].trim();
+        const colon = line.indexOf(":");
+        if (!line || colon < 0) continue;
+        const key = line.slice(0, colon).trim().toLowerCase();
+        const value = line.slice(colon + 1).trim();
+        if (key === "user-agent") {
+          if (!group || group.rulesStarted) { group = { agents: [], rules: [], rulesStarted: false }; groups.push(group); }
+          group.agents.push(value.toLowerCase());
+        } else if ((key === "allow" || key === "disallow") && group) {
+          group.rulesStarted = true;
+          group.rules.push({ type: key, path: value });
+        }
+      }
+      return groups;
+    })();
+  }
+  return robotsRulesCache;
+}
+async function isCrawlAllowed(path: string): Promise<boolean> {
+  try {
+    const groups = await robotsRules();
+    const token = USER_AGENT.toLowerCase().split(/[\\s/]/)[0];
+    const specific = groups.filter((item) => item.agents.some((agent) => agent !== "*" && token.startsWith(agent)));
+    const applicable = specific.length ? specific : groups.filter((item) => item.agents.includes("*"));
+    const rules = applicable.flatMap((item) => item.rules).filter((rule) => rule.path && rule.path !== "" && (rule.path === "/" || path === rule.path || path.startsWith(rule.path)));
+    rules.sort((a, b) => b.path.length - a.path.length || (a.type === "allow" ? -1 : 1));
+    return rules[0]?.type !== "disallow";
+  } catch {
+    return false;
+  }
+}
+
 async function fetchHtml(url: string): Promise<{ html: string; response: Response }> {
+  if (!await isCrawlAllowed(new URL(url).pathname)) throw new Error("Source crawl rules do not permit access right now.");
   const response = await fetch(url, {
     headers: { "User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml" },
     next: { revalidate: 21600 },
