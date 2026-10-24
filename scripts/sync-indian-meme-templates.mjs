@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 const SITE = "https://indianmemetemplates.com";
@@ -176,7 +176,12 @@ async function main() {
   if (totalPages > MAX_PAGES) throw new Error("The archive advertises more than " + MAX_PAGES + " pages; stopping for manual review.");
   if (!parseCards(firstHtml).length) throw new Error("Could not parse template cards from page 1. No catalog file was overwritten.");
   const all = new Map();
-  const append = (cards) => cards.forEach((card) => all.set(card.id, card));
+  let videoSlugs = new Set();
+  try {
+    const videoCatalog = JSON.parse(await readFile(resolve("src/data/indian-video-templates.json"), "utf8"));
+    videoSlugs = new Set(videoCatalog.map((item) => item.id));
+  } catch { console.warn("Video catalog is not available yet; image catalog will be collected without cross filtering."); }
+  const append = (cards) => cards.filter((card) => !videoSlugs.has(card.id)).forEach((card) => all.set(card.id, card));
   append(parseCards(firstHtml));
   console.log("Archive pages discovered: " + totalPages + "; page 1 yielded " + all.size + " templates.");
   for (let page = 2; page <= totalPages; page++) {
