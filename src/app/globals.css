@@ -40,3 +40,6 @@
 
 .brand-full-logo{display:block;width:218px;height:auto;max-height:54px;object-fit:contain}.brand-lockup{min-width:0}.brand-lockup-compact{justify-content:center}.site-footer .brand-full-logo{width:192px}.source-link{font-size:8px}.source-link:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 @media(max-width:480px){.brand-full-logo{width:174px;max-height:42px}.site-footer .brand-full-logo{width:175px}}
+
+.maker-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:42px}.maker-values article{border-top:1px solid var(--line);padding:17px 3px 0;transition:transform .25s}.maker-values article:hover{transform:translateY(-4px)}.maker-values article>span{font:9px var(--mono);letter-spacing:.1em;color:var(--red)}.maker-values h3{font:700 22px var(--display);letter-spacing:-.05em;margin:15px 0 8px}.maker-values p{font:14px/1.55 var(--serif);color:#716a62;max-width:350px;margin:0}
+@media(max-width:820px){.maker-values{grid-template-columns:1fr;gap:18px}.maker-values article{padding-top:15px}}
