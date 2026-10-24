@@ -198,10 +198,33 @@ export async function GET(request: Request) {
   }
 
   let items = catalog.filter((item) => !query || item.name.toLowerCase().includes(query));
-  if (sort === "trending") items = [...items].sort((a, b) => Number(b.trending) - Number(a.trending) || b.popularity - a.popularity);
-  else if (sort === "recent") items = [...items].sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.popularity - a.popularity);
-  else if (sort === "name") items = [...items].sort((a, b) => a.name.localeCompare(b.name));
-  else items = [...items].sort((a, b) => b.popularity - a.popularity);
+  if (sort === "trending") {
+    items = [...items].sort((a, b) => Number(b.trending) - Number(a.trending) || b.popularity - a.popularity || a.name.localeCompare(b.name));
+  } else if (sort === "recent") {
+    items = [...items].sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.popularity - a.popularity || b.id.localeCompare(a.id));
+  } else if (sort === "name") {
+    items = [...items].sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sort === "surprise") {
+    // Use a seeded shuffle so pages don't overlap and a fresh Surprise click
+    // (with a new seed) genuinely gives a different order.
+    const rawSeed = Number(params.get("seed") ?? 1);
+    let state = (Number.isFinite(rawSeed) ? rawSeed : 1) >>> 0;
+    if (state === 0) state = 0x6d2b79f5;
+    const random = () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let value = state;
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+    items = [...items];
+    for (let index = items.length - 1; index > 0; index--) {
+      const target = Math.floor(random() * (index + 1));
+      [items[index], items[target]] = [items[target], items[index]];
+    }
+  } else {
+    items = [...items].sort((a, b) => b.popularity - a.popularity || a.name.localeCompare(b.name));
+  }
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / limit));
   const results = items.slice((page - 1) * limit, page * limit);
