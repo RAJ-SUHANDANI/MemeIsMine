@@ -71,22 +71,22 @@ function imageUrl(block) {
 }
 function extractAnimatedMedia(html, base) {
   const candidates = [];
-  for (const tag of html.match(/<(?:video|source|a)\\b[^>]*>/gi) ?? []) {
+  for (const tag of html.match(/<(?:video|source|a)\b[^>]*>/gi) ?? []) {
     const raw = attr(tag, "src") ?? attr(tag, "href") ?? attr(tag, "data-src");
-    if (raw && /\\.(?:gif|mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(raw)) candidates.push(raw);
+    if (raw && /\.(?:gif|mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(raw)) candidates.push(raw);
   }
-  for (const tag of html.match(/<meta\\b[^>]*>/gi) ?? []) {
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     const property = attr(tag, "property") ?? attr(tag, "name") ?? "";
     if (/og:video|twitter:player:stream|video:url/i.test(property)) {
       const raw = attr(tag, "content");
       if (raw) candidates.push(raw);
     }
   }
-  for (const raw of html.match(/https?:[^\\s"'<>\\\\]+?\\.(?:gif|mp4|webm|mov|m4v|ogv)(?:\\?[^\\s"'<>\\\\]*)?/gi) ?? []) candidates.push(raw.replace(/&amp;/g, "&"));
+  for (const raw of html.match(/https?:[^\s"'<>\\]+?\.(?:gif|mp4|webm|mov|m4v|ogv)(?:\?[^\s"'<>\\]*)?/gi) ?? []) candidates.push(raw.replace(/&amp;/g, "&"));
   const found = [];
   for (const raw of candidates) {
     const safe = siteUrl(raw, base);
-    if (!safe || !/\\/wp-content\\/uploads\\//i.test(new URL(safe).pathname)) continue;
+    if (!safe || !/\/wp-content\/uploads\//i.test(new URL(safe).pathname)) continue;
     const ext = new URL(safe).pathname.toLowerCase().split(".").pop();
     const type = ext === "gif" ? "gif" : ["mp4", "webm", "mov", "m4v", "ogv"].includes(ext ?? "") ? "video" : null;
     if (type && !found.some((item) => item.url === safe)) found.push({ url: safe, type });
@@ -94,10 +94,10 @@ function extractAnimatedMedia(html, base) {
   return found.find((item) => item.type === "video") ?? found.find((item) => item.type === "gif") ?? null;
 }
 function hasEmbeddedVideo(html) {
-  return /<video\\b/i.test(html)
-    || /<source\\b[^>]*src\\s*=\\s*["'][^"']+\\.(?:mp4|webm|mov|m4v|ogv|gif)(?:[?#"']|$)/i.test(html)
-    || /<meta\\b(?=[^>]*(?:property|name)=["'](?:og:video|twitter:player:stream|video:url)["'])/i.test(html)
-    || /<iframe\\b[^>]*src\\s*=\\s*["'][^"']*(?:youtube\\.com\\/embed|youtu\\.be\\/|vimeo\\.com\\/video|dailymotion\\.com\\/embed)/i.test(html);
+  return /<video\b/i.test(html)
+    || /<source\b[^>]*src\s*=\s*["'][^"']+\.(?:mp4|webm|mov|m4v|ogv|gif)(?:[?#"']|$)/i.test(html)
+    || /<meta\b(?=[^>]*(?:property|name)=["'](?:og:video|twitter:player:stream|video:url)["'])/i.test(html)
+    || /<iframe\b[^>]*src\s*=\s*["'][^"']*(?:youtube\.com\/embed|youtu\.be\/|vimeo\.com\/video|dailymotion\.com\/embed)/i.test(html);
 }
 function parseCards(html) {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
