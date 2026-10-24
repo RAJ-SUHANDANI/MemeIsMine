@@ -232,10 +232,14 @@ async function main() {
   const videoCatalogPath = resolve("src/data/indian-video-templates.json");
   let videoCatalog = [];
   let videoSlugs = new Set();
+  let videoPages = new Set();
+  let videoPosters = new Set();
   const discoveredGifs = new Map();
   try {
     videoCatalog = JSON.parse(await readFile(videoCatalogPath, "utf8"));
     videoSlugs = new Set(videoCatalog.map((item) => item.id));
+    videoPages = new Set(videoCatalog.map((item) => item.originalUrl).filter(Boolean).map((value) => value.replace(/\/+$/, "").toLowerCase()));
+    videoPosters = new Set(videoCatalog.map((item) => item.posterUrl).filter(Boolean).map((value) => value.split("?")[0].toLowerCase()));
   } catch { console.warn("Video catalog is not available yet; image catalog will be collected without cross filtering."); }
   let trendingIds = new Set();
   let popularRanks = new Map();
@@ -248,6 +252,7 @@ async function main() {
     parseCards(homeHtml).forEach((item, index) => popularRanks.set(item.id, Math.max(1, 1000 - index)));
   } catch (error) { console.warn("Homepage popularity list unavailable: " + (error instanceof Error ? error.message : "request failed")); }
   const append = (cards) => cards.forEach((card) => {
+    if (isClearlyVideoPost(card) || videoPages.has(card.originalUrl.replace(/\/+$/, "").toLowerCase()) || videoPosters.has(card.url.split("?")[0].toLowerCase())) return;
     const isGif = /\.gif(?:[?#]|$)/i.test(card.url);
     if (isGif) {
       discoveredGifs.set(card.id, {
