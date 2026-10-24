@@ -14,7 +14,9 @@ Open http://localhost:3000.
 ## Pages
 - `/` — landing page with floating meme-card motion and a creator spotlight
 - `/explore` — search, filter, sort and bookmark template formats
-- `/templates` — curated categories and routes into the template library
+- `/templates` — randomized template discovery with popular, trending, recent and surprise filters
+- `/video-templates` — animated template collection with popular, trending, recent and name filters
+- `/video-editor/:id` — drag captions, add image overlays, choose output dimensions and export WebM
 - `/create/:id` — editor for a selected template
 - `/create/upload` — start with an image from your own device
 - `/studio` — drafts and bookmarks saved in the current browser
@@ -23,8 +25,26 @@ Open http://localhost:3000.
 - `/faq` — interactive frequently asked questions
 - `/privacy` — plain-language data and storage details
 - `/contact` — portfolio, GitHub, LinkedIn and email links
-- `/api/memes` — template endpoint, with a bundled fallback
+- `/api/memes` — the original Meme Is Mine template feed, with a bundled fallback
+- `/api/indian-memes` — paginated Indian still image template API
+- `/api/video-templates` — paginated animated GIF and video template API
+- `/api/video-source` — safe, same origin media proxy with byte range support for video playback
 - `/api/image` — image proxy restricted to approved template image hosts
+
+## Template API examples
+
+```text
+GET /api/indian-memes?page=1&limit=24&sort=popular
+GET /api/indian-memes?q=arjun&sort=trending
+GET /api/video-templates?page=1&limit=24&sort=recent
+GET /api/video-templates?slug=chinese-guy-explaining
+```
+
+The image endpoint returns a `memes` array; the animated endpoint returns a `templates` array. Both support pagination and search. Animated source media is previewed through `/api/video-source?url=...`, which permits only approved media file paths on the template archive host. The video editor exports WebM locally in the browser.
+
+To refresh source indexes manually, run `npm run sync:indian-videos` followed by `npm run sync:indian-images`, or use the GitHub Actions workflow. The workflow also refreshes the catalogs weekly. The sync indexes template metadata and original media URLs; it does not mirror media files into this repository.
+
+The source site describes its library as copyright free, but its disclaimer also describes a process for reporting third party intellectual property claims. The app therefore preserves original page URLs and does not make a blanket guarantee that every source asset is free of third party rights. Review source terms and individual asset rights before using content commercially.
 
 ## Stack
 Next.js App Router, React, TypeScript, Motion, Lucide icons, Tailwind CSS v4 and custom responsive CSS.
