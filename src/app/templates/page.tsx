@@ -13,7 +13,22 @@ const templateFilters: {key:FilterKey;label:string;icon:typeof Flame}[] = [
  {key:"surprise",label:"Surprise me",icon:Shuffle},
 ];
 const SEEN_KEY = "mim-template-seen";
-function shuffleTemplates<T>(items:T[]):T[]{return [...items].sort(()=>Math.random()-.5);}
+function shuffleTemplates<T>(items:T[]):T[]{
+ const result=[...items];
+ for(let index=result.length-1;index>0;index--){
+  const target=Math.floor(Math.random()*(index+1));
+  [result[index],result[target]]=[result[target],result[index]];
+ }
+ return result;
+}
+function prepareTemplates(items:MemeTemplate[]):MemeTemplate[]{
+ const trendingFormats=/drake|woman yelling|distracted boyfriend|two buttons|doge|mocking spongebob|change my mind|expanding brain|success kid|hide the pain harold|gru.?s plan|trade offer|uno draw 25|disaster girl|epic handshake|ancient aliens|always has been|this is fine|stonks|crying cat/i;
+ return items.map((item,index)=>({
+  ...item,
+  popularity:item.popularity??items.length-index,
+  trending:item.trending??trendingFormats.test(item.name),
+ }));
+}
 function readSeenTemplates():string[]{
  try { const value=JSON.parse(localStorage.getItem(SEEN_KEY)??"[]"); return Array.isArray(value)?value.filter((id):id is string=>typeof id==="string"):[]; }
  catch { return []; }
@@ -26,7 +41,13 @@ function pickTemplates(items:MemeTemplate[],mode:FilterKey,excluded:Set<string>,
  }else if(mode==="trending"){
   ranked.sort((a,b)=>Number(Boolean(b.trending))-Number(Boolean(a.trending))||(b.popularity??0)-(a.popularity??0));
  }else if(mode==="recent"){
-  ranked.sort((a,b)=>(b.publishedAt??"").localeCompare(a.publishedAt??""));
+  ranked.sort((a,b)=>{
+   const dates=(b.publishedAt??"").localeCompare(a.publishedAt??"");
+   if(dates!==0)return dates;
+   const aId=Number(a.id),bId=Number(b.id);
+   if(Number.isFinite(aId)&&Number.isFinite(bId))return bId-aId;
+   return b.id.localeCompare(a.id,undefined,{numeric:true});
+  });
  }else{
   ranked=shuffleTemplates(ranked);
  }
@@ -64,7 +85,7 @@ export default function TemplatesPage(){
     // The /templates page is intentionally Imgflip-only. Indian archive images
     // (including video posters) belong in separate collections, not this index.
     const apiTemplates=pulled.length?pulled:starterMemes;
-    const unique=Array.from(new Map(apiTemplates.map((item)=>[item.id,item])).values());
+    const unique=Array.from(new Map(prepareTemplates(apiTemplates).map((item)=>[item.id,item])).values());
     const seen=readSeenTemplates();
     setAllTemplates(unique); setSeenIds(seen);
     setVisibleTemplates(pickTemplates(unique,"surprise",new Set(seen),12));
@@ -73,8 +94,9 @@ export default function TemplatesPage(){
    .catch(()=>{
     if(!alive)return;
     const seen=readSeenTemplates();
-    setAllTemplates(starterMemes); setSeenIds(seen);
-    setVisibleTemplates(pickTemplates(starterMemes,"surprise",new Set(seen),12));
+    const fallback=prepareTemplates(starterMemes);
+    setAllTemplates(fallback); setSeenIds(seen);
+    setVisibleTemplates(pickTemplates(fallback,"surprise",new Set(seen),12));
     setCatalogError("Showing the bundled Imgflip collection while the API is unavailable.");
    })
    .finally(()=>{if(alive)setLoadingTemplates(false);});
