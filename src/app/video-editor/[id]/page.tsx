@@ -228,7 +228,8 @@ export default function VideoEditorPage() {
           if (audioTrack) stream.addTrack(audioTrack);
         }
       }
-      const mimeType = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((type) => MediaRecorder.isTypeSupported(type));
+      if (!stream) throw new Error("Could not capture the video canvas.");
+      const mimeType = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((type) => MediaRecorder.isTypeSupported(type));
       if (!mimeType) throw new Error("This browser cannot create a WebM file.");
       const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 7000000 });
       const chunks: BlobPart[] = [];
