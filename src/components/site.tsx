@@ -78,6 +78,7 @@ export function FloatingGallery({ memes = [] }: { memes?: MemeTemplate[] }) {
         <div className="float-image"><img src={card.url} alt={card.name} loading="eager"/></div>
         <div className="float-caption"><span>{card.name}</span><b>↗</b></div>
       </Link>
+      {card.url.startsWith("https://i.imgflip.com/") && <a className="float-source-link" href="https://imgflip.com" target="_blank" rel="noreferrer" aria-label="Open image source site" title="Open image source site"><ExternalLink size={12}/></a>}
     </motion.div>)}
     <div className="gallery-marker marker-left">GOOD MEMES<br/>BETTER TIMING</div><div className="gallery-marker marker-right">MADE FOR<br/>THE GROUP CHAT</div>
   </div>;
