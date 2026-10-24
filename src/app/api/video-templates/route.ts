@@ -111,8 +111,8 @@ function extractPosts(html: string): { id: string; name: string; originalUrl: st
   return posts;
 }
 function publicTemplate(item: VideoTemplate) {
-  const { source: _source, originalUrl: _originalUrl, ...publicItem } = item;
-  return publicItem;
+  const { source: _source, originalUrl, ...publicItem } = item;
+  return { ...publicItem, sourcePage: originalUrl };
 }
 function parseRobots(text: string): { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] {
   const groups: { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] = [];
