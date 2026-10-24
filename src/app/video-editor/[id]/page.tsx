@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowLeft, ArrowRight, BringToFront, Check, Clapperboard, Copy, Download, Eye, EyeOff,
-  ImagePlus, Move, Palette, SlidersHorizontal, Trash2, Type, Video, Volume2, VolumeX
+  ImagePlus, Move, SlidersHorizontal, Trash2, Type, Video, Volume2, VolumeX
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
@@ -20,7 +20,7 @@ type TextLayer = {
 };
 type ImageLayer = { id: string; kind: "image"; name: string; src: string; x: number; y: number; w: number; h: number; rotation: number; opacity: number };
 type Layer = TextLayer | ImageLayer;
-type Panel = "text" | "overlay" | "dimensions" | "background" | "layers";
+type Panel = "text" | "overlay" | "dimensions" | "effects" | "layers";
 type DragInfo = { id: string; mode: "move" | "resize"; clientX: number; clientY: number; x: number; y: number; w: number; h: number } | null;
 type Preset = { label: string; width: number; height: number; name: string };
 const PRESETS: Preset[] = [
@@ -31,7 +31,6 @@ const PRESETS: Preset[] = [
   { label: "4:3", width: 1440, height: 1080, name: "Classic" },
   { label: "3:2", width: 1500, height: 1000, name: "Photo" },
 ];
-const COLORS = ["#F5F0E7", "#151515", "#F0442E", "#FFFFFF", "#DFD6C8", "#CCD9B9", "#D9D2E8"];
 const INITIAL_LAYER: TextLayer = {
   id: "video-caption-1", kind: "text", name: "Caption", text: "YOUR TEXT HERE",
   x: 50, y: 20, w: 86, h: 18, rotation: 0, fontSize: 54, fontFamily: "Impact", color: "#FFFFFF",
@@ -39,7 +38,7 @@ const INITIAL_LAYER: TextLayer = {
 };
 const PANEL_ITEMS: { id: Panel; label: string; icon: typeof Type }[] = [
   { id: "text", label: "Text", icon: Type }, { id: "overlay", label: "Overlay", icon: ImagePlus },
-  { id: "dimensions", label: "Dimensions", icon: SlidersHorizontal }, { id: "background", label: "Background", icon: Palette },
+  { id: "dimensions", label: "Dimensions", icon: SlidersHorizontal }, { id: "effects", label: "Effects", icon: SlidersHorizontal },
   { id: "layers", label: "Layers", icon: BringToFront },
 ];
 function objectId() { return "motion-" + Math.random().toString(36).slice(2, 8) + Date.now().toString(36); }
@@ -52,6 +51,31 @@ function dataUrl(file: File) {
   });
 }
 function mediaUrl(url: string) { return "/api/video-source?url=" + encodeURIComponent(url); }
+
+
+async function convertToMp4(blob: Blob, ffmpegRef: { current: import("@ffmpeg/ffmpeg").FFmpeg | null }): Promise<Blob> {
+  const { FFmpeg } = await import("@ffmpeg/ffmpeg");
+  const { toBlobURL } = await import("@ffmpeg/util");
+  const ffmpeg = ffmpegRef.current ?? new FFmpeg();
+  ffmpegRef.current = ffmpeg;
+  if (!ffmpeg.loaded) {
+    const base = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
+    const [coreURL, wasmURL] = await Promise.all([
+      toBlobURL(base + "/ffmpeg-core.js", "text/javascript"),
+      toBlobURL(base + "/ffmpeg-core.wasm", "application/wasm"),
+    ]);
+    await ffmpeg.load({ coreURL, wasmURL });
+  }
+  await ffmpeg.writeFile("meme-input.webm", new Uint8Array(await blob.arrayBuffer()));
+  await ffmpeg.exec(["-y", "-i", "meme-input.webm", "-map", "0:v:0", "-map", "0:a?", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "24", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "meme-output.mp4"]);
+  const output = await ffmpeg.readFile("meme-output.mp4");
+  if (typeof output === "string") throw new Error("The MP4 encoder returned an invalid file.");
+  const bytes = Uint8Array.from(output);
+  const result = new Blob([bytes.buffer as ArrayBuffer], { type: "video/mp4" });
+  await Promise.all([ffmpeg.deleteFile("meme-input.webm").catch(() => undefined), ffmpeg.deleteFile("meme-output.mp4").catch(() => undefined)]);
+  if (!result.size) throw new Error("MP4 conversion produced an empty file.");
+  return result;
+}
 
 export default function VideoEditorPage() {
   const params = useParams<{ id: string }>();
@@ -67,13 +91,20 @@ export default function VideoEditorPage() {
   const [height, setHeight] = useState(1080);
   const [customWidth, setCustomWidth] = useState("1080");
   const [customHeight, setCustomHeight] = useState("1080");
-  const [background, setBackground] = useState("#151515");
+  const background = "#151515";
   const [fit, setFit] = useState<"cover" | "contain">("cover");
   const [seconds, setSeconds] = useState(8);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [grayscale, setGrayscale] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const effectFilter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)${grayscale ? " grayscale(1)" : ""}`;
   const [busy, setBusy] = useState(false);
   const [videoAudioEnabled, setVideoAudioEnabled] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const ffmpegRef = useRef<import("@ffmpeg/ffmpeg").FFmpeg | null>(null);
   const [notice, setNotice] = useState("");
   const [viewportHeight, setViewportHeight] = useState(900);
   const [drag, setDrag] = useState<DragInfo>(null);
@@ -105,6 +136,9 @@ export default function VideoEditorPage() {
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [templateId]);
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.playbackRate = playbackSpeed;
+  }, [playbackSpeed, template]);
   useEffect(() => {
     setViewportHeight(window.innerHeight);
     const handleResize = () => setViewportHeight(window.innerHeight);
@@ -181,7 +215,7 @@ export default function VideoEditorPage() {
     if (video.paused) void video.play().catch(() => undefined);
   }
 
-  async function exportWebm() {
+  async function exportVideo(format: "webm" | "mp4" = "webm") {
     if (!template) { toast("Choose a video template first."); return; }
     const canvas = document.createElement("canvas");
     canvas.width = width; canvas.height = height;
@@ -202,6 +236,7 @@ export default function VideoEditorPage() {
       stream = canvas.captureStream(30);
       if (source instanceof HTMLVideoElement) {
         originalMuted = source.muted;
+        source.playbackRate = playbackSpeed;
         // Capture the original audio track along with the caption-composited canvas frames.
         source.muted = false;
         source.currentTime = 0;
@@ -247,7 +282,11 @@ export default function VideoEditorPage() {
         ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
         const sourceW = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
         const sourceH = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
-        if (sourceW && sourceH) drawFit(source, sourceW, sourceH);
+        if (sourceW && sourceH) {
+          ctx.filter = effectFilter;
+          drawFit(source, sourceW, sourceH);
+          ctx.filter = "none";
+        }
         for (const layer of layersRef.current) {
           const x = layer.x / 100 * width; const y = layer.y / 100 * height;
           const w = layer.w / 100 * width; const h = layer.h / 100 * height;
@@ -294,12 +333,17 @@ export default function VideoEditorPage() {
         requestAnimationFrame(renderFrame);
       };
       renderFrame();
-      const blob = await finished;
-      if (!blob.size) throw new Error("The exported file was empty. Please try again.");
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a"); link.href = url; link.download = "meme-is-mine-video-" + width + "x" + height + ".webm"; link.click();
+      const recordedBlob = await finished;
+      if (!recordedBlob.size) throw new Error("The exported file was empty. Please try again.");
+      let finalBlob = recordedBlob;
+      if (format === "mp4") {
+        toast("Converting to MP4. The first conversion loads the encoder and can take a little longer.");
+        finalBlob = await convertToMp4(recordedBlob, ffmpegRef);
+      }
+      const url = URL.createObjectURL(finalBlob);
+      const link = document.createElement("a"); link.href = url; link.download = "meme-is-mine-video-" + width + "x" + height + "." + format; link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 10000);
-      toast("Video exported as WebM at " + width + " by " + height + " pixels.");
+      toast("Video exported as " + format.toUpperCase() + " at " + width + " by " + height + " pixels.");
     } catch (reason) {
       toast(reason instanceof Error ? reason.message : "Could not export this video.");
     } finally {
@@ -309,7 +353,10 @@ export default function VideoEditorPage() {
       }
       sourceCaptureStream?.getTracks().forEach((track) => track.stop());
       stream?.getTracks().forEach((track) => track.stop());
-      if (source instanceof HTMLVideoElement && originalMuted !== null) source.muted = originalMuted;
+      if (source instanceof HTMLVideoElement && originalMuted !== null) {
+        source.muted = originalMuted;
+        source.playbackRate = playbackSpeed;
+      }
       setBusy(false);
     }
   }
@@ -318,7 +365,7 @@ export default function VideoEditorPage() {
     <div className="editor-topbar">
       <div className="editor-crumb"><Link href="/video-templates" aria-label="Back to video templates"><ArrowLeft size={16}/></Link><span>/</span><Link href="/video-templates">Video templates</Link><span>/</span><strong>{template?.name ?? "Video editor"}</strong></div>
       <div className="saved-indicator">{template ? (template.mediaType === "gif" ? "Animated GIF source" : "Video source") : "Loading template"}</div>
-      <div className="editor-top-actions"><label className="video-duration-control">Export length<select value={seconds} onChange={(event) => setSeconds(Number(event.target.value))}><option value={3}>3 sec</option><option value={5}>5 sec</option><option value={8}>8 sec</option><option value={12}>12 sec</option><option value={15}>15 sec</option></select></label><button className="button button-dark button-small" onClick={exportWebm} disabled={busy || !template}>{busy ? "Rendering…" : <><Download size={14}/> Export WebM</>}</button></div>
+      <div className="editor-top-actions"><label className="video-duration-control">Export length<select value={seconds} onChange={(event) => setSeconds(Number(event.target.value))}><option value={3}>3 sec</option><option value={5}>5 sec</option><option value={8}>8 sec</option><option value={12}>12 sec</option><option value={15}>15 sec</option></select></label><label className="video-duration-control">Speed<select value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Number(event.target.value))}><option value={0.5}>0.5×</option><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={2}>2×</option></select></label><button className="button button-paper button-small" onClick={() => exportVideo("webm")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button><button className="button button-dark button-small" onClick={() => exportVideo("mp4")} disabled={busy || !template}><Download size={14}/> Export MP4</button></div>
     </div>
     {error && <section className="container section"><div className="empty-state"><Clapperboard size={28}/><h2>That template is not ready.</h2><p>{error}</p><Link href="/video-templates" className="button button-dark button-small">Back to video templates <ArrowRight size={14}/></Link></div></section>}
     {!error && <div className="editor-workspace editor-workspace-upgraded video-editor-workspace">
@@ -330,14 +377,14 @@ export default function VideoEditorPage() {
         {panel === "text" && <div className="editor-tool-panel"><div className="panel-label">Captions</div><button className="editor-add-tile" onClick={addText}><Type size={21}/><span><strong>Add text</strong><small>Place a new caption anywhere</small></span><span>＋</span></button><p className="control-help">Select a caption on the canvas to edit it. Drag it anywhere and resize it using the corner handle.</p><div className="sidebar-divider"/><button className="quick-style" onClick={() => selectedText ? updateLayer(selectedText.id, { fontSize: 58, color: "#FFFFFF", outline: true, shadow: true, uppercase: true }) : addText()}>Classic caption <span>Aa</span></button><button className="quick-style" onClick={() => selectedText ? updateLayer(selectedText.id, { fontSize: 36, color: "#151515", outline: false, shadow: false, uppercase: false }) : addText()}>Clean label <span>Aa</span></button></div>}
         {panel === "overlay" && <div className="editor-tool-panel"><div className="panel-label">Image overlays</div><button className="overlay-upload-tile" onClick={() => overlayInput.current?.click()}><ImagePlus size={23}/><strong>Upload an overlay</strong><small>Transparent PNG, JPG or WebP</small></button><input ref={overlayInput} hidden type="file" multiple accept="image/*" onChange={(event) => { void addOverlays(event.target.files); event.target.value = ""; }}/><p className="control-help">Add a logo, sticker, or reaction image. Image layers are included in the rendered video.</p><div className="sidebar-divider"/><button className="button button-paper button-small editor-full-button" onClick={duplicateLayer} disabled={!selected}><Copy size={14}/> Duplicate selected</button><button className="button button-plain button-small editor-full-button" onClick={deleteLayer} disabled={!selected}><Trash2 size={14}/> Delete selected</button></div>}
         {panel === "dimensions" && <div className="editor-tool-panel"><div className="panel-label">Output shape</div><div className="ratio-grid">{PRESETS.map((preset) => <button key={preset.label} className={currentPreset === preset.label ? "ratio-button active" : "ratio-button"} onClick={() => applyPreset(preset)}><span>{preset.label}</span><small>{preset.name}</small><i style={{ aspectRatio: preset.width + " / " + preset.height }}/></button>)}</div><div className="sidebar-divider"/><div className="panel-label">Custom size</div><div className="dimension-inputs"><label>Width<input type="number" min="200" max="4000" value={customWidth} onChange={(event) => setCustomWidth(event.target.value)}/></label><span>×</span><label>Height<input type="number" min="200" max="4000" value={customHeight} onChange={(event) => setCustomHeight(event.target.value)}/></label></div><button className="button button-dark button-small editor-full-button" onClick={changeDimensions}>Apply size</button><p className="control-help">Export size: {width} × {height} pixels.</p></div>}
-        {panel === "background" && <div className="editor-tool-panel"><div className="panel-label">Background colour</div><div className="background-swatches">{COLORS.map((color) => <button key={color} className={background === color ? "background-swatch active" : "background-swatch"} style={{ background: color }} aria-label={"Set background " + color} onClick={() => setBackground(color)}/>)}</div><label className="control-label" htmlFor="video-custom-bg">Custom colour</label><input className="editor-color-input" id="video-custom-bg" type="color" value={background} onChange={(event) => setBackground(event.target.value)}/><div className="sidebar-divider"/><div className="control-group"><label className="control-label" htmlFor="video-fit">Template fit</label><select id="video-fit" className="editor-select" value={fit} onChange={(event) => setFit(event.target.value as "cover" | "contain")}><option value="cover">Fill canvas</option><option value="contain">Fit whole frame</option></select></div></div>}
+        {panel === "effects" && <div className="editor-tool-panel"><div className="panel-label">Video effects <span>Live preview</span></div><p className="control-help">Adjust the source clip; captions and stickers remain sharp. Effects are included in exports.</p><div className="control-group"><label className="control-label" htmlFor="video-brightness">Brightness <span>{brightness}%</span></label><input id="video-brightness" className="editor-range" type="range" min="50" max="160" value={brightness} onChange={(event) => setBrightness(Number(event.target.value))}/></div><div className="control-group"><label className="control-label" htmlFor="video-contrast">Contrast <span>{contrast}%</span></label><input id="video-contrast" className="editor-range" type="range" min="50" max="160" value={contrast} onChange={(event) => setContrast(Number(event.target.value))}/></div><div className="control-group"><label className="control-label" htmlFor="video-saturation">Saturation <span>{saturation}%</span></label><input id="video-saturation" className="editor-range" type="range" min="0" max="200" value={saturation} onChange={(event) => setSaturation(Number(event.target.value))}/></div><div className="inspector-toggle-row"><label htmlFor="video-grayscale">Black &amp; white</label><input id="video-grayscale" type="checkbox" checked={grayscale} onChange={(event) => setGrayscale(event.target.checked)}/></div><button className="button button-paper button-small editor-full-button" onClick={() => { setBrightness(100); setContrast(100); setSaturation(100); setGrayscale(false); }}>Reset effects</button></div>}
         {panel === "layers" && <div className="editor-tool-panel"><div className="panel-label">Layers <span>{layers.length}</span></div><div className="editor-layer-list">{layers.map((layer,index) => <div key={layer.id} className={selectedId === layer.id ? "editor-layer-row active" : "editor-layer-row"}><button className="layer-select" onClick={() => { setSelectedId(layer.id); setPanel(layer.kind === "text" ? "text" : "overlay"); }}>{layer.kind === "text" ? <Type size={15}/> : <ImagePlus size={15}/>}<span>{layer.name}</span></button><button className="layer-icon-button" disabled={index === layers.length - 1} aria-label="Move forward" onClick={() => moveLayer(layer.id, 1)}><BringToFront size={14}/></button><button className="layer-icon-button" disabled={index === 0} aria-label="Move backward" onClick={() => moveLayer(layer.id, -1)} onPointerDown={(event) => event.stopPropagation()}><ArrowLeft size={14}/></button><button className="layer-icon-button" aria-label="Hide or show layer" onClick={() => updateLayer(layer.id, { opacity: layer.opacity === 0 ? 1 : 0 })}>{layer.opacity === 0 ? <EyeOff size={14}/> : <Eye size={14}/>}</button></div>)}</div><button className="button button-paper button-small editor-full-button" onClick={duplicateLayer} disabled={!selected}><Copy size={14}/> Duplicate selected</button><button className="button button-plain button-small editor-full-button" onClick={deleteLayer} disabled={!selected}><Trash2 size={14}/> Delete selected</button></div>}
       </aside>
       <section className="editor-center editor-center-upgraded video-center">
         <div className="canvas-workspace-meta"><span><span className="canvas-live-dot"/> Live motion preview</span><span>{width} × {height}</span><span>{layers.length} layers</span></div>
         {loading && <div className="empty-state"><Clapperboard size={26}/><h2>Loading the moving template…</h2></div>}
         {template && <div className="canvas-stage-shell"><div ref={stageRef} className="editor-canvas-stage video-canvas-stage" style={{ width: "min(100%, " + Math.min(680, Math.max(180, Math.floor(viewportHeight * .65 * width / height))) + "px)", aspectRatio: width + " / " + height, background }} onPointerMove={onStageMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
-          {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="auto" style={{ objectFit: fit }} />}
+          {template.mediaType === "gif" ? <img ref={gifRef} className="editor-base-image" src={safeMediaUrl} alt={template.name} draggable={false} style={{ objectFit: fit, filter: effectFilter }}/> : <video ref={videoRef} className="editor-base-image" src={safeMediaUrl} poster={template.posterUrl || undefined} muted={!videoAudioEnabled} loop autoPlay playsInline controls={false} preload="auto" style={{ objectFit: fit, filter: effectFilter }} />}
           {layers.map((layer,index) => <div key={layer.id} className={selectedId === layer.id ? "editor-object selected" : "editor-object"} role="button" tabIndex={0} aria-label={"Select " + layer.name} style={{ left: layer.x + "%", top: layer.y + "%", width: layer.w + "%", height: layer.h + "%", zIndex: index + 2, opacity: layer.opacity, transform: "translate(-50%, -50%) rotate(" + layer.rotation + "deg)" }} onPointerDown={(event) => onDragStart(event,layer)} onClick={() => setSelectedId(layer.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedId(layer.id); }}>
             {layer.kind === "text" ? <div className="editor-object-text" style={{ fontFamily: layer.fontFamily + ", Arial Black, sans-serif", fontSize: "clamp(12px, " + (layer.fontSize / 1080 * 100) + "cqw, 80px)", color: layer.color, textAlign: layer.align, textTransform: layer.uppercase ? "uppercase" : "none", WebkitTextStroke: layer.outline ? (layer.outlineWidth / 1080 * 100) + "cqw " + layer.outlineColor : "0 transparent", textShadow: layer.shadow ? "2px 2px 0 rgba(0,0,0,.5)" : "none" }}>{layer.text}</div> : <img className="editor-overlay-image" src={layer.src} alt={layer.name} draggable={false}/>}
             {selectedId === layer.id && <button type="button" className="object-resize-handle" aria-label="Resize selected layer" onPointerDown={(event) => onDragStart(event,layer,"resize")}/>}
@@ -363,7 +410,7 @@ export default function VideoEditorPage() {
         </>}
         {selectedImage && <><div className="control-group"><label className="control-label" htmlFor="video-overlay-name">Layer name</label><input id="video-overlay-name" className="editor-input" value={selectedImage.name} onChange={(event) => updateLayer(selectedImage.id,{name:event.target.value})}/></div><div className="control-group"><label className="control-label" htmlFor="video-overlay-opacity">Opacity <span>{Math.round(selectedImage.opacity*100)}%</span></label><input id="video-overlay-opacity" className="editor-range" type="range" min="0" max="1" step=".05" value={selectedImage.opacity} onChange={(event) => updateLayer(selectedImage.id,{opacity:Number(event.target.value)})}/></div></>}
         {selected && <><div className="sidebar-divider"/><div className="panel-label">Transform</div><div className="control-group"><label className="control-label" htmlFor="video-layer-rotation">Rotation <span>{selected.rotation}°</span></label><input id="video-layer-rotation" className="editor-range" type="range" min="-180" max="180" value={selected.rotation} onChange={(event) => updateLayer(selected.id,{rotation:Number(event.target.value)})}/></div><div className="dimension-inputs"><label>X<input type="number" min="0" max="100" value={Math.round(selected.x)} onChange={(event) => updateLayer(selected.id,{x:Math.max(0,Math.min(100,Number(event.target.value)))})}/></label><label>Y<input type="number" min="0" max="100" value={Math.round(selected.y)} onChange={(event) => updateLayer(selected.id,{y:Math.max(0,Math.min(100,Number(event.target.value)))})}/></label></div><div className="control-group"><label className="control-label" htmlFor="video-layer-width">Width <span>{Math.round(selected.w)}%</span></label><input id="video-layer-width" className="editor-range" type="range" min="6" max="100" value={selected.w} onChange={(event) => updateLayer(selected.id,{w:Number(event.target.value)})}/></div><div className="inspector-toggle-row"><label htmlFor="video-layer-visible">Visible</label><input id="video-layer-visible" type="checkbox" checked={selected.opacity>0} onChange={(event) => updateLayer(selected.id,{opacity:event.target.checked?1:0})}/></div><div className="editor-object-actions"><button className="button button-paper button-small" onClick={duplicateLayer}><Copy size={14}/> Duplicate</button><button className="button button-paper button-small" onClick={deleteLayer}><Trash2 size={14}/> Delete</button></div></>}
-        <div className="sidebar-divider"/><button className="button button-dark editor-full-button" onClick={exportWebm} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button>
+        <div className="sidebar-divider"/><button className="button button-paper editor-full-button" onClick={() => exportVideo("webm")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export WebM"}</button><button className="button button-dark editor-full-button" onClick={() => exportVideo("mp4")} disabled={busy || !template}><Download size={14}/> {busy ? "Rendering…" : "Export MP4"}</button>
       </aside>
     </div>}
     {notice && <div className="editor-toast"><div className="toast">{notice}</div></div>}
