@@ -24,7 +24,7 @@ function sourceUrl(template: VideoTemplate) {
 
 function VideoPreview({ template }: { template: VideoTemplate }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [posterFailed, setPosterFailed] = useState(false);
@@ -37,7 +37,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
   useEffect(() => {
     setVideoSrc(sourceUrl(template));
     setResolvedUrl(template.url);
-    setMuted(false);
+    setMuted(true);
     setReady(false);
     setFailed(false);
     setPosterFailed(false);
