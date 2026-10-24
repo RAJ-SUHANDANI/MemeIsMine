@@ -12,8 +12,16 @@ function mediaContentType(path: string, fallback: string | null) {
 async function handle(request: Request) {
   const incoming = new URL(request.url);
   const raw = incoming.searchParams.get("url");
+  const rawReferrer = incoming.searchParams.get("referrer");
   if (!raw) return NextResponse.json({ error: "Missing url parameter." }, { status: 400 });
   let target: URL;
+  let referrer = "https://indianmemetemplates.com/";
+  if (rawReferrer) {
+    try {
+      const candidate = new URL(rawReferrer);
+      if (candidate.protocol === "https:" && ALLOWED_HOSTS.has(candidate.hostname) && !MEDIA_PATH.test(candidate.pathname)) referrer = candidate.toString();
+    } catch { /* Keep the safe archive referrer. */ }
+  }
   try { target = new URL(raw); } catch { return NextResponse.json({ error: "Invalid media URL." }, { status: 400 }); }
   if (target.protocol !== "https:" || !ALLOWED_HOSTS.has(target.hostname) || !MEDIA_PATH.test(target.pathname) || !MEDIA_FILE.test(target.pathname)) {
     return NextResponse.json({ error: "Only GIF and video files from the template archive are supported." }, { status: 400 });
@@ -22,7 +30,7 @@ async function handle(request: Request) {
     const headers = new Headers({
       "User-Agent": "Mozilla/5.0 (compatible; MemeIsMineVideoEditor/1.0; +https://memeismine.vercel.app/)",
       "Accept": "video/mp4, video/webm, video/ogg, video/*;q=0.9, image/gif;q=0.8, */*;q=0.5",
-      "Referer": "https://indianmemetemplates.com/",
+      "Referer": referrer,
       "Origin": "https://indianmemetemplates.com",
       "Accept-Encoding": "identity",
     });
