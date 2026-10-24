@@ -23,21 +23,33 @@ function pickTemplates(items:MemeTemplate[],mode:FilterKey,excluded:Set<string>,
  let ranked=[...items];
  if(mode==="popular"){
   ranked.sort((a,b)=>(b.popularity??0)-(a.popularity??0));
-  ranked=shuffleTemplates(ranked.slice(0,Math.max(count,Math.ceil(ranked.length*.4))));
  }else if(mode==="trending"){
-  const trending=ranked.filter((item)=>item.trending);
-  ranked=(trending.length?trending:ranked.slice(0,Math.max(count,Math.ceil(ranked.length*.4)))).sort((a,b)=>(b.popularity??0)-(a.popularity??0));
-  ranked=shuffleTemplates(ranked);
+  ranked.sort((a,b)=>Number(Boolean(b.trending))-Number(Boolean(a.trending))||(b.popularity??0)-(a.popularity??0));
  }else if(mode==="recent"){
   ranked.sort((a,b)=>(b.publishedAt??"").localeCompare(a.publishedAt??""));
   if(ranked.every((item)=>!item.publishedAt))ranked.reverse();
-  ranked=shuffleTemplates(ranked.slice(0,Math.max(count,Math.ceil(ranked.length*.4))));
- }else ranked=shuffleTemplates(ranked);
+ }else{
+  ranked=shuffleTemplates(ranked);
+ }
  const fresh=ranked.filter((item)=>!excluded.has(item.id));
  const seen=ranked.filter((item)=>excluded.has(item.id));
- return [...fresh,...shuffleTemplates(seen)].slice(0,Math.min(count,items.length));
+ let candidates=fresh;
+ if(mode==="popular"||mode==="recent")candidates=fresh.slice(0,Math.max(count,Math.ceil(fresh.length*.5)));
+ if(mode==="trending"){
+  const freshTrending=fresh.filter((item)=>item.trending);
+  candidates=freshTrending.length>=count?freshTrending:(freshTrending.length?[...freshTrending,...fresh.filter((item)=>!item.trending)]:fresh);
+ }
+ let selected=shuffleTemplates(candidates).slice(0,count);
+ if(selected.length<count){
+  const chosen=new Set(selected.map((item)=>item.id));
+  selected=[...selected,...shuffleTemplates(fresh.filter((item)=>!chosen.has(item.id)))].slice(0,count);
+ }
+ if(selected.length<count){
+  const chosen=new Set(selected.map((item)=>item.id));
+  selected=[...selected,...shuffleTemplates(seen.filter((item)=>!chosen.has(item.id)))].slice(0,count);
+ }
+ return selected;
 }
-
 const groups=[
  {name:"Classics",tag:"THE TIMELESS ONES",copy:"Formats that have lived through a thousand group chats and somehow still work.",icon:Flame,count:"EVERGREEN",href:"/explore?category=Classics",className:"template-feature red"},
  {name:"Reaction images",tag:"SAY IT WITHOUT SAYING IT",copy:"The exact facial expression for when words are not doing the job.",icon:MessageCircle,count:"INSTANT CONTEXT",href:"/explore?category=Reaction",className:"template-feature ink"},
