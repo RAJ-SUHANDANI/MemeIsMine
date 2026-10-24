@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-const ALLOWED_HOSTS = new Set(["i.imgflip.com", "imgflip.com"]);
+const ALLOWED_HOSTS = new Set(["i.imgflip.com", "imgflip.com", "indianmemetemplates.com", "www.indianmemetemplates.com"]);
 export async function GET(request: Request) {
   const raw = new URL(request.url).searchParams.get("url");
   if (!raw) return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
