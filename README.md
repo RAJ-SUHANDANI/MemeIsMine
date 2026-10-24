@@ -1,6 +1,6 @@
 # Meme Is Mine
 
-A playful, editorial meme creation studio built with Next.js, TypeScript, Tailwind CSS, and Motion.
+An independent meme-creation studio with an editorial visual identity, animated templates, a browser-side editor and a local draft studio. Designed and developed by **Raj Suhandani**.
 
 ## Getting started
 
@@ -11,12 +11,31 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Product notes
+## Pages
+- `/` — landing page with floating meme-card motion and a creator spotlight
+- `/explore` — search, filter, sort and bookmark template formats
+- `/templates` — curated categories and routes into the template library
+- `/create/:id` — editor for a selected template
+- `/create/upload` — start with an image from your own device
+- `/studio` — drafts and bookmarks saved in the current browser
+- `/how-it-works` — how to create and export a meme
+- `/about` — product story and information about Raj Suhandani
+- `/faq` — interactive frequently asked questions
+- `/privacy` — plain-language data and storage details
+- `/contact` — portfolio, GitHub, LinkedIn and email links
+- `/api/memes` — template endpoint, with a bundled fallback
+- `/api/image` — image proxy restricted to approved template image hosts
 
-- Meme templates are bundled locally in `src/data/memes.ts`; the app does not require a meme API key.
-- Drafts and saved templates use browser local storage. There is no hosted database or email-verification service.
-- Meme export is generated in the browser using the Canvas API.
+## Stack
+Next.js App Router, React, TypeScript, Motion, Lucide icons, Tailwind CSS v4 and custom responsive CSS.
 
-## Deploy
+## Data and privacy notes
+- The public template endpoint retrieves up to 100 current templates from a no-key public feed where available, then falls back to bundled template metadata.
+- Meme images are provided by their respective source URLs. Each template card includes a small external link to the original template page; it is not part of the Meme Is Mine brand identity.
+- The editor exports PNGs in the browser using Canvas.
+- Drafts and bookmarks use browser localStorage. They are not uploaded to a hosted database and do not sync across devices.
+- Local image uploads are limited to 2.5 MB so data-URL drafts can remain in browser storage.
+- No hosted user database, email-verification service or external authentication provider is required.
 
-Import this repository into Vercel and use the default Next.js build settings.
+## Deployment
+Import the repository into Vercel and use the standard Next.js build settings. Build command: `npm run build`.

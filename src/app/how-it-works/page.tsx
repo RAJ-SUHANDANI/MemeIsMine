@@ -1,0 +1,23 @@
+"use client";
+import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowRight, Download, ImagePlus, Layers3, MousePointer2, Type, WandSparkles } from "lucide-react";
+import { SiteHeader } from "@/components/site";
+export default function HowItWorksPage(){
+ const reduce=useReducedMotion();
+ const steps=[
+  {number:"01",title:"Find a format",body:"Search the template library or browse by the kind of moment you’re trying to capture. Classics, reaction images, absurd formats. Start with the right raw material.",icon:Layers3,detail:"SEARCH · FILTER · PICK"},
+  {number:"02",title:"Make it yours",body:"Open the editor and write your own captions. Adjust size, typeface, colour, alignment, and outline while the canvas updates live.",icon:Type,detail:"CAPTION · TUNE · PREVIEW"},
+  {number:"03",title:"Bring your own",body:"Have a better image? Upload a JPG, PNG, or WebP from your device and use the same editor controls on your own picture.",icon:ImagePlus,detail:"UPLOAD · PERSONALISE"},
+  {number:"04",title:"Save or send",body:"Download a 1080 × 1080 PNG directly from the browser or save a draft to continue later on the same device.",icon:Download,detail:"EXPORT · SAVE · SHARE"},
+ ];
+ return <main className="paper-noise"><SiteHeader/>
+  <section className="page-hero"><div className="container"><span className="eyebrow">A punchline in four moves</span><h1>From blank page<br/>to <span>sent.</span></h1><p>No account wall, no complicated timeline, no creative software course required.</p></div></section>
+  <section className="section"><div className="container workflow-layout"><div className="workflow-sticky"><span className="eyebrow">The whole process</span><h2 className="page-display">LESS FUSS.<br/><em>MORE FUNNY.</em></h2><p>A small, direct tool for the moment when the joke is already in your head.</p><Link href="/explore" className="button button-dark">Start creating <ArrowRight size={16}/></Link><div className="workflow-orbit"><motion.div className="workflow-orbit-card" animate={reduce?undefined:{rotateY:[-7,7,-7],rotateX:[3,-3,3],y:[0,-8,0]}} transition={{duration:8,repeat:Infinity,ease:"easeInOut"}}><div className="workflow-browser-dots"><i/><i/><i/></div><div className="workflow-card-scribble">THE<br/><em>IDEA</em><br/>LANDED.</div><div className="workflow-card-foot">MIM / STUDIO <span>↗</span></div></motion.div></div></div>
+   <div className="workflow-steps">{steps.map((step,i)=><motion.article className="workflow-step" key={step.number} initial={reduce?false:{opacity:0,y:22}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:.25}} transition={{duration:.45,delay:.04*i}}><div className="workflow-step-head"><span>{step.number} / PROCESS</span><step.icon size={22}/></div><h3>{step.title}</h3><p>{step.body}</p><small>{step.detail}</small><div className="workflow-progress"><span style={{width:`${(i+1)*25}%`}}/></div></motion.article>)}</div>
+  </div></section>
+  <section className="section section-dark"><div className="container"><div className="section-head"><div><span className="eyebrow">Designed around the actual task</span><h2 className="section-title">EVERY CLICK<br/><span className="serif-italic">HAS A PURPOSE.</span></h2></div></div><div className="about-principles"><article><MousePointer2/><small>01 / DIRECT</small><h3>Fast path to create.</h3><p>The main actions take you straight into the library or editor.</p></article><article><WandSparkles/><small>02 / FLEXIBLE</small><h3>Your words, your way.</h3><p>Choose a ready made format or begin with a local image.</p></article><article><Download/><small>03 / YOURS</small><h3>Export on your device.</h3><p>The current editor creates PNGs in your browser instead of asking for an account.</p></article></div><div style={{marginTop:36}}><Link href="/faq" className="text-link" style={{color:"var(--paper)",borderColor:"var(--paper)"}}>Questions about the editor? <ArrowRight size={15}/></Link></div></div></section>
+  <section className="cta-section"><div className="container"><div className="cta-panel"><div><span className="eyebrow">Okay, enough explaining</span><h2>The joke won’t<br/>write itself.</h2></div><Link href="/explore" className="button button-dark">Pick a template <ArrowRight size={16}/></Link></div></div></section>
+  <footer className="site-footer"><div className="container footer-inner"><div className="footer-copy">Meme Is Mine · How it works</div><div className="footer-links"><Link href="/">Home</Link><Link href="/templates">Templates</Link><Link href="/about">About</Link></div><span className="footer-copy">Made by Raj Suhandani</span></div></footer>
+ </main>;
+}

@@ -1,0 +1,16 @@
+"use client";
+import Link from "next/link";
+import { LockKeyhole, HardDrive, Image, ShieldCheck } from "lucide-react";
+import { SiteHeader } from "@/components/site";
+export default function PrivacyPage(){
+ return <main className="paper-noise"><SiteHeader/><section className="page-hero"><div className="container"><span className="eyebrow">Plain language, please</span><h1>Your memes.<br/><span>Your device.</span></h1><p>Meme Is Mine is designed to work without an account or a hosted user database.</p></div></section>
+  <section className="section"><div className="container privacy-layout"><aside className="privacy-aside"><div className="privacy-icon"><LockKeyhole size={28}/></div><span className="eyebrow">Privacy overview</span><h2 className="page-display">LOCAL BY<br/><em>DEFAULT.</em></h2><p>Last updated October 24, 2026</p></aside><article className="privacy-copy">
+    <p className="privacy-lede">The current Meme Is Mine experience does not ask you to create an account, does not request your email, and does not save your drafts to a hosted database.</p>
+    <section><h3><HardDrive size={19}/> Drafts and bookmarks</h3><p>When you save a draft or bookmark a format, the information is stored in your browser’s localStorage. It stays in that browser profile on that device. Anyone with access to your browser profile may be able to see it, and clearing site data can remove it. There is no cross-device sync.</p></section>
+    <section><h3><Image size={19}/> Images and uploads</h3><p>Images selected from your device are processed in the browser for preview and export. This version does not upload your personal image to a Meme Is Mine user account or remote database. The editor limits local uploads to 2.5 MB so an image can be stored with a draft where applicable.</p><p>The template gallery may request image files from outside image hosts. Those providers can receive the usual connection information when your browser loads their content. Use images you have permission to edit or share.</p></section>
+    <section><h3><ShieldCheck size={19}/> APIs and services</h3><p>The template route may fetch a public template list from an external service and caches the response where the hosting platform supports it. The image proxy only allows configured image hostnames. We do not use an email verification service, hosted authentication service, or a managed user database in this version.</p></section>
+    <section><h3>Limits to keep in mind</h3><p>This page describes the current implementation, not a legal guarantee. Hosting, access logs, external image providers, and browser storage each have their own behavior and policies. Avoid storing sensitive information in drafts.</p></section>
+    <div className="privacy-callout">Questions about how the current version handles data? <Link href="/contact">Contact Raj <span>↗</span></Link></div>
+  </article></div></section>
+  <footer className="site-footer"><div className="container footer-inner"><div className="footer-copy">Meme Is Mine · Privacy</div><div className="footer-links"><Link href="/about">About</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link></div><span className="footer-copy">Created by Raj Suhandani</span></div></footer></main>;
+}
