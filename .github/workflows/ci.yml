@@ -18,5 +18,7 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Validate catalog crawler syntax
+        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs
       - name: Build application
         run: npm run build
