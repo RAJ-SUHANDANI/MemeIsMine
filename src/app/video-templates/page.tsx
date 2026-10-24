@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, Download, Film, Search, Sparkles, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, Download, Film, Search, Sparkles, Video, Volume2, VolumeX } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
 type VideoTemplate = {
@@ -20,6 +20,75 @@ const filters = [
 function sourceUrl(template: VideoTemplate) {
   return "/api/video-source?url=" + encodeURIComponent(template.url);
 }
+
+function VideoPreview({ template }: { template: VideoTemplate }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = muted;
+    video.volume = 1;
+    const attempt = video.play();
+    if (attempt) {
+      attempt.catch(() => {
+        // Browsers commonly block audible autoplay. Keep the preview moving silently
+        // until the viewer explicitly turns sound on.
+        const current = videoRef.current;
+        if (!current) return;
+        current.muted = true;
+        setMuted(true);
+        void current.play().then(() => setReady(true)).catch(() => undefined);
+      });
+    }
+  }, [template.url, muted]);
+
+  function toggleMute(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !muted;
+    video.muted = nextMuted;
+    if (!nextMuted) video.volume = 1;
+    setMuted(nextMuted);
+    if (video.paused) void video.play().catch(() => {
+      video.muted = true;
+      setMuted(true);
+    });
+  }
+
+  return <div className="video-preview-player">
+    {(!ready || failed) && <div className="video-preview-placeholder">
+      {template.posterUrl
+        ? <img src={template.posterUrl} alt="" loading="lazy"/>
+        : <div className="video-preview-placeholder-art"><Clapperboard size={30}/><span>VIDEO PREVIEW</span></div>}
+    </div>}
+    <video
+      ref={videoRef}
+      className={ready && !failed ? "video-preview-video is-ready" : "video-preview-video"}
+      src={sourceUrl(template)}
+      poster={template.posterUrl || undefined}
+      muted={muted}
+      autoPlay
+      loop
+      playsInline
+      preload="auto"
+      onLoadedData={() => setReady(true)}
+      onCanPlay={() => setReady(true)}
+      onError={() => setFailed(true)}
+      aria-label={template.name}
+    />
+    <button type="button" className="video-audio-toggle" onClick={toggleMute} aria-label={muted ? "Unmute video" : "Mute video"} title={muted ? "Unmute video" : "Mute video"}>
+      {muted ? <VolumeX size={15}/> : <Volume2 size={15}/>}
+      <span>{muted ? "Unmute" : "Mute"}</span>
+    </button>
+  </div>;
+}
+
 export default function VideoTemplatesPage() {
   const reduce = useReducedMotion();
   const [templates, setTemplates] = useState<VideoTemplate[]>([]);
@@ -80,7 +149,7 @@ export default function VideoTemplatesPage() {
       {!loading && !error && templates.length === 0 && <div className="video-empty-state"><div className="video-empty-icon"><Clapperboard size={28}/></div><h2>The motion catalog is syncing.</h2><p>Video clips are kept in their original format. New templates will appear here as the video catalog refreshes.</p><div className="video-empty-actions"><Link className="button button-paper" href="/templates">Browse image templates <ArrowRight size={15}/></Link></div></div>}
       {templates.length > 0 && <div className="video-template-grid">{templates.map((template, index) => <motion.article key={template.id} className="video-template-card" initial={reduce ? false : { opacity: 0, y: 18, rotate: index % 2 ? 1 : -1 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: .08 }} transition={{ duration: .35, delay: Math.min(index % 6, 5) * .035 }} whileHover={reduce ? undefined : { y: -6, rotate: index % 2 ? 1 : -1 }}>
         <div className="video-template-preview">
-          {template.mediaType === "gif" ? <Link className="video-template-media-link" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}><img src={sourceUrl(template)} alt={template.name} loading={index < 4 ? "eager" : "lazy"}/></Link> : <video src={sourceUrl(template)} poster={template.posterUrl || undefined} controls loop playsInline preload="metadata" aria-label={template.name}/>}
+          {template.mediaType === "gif" ? <Link className="video-template-media-link" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}><img src={sourceUrl(template)} alt={template.name} loading={index < 4 ? "eager" : "lazy"}/></Link> : <VideoPreview template={template}/>}
           <span className="video-kind-pill">{template.mediaType === "gif" ? "GIF" : "VIDEO"}</span><Link className={template.mediaType === "video" ? "video-edit-cue video-edit-cue-video" : "video-edit-cue"} href={"/video-editor/" + encodeURIComponent(template.id)}><Sparkles size={13}/> Edit this template <ArrowUpRight size={14}/></Link>
         </div>
         <div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category}</span></div></div>
