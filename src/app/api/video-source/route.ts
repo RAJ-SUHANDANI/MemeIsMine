@@ -19,18 +19,25 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "Only GIF and video files from the template archive are supported." }, { status: 400 });
   }
   try {
-    const headers = new Headers({ "User-Agent": "MemeIsMineVideoEditor/1.0", "Accept": "image/gif, */*" });
+    const headers = new Headers({
+      "User-Agent": "Mozilla/5.0 (compatible; MemeIsMineVideoEditor/1.0; +https://memeismine.vercel.app/)",
+      "Accept": "video/mp4, video/webm, video/ogg, video/*;q=0.9, image/gif;q=0.8, */*;q=0.5",
+      "Referer": "https://indianmemetemplates.com/",
+      "Origin": "https://indianmemetemplates.com",
+      "Accept-Encoding": "identity",
+    });
     const range = request.headers.get("range");
     if (range) headers.set("Range", range);
-    const upstream = await fetch(target.toString(), { method: request.method === "HEAD" ? "HEAD" : "GET", headers, cache: range ? "no-store" : "force-cache", next: range ? undefined : { revalidate: 86400 }, signal: AbortSignal.timeout(30000) });
+    const upstream = await fetch(target.toString(), { method: request.method === "HEAD" ? "HEAD" : "GET", headers, cache: range ? "no-store" : "force-cache", next: range ? undefined : { revalidate: 86400 }, signal: AbortSignal.timeout(45000) });
     if (!upstream.ok && upstream.status !== 206) {
       return NextResponse.json({ error: "The source media is unavailable right now.", status: upstream.status }, { status: upstream.status === 404 ? 404 : 502 });
     }
     const outHeaders = new Headers();
     outHeaders.set("Content-Type", mediaContentType(target.pathname, upstream.headers.get("content-type")));
     outHeaders.set("Cache-Control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400");
+    outHeaders.set("Accept-Ranges", upstream.headers.get("accept-ranges") ?? "bytes");
     outHeaders.set("X-Content-Type-Options", "nosniff");
-    for (const name of ["content-length", "content-range", "accept-ranges", "last-modified", "etag"]) {
+    for (const name of ["content-length", "content-range", "last-modified", "etag"]) {
       const value = upstream.headers.get(name);
       if (value) outHeaders.set(name, value);
     }
