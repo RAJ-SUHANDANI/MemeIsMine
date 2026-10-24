@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowLeft, ArrowUpRight, Bookmark, BringToFront, Check, ChevronDown, Copy, Download, Eye, EyeOff, FlipHorizontal,
-  ImagePlus, Layers, Lock, Move, Palette, Redo2, RotateCcw, RotateCw, Save, Shapes, SlidersHorizontal,
+  ArrowLeft, ArrowUpRight, BringToFront, Check, Copy, Download, Eye, EyeOff, FlipHorizontal,
+  ImagePlus, Layers, Move, Palette, Redo2, RotateCcw, Save, Shapes, SlidersHorizontal,
   Sparkles, Trash2, Type, Undo2, Upload, X, ZoomIn
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -144,14 +144,14 @@ export default function EditorPage() {
       const draft = stored.find((item) => item.id === draftId);
       if (!draft) return;
       if (draft.templateId === "upload" && draft.url.startsWith("data:")) setUploadedUrl(draft.url);
-      setObjects(draft.objects?.length ? draft.objects : [
-        { ...DEFAULT_OBJECTS[0], text: draft.topText, fontSize: draft.fontSize, outline: draft.outline },
-        { ...DEFAULT_OBJECTS[1], text: draft.bottomText, fontSize: draft.fontSize, outline: draft.outline },
-      ]);
-      objectsRef.current = draft.objects?.length ? draft.objects : [
+      const restoredObjects = draft.objects?.length ? draft.objects : [
         { ...DEFAULT_OBJECTS[0], text: draft.topText, fontSize: draft.fontSize, outline: draft.outline },
         { ...DEFAULT_OBJECTS[1], text: draft.bottomText, fontSize: draft.fontSize, outline: draft.outline },
       ];
+      setObjects(restoredObjects);
+      objectsRef.current = restoredObjects;
+      setHistory([restoredObjects]);
+      setHistoryIndex(0);
       if (draft.canvasWidth) setCanvasWidth(draft.canvasWidth);
       if (draft.canvasHeight) setCanvasHeight(draft.canvasHeight);
       if (draft.backgroundColor) setBackgroundColor(draft.backgroundColor);
@@ -169,12 +169,10 @@ export default function EditorPage() {
   const rememberObjects = useCallback((next: EditorObject[]) => {
     setObjects(next);
     objectsRef.current = next;
-    setHistory((previous) => {
-      const base = historyIndex >= 0 ? previous.slice(0, historyIndex + 1) : previous;
-      const updated = [...base, next.map((item) => ({ ...item }))].slice(-60);
-      setHistoryIndex(updated.length - 1);
-      return updated;
-    });
+    const base = historyIndex >= 0 ? history.slice(0, historyIndex + 1) : history;
+    const updated = [...base, next.map((item) => ({ ...item }))].slice(-60);
+    setHistory(updated);
+    setHistoryIndex(updated.length - 1);
     setSaved(false);
   }, [historyIndex]);
   function patchObject(objectId: string, patch: Partial<EditorObject>) {
@@ -267,12 +265,10 @@ export default function EditorPage() {
   function stopDrag() {
     if (!drag) return;
     const finalObjects = objectsRef.current.map((item) => ({ ...item }));
-    setHistory((previous) => {
-      const base = historyIndex >= 0 ? previous.slice(0, historyIndex + 1) : previous;
-      const updated = [...base, finalObjects].slice(-60);
-      setHistoryIndex(updated.length - 1);
-      return updated;
-    });
+    const base = historyIndex >= 0 ? history.slice(0, historyIndex + 1) : history;
+    const updated = [...base, finalObjects].slice(-60);
+    setHistory(updated);
+    setHistoryIndex(updated.length - 1);
     setDrag(null);
   }
   function renderTextPreview(item: TextObject) {
@@ -362,8 +358,9 @@ export default function EditorPage() {
 
   function selectTemplate(item: MemeTemplate) {
     setTemplate(item); setUploadedUrl(null); setSaved(false);
-    setObjects(DEFAULT_OBJECTS.map((object) => object.kind === "text" && object.id === "caption-top" ? { ...object, text: item.name.toUpperCase() } : object));
-    objectsRef.current = DEFAULT_OBJECTS.map((object) => object.kind === "text" && object.id === "caption-top" ? { ...object, text: item.name.toUpperCase() } : object);
+    const nextObjects = DEFAULT_OBJECTS.map((object) => object.kind === "text" && object.id === "caption-top" ? { ...object, text: item.name.toUpperCase() } : object);
+    setObjects(nextObjects); objectsRef.current = nextObjects;
+    setHistory([nextObjects]); setHistoryIndex(0);
     setSelectedId("caption-top"); templateInitialized.current = true;
   }
   function setSelectedPatch(patch: Partial<EditorObject>) {
