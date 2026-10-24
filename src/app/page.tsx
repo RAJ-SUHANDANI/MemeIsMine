@@ -32,7 +32,7 @@ export default function HomePage() {
     fetch("/api/memes?limit=100", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok || !data?.success || !Array.isArray(data.memes)) throw new Error("Imgflip memes are unavailable.");
+        if (!response.ok || !data?.success || !Array.isArray(data.memes)) throw new Error("Image templates are unavailable.");
         return data.memes as MemeTemplate[];
       })
       .then((imgflipMemes) => {
