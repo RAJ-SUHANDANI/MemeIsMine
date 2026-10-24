@@ -8,7 +8,7 @@ const OUTPUT = resolve("src/data/indian-meme-templates.json");
 const DELAY_MS = 1000;
 const MAX_PAGES = 500;
 const VERIFY_CONCURRENCY = 5;
-const VERIFY_DELAY_MS = 250;
+const VERIFY_DELAY_MS = 300;
 
 const sleep = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
 
