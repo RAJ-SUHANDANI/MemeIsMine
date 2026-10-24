@@ -265,7 +265,7 @@ export async function GET(request: Request) {
         query: query || null, page, limit, count: memes.length, pageCount: memes.length,
         totalItems, totalPages, hasPreviousPage: page > 1, hasNextPage: page < totalPages,
         memes: memes.map(publicMeme),
-      }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
+      }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
     }
 
     const url = archiveUrl(page, query, sort);
