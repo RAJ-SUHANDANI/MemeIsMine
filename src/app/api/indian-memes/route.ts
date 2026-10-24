@@ -65,11 +65,21 @@ function getImageUrl(block: string): string | null {
   }
   return null;
 }
+function hasAnimatedContent(html: string): boolean {
+  return /<video\b/i.test(html)
+    || /<source\b[^>]*src\s*=\s*["'][^"']+\.(?:gif|mp4|webm|mov|m4v|ogv)(?:[?#"']|$)/i.test(html)
+    || /<meta\b(?=[^>]*(?:property|name)=["'](?:og:video|twitter:player:stream|video:url)["'])/i.test(html)
+    || /<iframe\b[^>]*src\s*=\s*["'][^"']*(?:youtube\.com\/embed|youtu\.be\/|vimeo\.com\/video|dailymotion\.com\/embed)/i.test(html);
+}
+function isClearlyVideoPost(item: Pick<IndianTemplate, "id" | "name">): boolean {
+  return /\bvideo(?:s|[- ]meme|[- ]template|[- ]editing|[- ]dikhaye)?\b|\bmeme[- ]clips?\b|\bfootage\b|\banimated[- ]meme\b/i.test(item.id + " " + item.name);
+}
 function extractCards(html: string): IndianTemplate[] {
   const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
   const blocks = articles.length ? articles : html.split(/(?=<h2\b|<h3\b)/i).slice(1);
   const found = new Map<string, IndianTemplate>();
   for (const block of blocks) {
+    if (hasAnimatedContent(block)) continue;
     const heading = block.match(/<h[1-3]\b[^>]*>[\s\S]*?<a\b[^>]*href=(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[1-3]>/i);
     if (!heading) continue;
     const originalUrl = allowedSiteUrl(decodeEntities(heading[2]));
@@ -193,7 +203,12 @@ export async function GET(request: Request) {
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
   const videoIds = new Set((videoCatalog as { id: string; url: string }[]).map((item) => item.id));
-  const snapshot = (snapshotData as IndianTemplate[]).filter((item) => !videoIds.has(item.id) && !/\.(mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.url));
+  const snapshot = (snapshotData as IndianTemplate[]).filter((item) =>
+    !videoIds.has(item.id)
+    && !/\.(gif|mp4|webm|mov|m4v|ogv)(?:[?#]|$)/i.test(item.url)
+    && !isClearlyVideoPost(item)
+    && (item as IndianTemplate & { mediaType?: string }).mediaType !== "video"
+  );
 
   try {
     if (slug) {
@@ -209,6 +224,7 @@ export async function GET(request: Request) {
       if (!originalUrl) return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
       const { html, response } = await fetchHtml(originalUrl);
       if (!response.ok) return NextResponse.json({ success: false, error: "The template source is temporarily unavailable.", status: response.status }, { status: 502 });
+      if (hasAnimatedContent(html)) return NextResponse.json({ success: false, error: "This is an animated/video template. Open it from the video templates collection instead." }, { status: 404 });
       const titleTag = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? html.match(/<meta\b[^>]*property=["']og:title["'][^>]*>/i)?.[0] ?? "";
       const metaImageTag = html.match(/<meta\b(?=[^>]*property=["']og:image["'])[^>]*>/i)?.[0] ?? html.match(/<meta\b(?=[^>]*name=["']twitter:image["'])[^>]*>/i)?.[0];
       const image = allowedSiteUrl(metaImageTag ? attr(metaImageTag, "content") : null) ?? getImageUrl(html);
