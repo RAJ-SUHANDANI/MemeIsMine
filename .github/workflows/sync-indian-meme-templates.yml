@@ -1,6 +1,11 @@
 name: Sync Indian meme template catalog
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/sync-indian-meme-templates.mjs"
+      - ".github/workflows/sync-indian-meme-templates.yml"
   workflow_dispatch:
   schedule:
     - cron: "23 3 * * 1"
