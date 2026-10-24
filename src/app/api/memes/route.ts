@@ -3,7 +3,7 @@ import { starterMemes, categoryFor } from "@/data/memes";
 export const revalidate = 3600;
 type ImgflipMeme = { id: string; name: string; url: string; width: number; height: number; box_count: number };
 const TRENDING_FORMATS = /drake|woman yelling|distracted boyfriend|two buttons|doge|mocking spongebob|change my mind|expanding brain|success kid|hide the pain harold|gru.?s plan|trade offer|uno draw 25|disaster girl|epic handshake|ancient aliens|always has been|this is fine|stonks|crying cat/i;
-function enrichMeme(meme: ImgflipMeme & Partial<ReturnType<typeof starterMemes[number]>>, index: number, total: number) {
+function enrichMeme(meme: ImgflipMeme & Partial<(typeof starterMemes)[number]>, index: number, total: number) {
   return {
     ...meme,
     category: meme.category ?? categoryFor(meme.name),
