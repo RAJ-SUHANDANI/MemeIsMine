@@ -89,6 +89,6 @@ export default function HomePage() {
         <article><span>03 / KEEP IT USEFUL</span><h3>Let people get on with it.</h3><p>Simple controls, browser based editing, and a direct download keep the main task clear.</p></article>
       </div>
     </section>
-    <footer className="site-footer"><div className="container footer-inner"><div><a href="/" className="brand-lockup" aria-label="Meme Is Mine home"><img src="/meme-is-mine-logo.svg" alt="Meme Is Mine" className="brand-full-logo"/></a><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/explore">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/about">About Raj</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
+    <footer className="site-footer"><div className="container footer-inner"><div><Link href="/" className="brand-lockup" aria-label="Meme Is Mine home"><img src="/meme-is-mine-logo.svg" alt="Meme Is Mine" className="brand-full-logo"/></Link><p className="footer-copy">Good memes. Better conversations.</p></div><div className="footer-links"><Link href="/explore">Explore templates</Link><Link href="/studio">Your studio</Link><Link href="/about">About Raj</Link><Link href="/faq">FAQ</Link><Link href="/contact">Contact</Link><Link href="/privacy">Privacy</Link></div><span className="footer-copy">Made for the group chat © 2026</span></div></footer>
   </main>;
 }
