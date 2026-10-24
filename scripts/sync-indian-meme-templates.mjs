@@ -198,7 +198,7 @@ async function main() {
   const discoveredGifs = new Map();
   try {
     videoCatalog = JSON.parse(await readFile(videoCatalogPath, "utf8"));
-    videoSlugs = new Set(videoCatalog.filter((item) => /\.gif(?:[?#]|$)/i.test(item.url)).map((item) => item.id));
+    videoSlugs = new Set(videoCatalog.map((item) => item.id));
   } catch { console.warn("Video catalog is not available yet; image catalog will be collected without cross filtering."); }
   let trendingIds = new Set();
   let popularRanks = new Map();
@@ -242,12 +242,12 @@ async function main() {
   }
   if (all.size < 100) throw new Error("Only " + all.size + " records were collected. Refusing to replace the catalog with an incomplete result.");
   const records = [...all.values()];
-  const videosById = new Map(videoCatalog.filter((item) => /\.gif(?:[?#]|$)/i.test(item.url)).map((item) => [item.id, item]));
+  const videosById = new Map(videoCatalog.map((item) => [item.id, item]));
   for (const [id, gif] of discoveredGifs) videosById.set(id, gif);
   await mkdir(dirname(OUTPUT), { recursive: true });
   await writeFile(OUTPUT, JSON.stringify(records, null, 2) + "\n", "utf8");
   await writeFile(videoCatalogPath, JSON.stringify([...videosById.values()], null, 2) + "\n", "utf8");
-  console.log("Saved " + records.length + " still image templates and promoted " + discoveredGifs.size + " native GIF templates into the animated catalog. Media files were not downloaded or copied.");
+  console.log("Saved " + records.length + " still image templates and promoted " + discoveredGifs.size + " native GIF templates into the animated catalog. Video archive slugs remain excluded from the still-image catalog. Media files were not downloaded or copied.");
 }
 main().catch((error) => {
   console.error("Template catalog sync failed:", error instanceof Error ? error.message : error);
