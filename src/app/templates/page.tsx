@@ -63,7 +63,8 @@ export default function TemplatesPage(){
     if(!alive)return;
     // The /templates page is intentionally Imgflip-only. Indian archive images
     // (including video posters) belong in separate collections, not this index.
-    const unique=Array.from(new Map([...starterMemes,...pulled].map((item)=>[item.id,item])).values());
+    const apiTemplates=pulled.length?pulled:starterMemes;
+    const unique=Array.from(new Map(apiTemplates.map((item)=>[item.id,item])).values());
     const seen=readSeenTemplates();
     setAllTemplates(unique); setSeenIds(seen);
     setVisibleTemplates(pickTemplates(unique,"surprise",new Set(seen),12));
