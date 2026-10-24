@@ -27,25 +27,89 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [posterFailed, setPosterFailed] = useState(false);
+  const [active, setActive] = useState(false);
+  const [videoSrc, setVideoSrc] = useState(sourceUrl(template));
+  const [refreshAttempted, setRefreshAttempted] = useState(false);
+  const [directFallbackTried, setDirectFallbackTried] = useState(false);
+
+  useEffect(() => {
+    setVideoSrc(sourceUrl(template));
+    setMuted(false);
+    setReady(false);
+    setFailed(false);
+    setPosterFailed(false);
+    setRefreshAttempted(false);
+    setDirectFallbackTried(false);
+    setActive(false);
+  }, [template.id, template.url]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = false;
-    video.volume = 1;
-    const attempt = video.play();
-    if (attempt) {
-      attempt.catch(() => {
-        // Browsers commonly block audible autoplay. Keep the preview moving silently
-        // until the viewer explicitly turns sound on.
-        const current = videoRef.current;
-        if (!current) return;
-        current.muted = true;
-        setMuted(true);
-        void current.play().then(() => setReady(true)).catch(() => undefined);
-      });
+    if (typeof IntersectionObserver === "undefined") {
+      setActive(true);
+      return;
     }
-  }, [template.url]);
+    const observer = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      if (entry.isIntersecting) {
+        setActive(true);
+      } else {
+        video.pause();
+      }
+    }, { rootMargin: "260px 0px" });
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [template.id]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !active || !videoSrc) return;
+    video.muted = muted;
+    video.volume = 1;
+    void video.play().catch(() => {
+      // Audible autoplay is restricted by most browsers. Keep the preview moving,
+      // then let the user explicitly turn audio back on.
+      const current = videoRef.current;
+      if (!current) return;
+      current.muted = true;
+      setMuted(true);
+      void current.play().then(() => setReady(true)).catch(() => undefined);
+    });
+  }, [active, videoSrc]);
+
+  async function recoverVideo() {
+    if (refreshAttempted) {
+      if (!directFallbackTried) {
+        setDirectFallbackTried(true);
+        setVideoSrc(template.url);
+        setFailed(false);
+        setReady(false);
+        return;
+      }
+      setFailed(true);
+      return;
+    }
+    setRefreshAttempted(true);
+    try {
+      const response = await fetch("/api/video-templates?slug=" + encodeURIComponent(template.id) + "&refresh=1", { cache: "no-store" });
+      const data = await response.json();
+      const freshUrl = data?.template?.url as string | undefined;
+      if (response.ok && data?.success && freshUrl && freshUrl !== template.url) {
+        setVideoSrc(sourceUrl({ ...template, url: freshUrl }));
+        setFailed(false);
+        setReady(false);
+        return;
+      }
+    } catch {
+      // Try the source URL directly below if refreshing the catalog fails.
+    }
+    setDirectFallbackTried(true);
+    setVideoSrc(template.url);
+    setFailed(false);
+    setReady(false);
+  }
 
   function toggleMute(event: ReactMouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -66,21 +130,21 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
     {(!ready || failed) && <div className="video-preview-placeholder">
       {template.posterUrl && !posterFailed
         ? <img src={template.posterUrl} alt="" loading="lazy" onError={() => setPosterFailed(true)}/>
-        : <div className="video-preview-placeholder-art"><Clapperboard size={30}/><span>VIDEO PREVIEW</span></div>}
+        : <div className="video-preview-placeholder-art"><Clapperboard size={30}/><span>{failed ? "PREVIEW UNAVAILABLE" : "VIDEO PREVIEW"}</span></div>}
     </div>}
     <video
       ref={videoRef}
       className={ready && !failed ? "video-preview-video is-ready" : "video-preview-video"}
-      src={sourceUrl(template)}
+      src={active ? videoSrc : undefined}
       poster={template.posterUrl || undefined}
       muted={muted}
-      autoPlay
+      autoPlay={active}
       loop
       playsInline
-      preload="auto"
-      onLoadedData={() => setReady(true)}
-      onCanPlay={() => setReady(true)}
-      onError={() => setFailed(true)}
+      preload={active ? "metadata" : "none"}
+      onLoadedData={() => { setReady(true); setFailed(false); }}
+      onCanPlay={() => { setReady(true); setFailed(false); }}
+      onError={() => { void recoverVideo(); }}
       aria-label={template.name}
     />
     <button type="button" className="video-audio-toggle" onClick={toggleMute} aria-label={muted ? "Unmute video" : "Mute video"} title={muted ? "Unmute video" : "Mute video"}>
