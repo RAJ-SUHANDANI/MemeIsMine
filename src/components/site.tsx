@@ -14,7 +14,7 @@ export function BrandLogo({ compact = false }: { compact?: boolean }) {
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const links = [{ href: "/explore", label: "Explore" }, { href: "/templates", label: "Templates" }, { href: "/video-templates", label: "Video templates" }, { href: "/how-it-works", label: "How it works" }, { href: "/about", label: "About" }];
+  const links = [{ href: "/explore", label: "Explore" }, { href: "/templates", label: "Templates" }, { href: "/video-templates", label: "Video templates" }, { href: "/how-it-works", label: "How it works" }, { href: "/about", label: "About" }, { href: "/add-review", label: "Add a review" }];
   return <header className="site-header"><div className="header-inner">
     <BrandLogo/>
     <nav className="desktop-nav" aria-label="Main navigation">{links.map((link) => <Link key={link.href} href={link.href} className={pathname === link.href ? "nav-link active" : "nav-link"}>{link.label}</Link>)}</nav>
