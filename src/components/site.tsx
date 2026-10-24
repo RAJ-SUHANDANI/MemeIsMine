@@ -20,7 +20,7 @@ export function SiteHeader() {
     <nav className="desktop-nav" aria-label="Main navigation">{links.map((link) => <Link key={link.href} href={link.href} className={pathname === link.href ? "nav-link active" : "nav-link"}>{link.label}</Link>)}</nav>
     <div className="header-actions"><Link className="header-quiet" href="/studio">Studio</Link><Link className="button button-dark header-cta" href="/explore">Make a meme <ArrowUpRight size={15}/></Link></div>
     <button className="mobile-menu-toggle" type="button" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((value) => !value)}>{open ? <X/> : <Menu/>}</button>
-  </div>{open && <nav className="mobile-nav" aria-label="Mobile navigation">{links.map((link) => <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</Link>)}<a href="/#how-it-works" onClick={() => setOpen(false)}>How it works</a><Link href="/create/upload" onClick={() => setOpen(false)}>Upload your own</Link></nav>}</header>;
+  </div>{open && <nav className="mobile-nav" aria-label="Mobile navigation">{links.map((link) => <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</Link>)}<Link href="/studio" onClick={() => setOpen(false)}>Your studio</Link><Link href="/faq" onClick={() => setOpen(false)}>FAQ</Link><Link href="/contact" onClick={() => setOpen(false)}>Contact</Link><Link href="/privacy" onClick={() => setOpen(false)}>Privacy</Link><Link href="/create/upload" onClick={() => setOpen(false)}>Upload your own</Link></nav>}</header>;
 }
 
 const BOOKMARKS_KEY = "mim-bookmarks";
