@@ -162,7 +162,7 @@ async function main() {
       const mediaChoice = media.find((item) => item.type === "video") ?? media.find((item) => item.type === "gif");
       if (!mediaChoice) continue;
       results.push({
-        id: post.id, name, url: mediaChoice.url, posterUrl: post.posterUrl ?? mediaChoice.url,
+        id: post.id, name, url: mediaChoice.url, posterUrl: post.posterUrl ?? (mediaChoice.type === "gif" ? mediaChoice.url : ""),
         width: 0, height: 0, box_count: 2, category: "Video Memes",
         description: "Add your own captions and export a video in the browser.",
         source: "indianmemetemplates", originalUrl: post.originalUrl,
