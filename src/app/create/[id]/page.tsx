@@ -154,10 +154,11 @@ export default function EditorPage() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok || !data.success || !data.meme) throw new Error(data.error ?? "Template could not be loaded.");
-        if (!alive || draftId) return;
+        if (!alive) return;
         const item = data.meme as MemeTemplate;
         setTemplate(item);
         setUploadedUrl(null);
+        if (draftId) return;
         const initialObjects = DEFAULT_OBJECTS.map((object) => object.kind === "text" && object.id === "caption-top" ? { ...object, text: item.name.toUpperCase() } : object);
         setObjects(initialObjects); objectsRef.current = initialObjects;
         setHistory([initialObjects]); setHistoryIndex(0);
