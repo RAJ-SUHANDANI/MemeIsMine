@@ -338,7 +338,7 @@ export default function VideoEditorPage() {
         const proxySrc = mediaUrl(template.url, template.sourcePage, true);
         let probe: Response;
         try {
-          probe = await fetch(proxySrc, { headers: { Range: "bytes=0-1" }, cache: "no-store" });
+          probe = await fetch(proxySrc, { cache: "no-store" });
         } catch {
           toast("The source video plays, but the same-origin media proxy is unavailable. Export needs the proxy to work.");
           return;
