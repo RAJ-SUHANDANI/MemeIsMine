@@ -5,7 +5,7 @@ import ViewShot, { type ViewShotRef } from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, router } from "expo-router";
-import { ArrowLeft, Check, Download, ImagePlus, Save, Type, Undo2 } from "lucide-react-native";
+import { ArrowLeft, Download, Save, Type, Undo2 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TemplateCard } from "../../src/components/TemplateCard";
 import { getMemes, imageUri } from "../../src/lib/api";
@@ -16,7 +16,7 @@ import type { Draft, MemeTemplate } from "../../src/types";
 const defaultTop = "WHEN THE MEME HITS";
 const defaultBottom = "JUST RIGHT";
 export default function ImageEditorScreen() {
-  const { id, draft: draftId } = useLocalSearchParams<{ id: string; draft?: string }>();
+  const { id, draft: draftId, uri: uploadedUri } = useLocalSearchParams<{ id: string; draft?: string; uri?: string }>();
   const [catalog, setCatalog] = useState<MemeTemplate[]>([]);
   const [template, setTemplate] = useState<MemeTemplate | null>(null);
   const [topText, setTopText] = useState(defaultTop);
@@ -27,6 +27,7 @@ export default function ImageEditorScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const shot = useRef<ViewShotRef>(null);
+  const customImage = id === "upload" ? uploadedUri : undefined;
 
   useEffect(() => {
     let active = true;
@@ -39,7 +40,9 @@ export default function ImageEditorScreen() {
       if (draftId) {
         const draft = (await getDrafts()).find((item) => item.id === draftId);
         if (draft && active) {
-          setTopText(draft.topText); setBottomText(draft.bottomText); setTemplate(found ?? { id: draft.templateId, name: draft.name, url: draft.imageUrl, width: 0, height: 0 });
+          setTopText(draft.topText);
+          setBottomText(draft.bottomText);
+          setTemplate({ id: draft.templateId, name: draft.name, url: draft.imageUrl, width: 0, height: 0 });
         }
       }
     }).catch((reason) => { if (active) setMessage(reason instanceof Error ? reason.message : "Could not load template."); });
@@ -49,22 +52,32 @@ export default function ImageEditorScreen() {
   const randomize = useCallback(() => {
     if (!catalog.length) return;
     const next = catalog[Math.floor(Math.random() * catalog.length)];
-    setTemplate(next); setTopText(next.name.toUpperCase()); setBottomText("BUT MAKE IT YOURS");
+    setTemplate(next);
+    setTopText(next.name.toUpperCase());
+    setBottomText("BUT MAKE IT YOURS");
   }, [catalog]);
 
-  const previewUri = useMemo(() => template ? imageUri(template.url) : null, [template]);
+  const previewUri = useMemo(() => customImage || (template ? imageUri(template.url) : null), [template, customImage]);
+  const templateId = template?.id ?? "upload";
+  const templateName = template?.name ?? "My image";
   async function persist() {
-    if (!template) return;
+    if (!previewUri) return;
     const draft: Draft = {
-      id: draftId || `draft-${Date.now()}`, templateId: template.id, name: template.name,
-      imageUrl: template.url, topText, bottomText, updatedAt: new Date().toISOString(),
+      id: draftId || `draft-${Date.now()}`,
+      templateId,
+      name: templateName,
+      imageUrl: customImage || template?.url || "",
+      topText,
+      bottomText,
+      updatedAt: new Date().toISOString(),
     };
     await saveDraft(draft);
     setMessage("Saved to your studio.");
   }
   async function exportImage() {
-    if (!shot.current || !template) return;
-    setBusy(true); setMessage("");
+    if (!shot.current || !previewUri) return;
+    setBusy(true);
+    setMessage("");
     try {
       const uri = await shot.current.capture?.();
       if (!uri) throw new Error("Could not render the image.");
@@ -76,8 +89,9 @@ export default function ImageEditorScreen() {
         await MediaLibrary.saveToLibraryAsync(uri);
         setMessage("Meme saved to your photos.");
       }
-    } catch (reason) { Alert.alert("Export couldn't finish", reason instanceof Error ? reason.message : "Try again."); }
-    finally { setBusy(false); }
+    } catch (reason) {
+      Alert.alert("Export couldn't finish", reason instanceof Error ? reason.message : "Try again.");
+    } finally { setBusy(false); }
   }
 
   return (
@@ -90,12 +104,12 @@ export default function ImageEditorScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
           <View style={styles.canvasFrame}>
-            {template && previewUri ? (
+            {previewUri ? (
               <ViewShot ref={shot} options={{ format: "png", quality: 1, result: "tmpfile" }} style={styles.canvas}>
                 <Image source={{ uri: previewUri }} style={StyleSheet.absoluteFill} contentFit="contain" cachePolicy="memory-disk"/>
                 <View style={styles.captionLayer} pointerEvents="none">
                   <Text numberOfLines={3} adjustsFontSizeToFit style={[styles.caption, { fontSize, color, textShadowColor: stroke ? "#000" : "transparent" }]}>{topText || " "}</Text>
-                  <Text numberOfLines={3} adjustsFontSizeToFit style={[styles.caption, styles.bottomCaption, { fontSize, color, textShadowColor: stroke ? "#000" : "transparent" }]}>{bottomText || " "}</Text>
+                  <Text numberOfLines={3} adjustsFontSizeToFit style={[styles.caption, { fontSize, color, textShadowColor: stroke ? "#000" : "transparent" }]}>{bottomText || " "}</Text>
                 </View>
               </ViewShot>
             ) : <View style={styles.placeholder}><Text style={styles.placeholderText}>{message || "Loading template…"}</Text></View>}
@@ -104,14 +118,8 @@ export default function ImageEditorScreen() {
             <Text style={styles.sectionTitle}>THE CAPTIONS</Text>
             <Pressable onPress={randomize} style={styles.surprise}><Undo2 size={12} color={colors.red}/><Text style={styles.surpriseText}>Surprise me</Text></Pressable>
           </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>TOP LINE</Text>
-            <TextInput value={topText} onChangeText={setTopText} style={styles.captionInput} placeholder="Write your opening line…" placeholderTextColor={colors.muted} multiline/>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>BOTTOM LINE</Text>
-            <TextInput value={bottomText} onChangeText={setBottomText} style={styles.captionInput} placeholder="Land the punchline…" placeholderTextColor={colors.muted} multiline/>
-          </View>
+          <View style={styles.field}><Text style={styles.label}>TOP LINE</Text><TextInput value={topText} onChangeText={setTopText} style={styles.captionInput} placeholder="Write your opening line…" placeholderTextColor={colors.muted} multiline/></View>
+          <View style={styles.field}><Text style={styles.label}>BOTTOM LINE</Text><TextInput value={bottomText} onChangeText={setBottomText} style={styles.captionInput} placeholder="Land the punchline…" placeholderTextColor={colors.muted} multiline/></View>
           <View style={styles.tools}>
             <View style={styles.toolHeader}><Type color={colors.ink} size={15}/><Text style={styles.sectionTitle}>TYPE TREATMENT</Text></View>
             <View style={styles.optionRow}><Text style={styles.label}>SIZE</Text><View style={styles.sizeActions}><Pressable style={styles.sizeBtn} onPress={() => setFontSize((v) => Math.max(16, v - 2))}><Text style={styles.sizeBtnText}>−</Text></Pressable><Text style={styles.sizeValue}>{fontSize}px</Text><Pressable style={styles.sizeBtn} onPress={() => setFontSize((v) => Math.min(42, v + 2))}><Text style={styles.sizeBtnText}>+</Text></Pressable></View></View>
@@ -120,10 +128,10 @@ export default function ImageEditorScreen() {
           </View>
           <View style={styles.footerActions}>
             <Pressable onPress={() => void persist()} style={styles.secondary}><Save size={15} color={colors.ink}/><Text style={styles.secondaryText}>Save draft</Text></Pressable>
-            <Pressable disabled={busy || !template} onPress={() => void exportImage()} style={[styles.export, busy && { opacity: 0.6 }]}><Download size={16} color={colors.surface}/><Text style={styles.exportText}>{busy ? "Preparing…" : "Export meme"}</Text></Pressable>
+            <Pressable disabled={busy || !previewUri} onPress={() => void exportImage()} style={[styles.export, busy && { opacity: 0.6 }]}><Download size={16} color={colors.surface}/><Text style={styles.exportText}>{busy ? "Preparing…" : "Export meme"}</Text></Pressable>
           </View>
           {!!message && <Text style={styles.message}>{message}</Text>}
-          <Text style={styles.note}>Your work is saved on this device. Export uses a rendered PNG and your device’s share sheet.</Text>
+          <Text style={styles.note}>Drafts are stored on this device. Export renders a PNG and opens your device’s share sheet.</Text>
           <Text style={styles.nextTitle}>KEEP THE IDEAS COMING</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 12 }}>
             {catalog.filter((item) => item.id !== template?.id).slice(0, 6).map((item) => <View key={item.id} style={{ width: 138 }}><TemplateCard item={item} compact onPress={() => { setTemplate(item); setTopText(item.name.toUpperCase()); setBottomText(defaultBottom); }}/></View>)}
@@ -147,7 +155,6 @@ const styles = StyleSheet.create({
   canvas: { width: "100%", aspectRatio: 1, backgroundColor: "#D5CFC4", overflow: "hidden", justifyContent: "space-between" },
   captionLayer: { ...StyleSheet.absoluteFillObject, justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12, paddingVertical: 12 },
   caption: { width: "100%", textAlign: "center", fontWeight: "900", letterSpacing: 0.3, textTransform: "uppercase", includeFontPadding: false, lineHeight: 34, textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 3 },
-  bottomCaption: {},
   placeholder: { height: 300, alignItems: "center", justifyContent: "center" },
   placeholderText: { color: colors.muted, fontSize: 12 },
   actionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 23, marginBottom: 11 },
