@@ -1,6 +1,8 @@
 name: Native Mobile Build
 
 on:
+  push:
+    branches: [app]
   workflow_dispatch:
     inputs:
       platform:
@@ -21,7 +23,8 @@ on:
 
 jobs:
   build:
-    name: EAS ${{ inputs.profile }} · ${{ inputs.platform }}
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[native-build'))
+    name: EAS build · ${{ inputs.profile || 'preview' }} / ${{ inputs.platform || 'all' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -49,6 +52,21 @@ jobs:
             echo "::error::Add EAS_PROJECT_ID as a GitHub Actions variable after running eas init."
             exit 1
           fi
+      - name: Resolve build target
+        id: target
+        env:
+          INPUT_PLATFORM: ${{ inputs.platform }}
+          INPUT_PROFILE: ${{ inputs.profile }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          platform="${INPUT_PLATFORM:-all}"
+          profile="${INPUT_PROFILE:-preview}"
+          if [[ "$COMMIT_MESSAGE" =~ \[native-build:(android|ios|all):(preview|production)\] ]]; then
+            platform="${BASH_REMATCH[1]}"
+            profile="${BASH_REMATCH[2]}"
+          fi
+          echo "platform=$platform" >> "$GITHUB_OUTPUT"
+          echo "profile=$profile" >> "$GITHUB_OUTPUT"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Validate Expo dependencies
@@ -57,6 +75,6 @@ jobs:
         run: npx expo-doctor
       - name: Build native app with EAS
         env:
-          BUILD_PLATFORM: ${{ inputs.platform }}
-          BUILD_PROFILE: ${{ inputs.profile }}
+          BUILD_PLATFORM: ${{ steps.target.outputs.platform }}
+          BUILD_PROFILE: ${{ steps.target.outputs.profile }}
         run: npx eas-cli@latest build --platform "$BUILD_PLATFORM" --profile "$BUILD_PROFILE" --non-interactive --message "GitHub Actions run $GITHUB_RUN_NUMBER"
