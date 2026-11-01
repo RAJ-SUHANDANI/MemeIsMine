@@ -2,17 +2,39 @@
 
 The native application lives in this directory. The existing Next.js website and APIs at the repository root are unchanged.
 
-## Current mobile features
+## Run locally
 
-- Home, Explore, Motion, Studio and profile tabs.
-- Live Imgflip image template discovery from the deployed MemeIsMine API.
-- Search and sorting for image templates.
-- Animated GIF/video template discovery with search and sort.
-- Native GIF and video preview (Expo Video for video sources).
-- Local bookmarks and image-editor drafts using AsyncStorage.
-- Camera-roll image selection.
-- Image meme editor with top/bottom captions, text size, colour and outline controls.
-- PNG rendering with `react-native-view-shot` and device share-sheet export.
+```bash
+git checkout app
+cd mobile
+npm install
+npx expo start
+```
+
+Android: `npm run android` · iOS simulator: `npm run ios` · TypeScript: `npm run typecheck`
+
+Requires Node.js 22 and an Android device/emulator or macOS with an iOS simulator. Native camera, media library and video features require a development build or device; Expo Go may not represent release behaviour.
+
+## Core mobile features
+
+- Five primary native tabs: For you, Battle, MemeCam, MemeVault and Studio.
+- Live Imgflip image discovery, search, sorting and bookmarks.
+- GIF/video discovery and native video preview.
+- Image meme editor with captions, text styling, drafts and PNG sharing.
+- Camera-roll image selection and native camera capture.
+- Native video caption editor with live overlay preview, playback speed, mute, output ratio and duration settings; edit projects are saved locally.
+- Local image and video project management.
+
+## App-exclusive experiences
+
+### Meme Battle
+A daily rotating prompt, photo entry composer, branded entry render, one entry per day and share-to-challenge-friends flow. Entries are stored on the device. Global community voting, public profiles, server-side streaks and leaderboards need a backend and are not represented as live features.
+
+### MemeCam
+Live front/rear camera preview, editable caption overlay, flash toggle and capture-to-editor flow. Camera permission is requested only when the feature is opened.
+
+### MemeVault
+Create circular or rounded transparent PNG reaction stickers from camera-roll photos, label them by mood, save them to a local collection, share individual PNGs or save them to Photos. Full ZIP pack export and keyboard integration are not included.
 
 ## Existing API use
 
@@ -22,31 +44,17 @@ The app consumes the existing deployed API:
 - `GET /api/image?url=...`
 - `GET /api/video-source?url=...`
 
-Base URL defaults to `https://memeismine.vercel.app`. Set `EXPO_PUBLIC_API_BASE_URL` to use another deployment. Only use the existing allowlisted API proxies for external media.
+Base URL defaults to `https://memeismine.vercel.app`. Set `EXPO_PUBLIC_API_BASE_URL` to use another deployment. Media is requested through the existing API proxies.
 
-## Honest limitations
+## Known limitations requiring further engineering
 
-- Drafts and bookmarks are local to one device; there is no account system or cross-device sync.
-- Native video caption compositing, timeline editing, video export, and audio-track export are not implemented. The web editor uses browser Canvas/MediaRecorder and this is not automatically available in React Native.
-- User-uploaded photo URIs are kept as local editor input; draft restoration for custom local photos is limited because app-private URI persistence should be implemented with a managed file copy before relying on it long-term.
-- The application has been added to GitHub, but an Expo install, type-check, emulator launch, and on-device QA have not been run in this environment.
+- Drafts, stickers, bookmarks and battle entries are local to one device. There is no account system, cloud backup or cross-device sync.
+- Meme Battle is a local daily challenge. Community submissions, voting, anti-abuse controls and global leaderboards require a backend.
+- Native video editor currently provides caption overlay preview and persists edit settings. It does not yet composite caption layers into a rendered MP4/WebM or mix/export the source audio. The web editor's browser Canvas/MediaRecorder/FFmpeg.wasm pipeline cannot be reused directly in a native React Native build; a native FFmpeg/media pipeline and device QA are required.
+- The video duration control is saved as a project setting; frame-accurate trimming/export is not implemented.
+- MemeVault exports individual transparent PNGs; ZIP pack export and share-sheet sticker keyboard integration are future work.
+- The application has been committed to GitHub. A GitHub Actions workflow now checks Expo dependency compatibility and TypeScript on pushes/PRs to the app branch. A successful device build, emulator launch and on-device QA are still required before release.
 
-## Run locally
+## Configuration
 
-Requires Node.js and an Android emulator/device or macOS with the iOS simulator.
-
-```bash
-cd mobile
-npm install
-npx expo start
-```
-
-Android: `npm run android`
-
-iOS simulator (macOS): `npm run ios`
-
-Web preview: `npm run web`
-
-Type-check: `npm run typecheck`
-
-For a native release, configure EAS Build and review the permissions and app identifiers in `app.config.ts`.
+Set `EXPO_PUBLIC_API_BASE_URL` in your environment to override the deployed API. Review app identifiers, permissions and EAS Build settings in `app.config.ts` before publishing.
