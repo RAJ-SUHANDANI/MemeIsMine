@@ -10,6 +10,7 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   plugins: [
     "expo-router",
+    ["expo-camera", { cameraPermission: "MemeIsMine uses your camera to create memes." }],
     ["expo-image-picker", {
       photosPermission: "MemeIsMine uses your photo library to create memes from your images."
     }],
@@ -21,12 +22,13 @@ const config: ExpoConfig = {
     supportsTablet: true,
     infoPlist: {
       NSPhotoLibraryUsageDescription: "MemeIsMine uses your photo library to create memes from your images.",
+      NSCameraUsageDescription: "MemeIsMine uses your camera to capture original memes.",
       NSPhotoLibraryAddUsageDescription: "MemeIsMine saves exported memes to your photo library."
     }
   },
   android: {
     edgeToEdgeEnabled: true,
-    permissions: ["READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
+    permissions: ["CAMERA", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
   }
 };
 export default config;
