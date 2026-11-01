@@ -5,6 +5,15 @@ const config: ExpoConfig = {
   slug: "memeismine",
   scheme: "memeismine",
   version: "1.0.0",
+  ios: {
+    bundleIdentifier: "com.memeismine.app",
+    supportsTablet: true,
+    infoPlist: {
+      NSPhotoLibraryUsageDescription: "MemeIsMine uses your photo library to create memes from your images.",
+      NSPhotoLibraryAddUsageDescription: "MemeIsMine saves exported memes to your photo library.",
+      NSCameraUsageDescription: "MemeIsMine uses your camera to capture original memes."
+    }
+  },
   orientation: "portrait",
   userInterfaceStyle: "light",
   newArchEnabled: true,
@@ -19,14 +28,7 @@ const config: ExpoConfig = {
     "munim-ffmpeg"
   ],
   experiments: { typedRoutes: true },
-  ios: {
-    supportsTablet: true,
-    infoPlist: {
-      NSPhotoLibraryUsageDescription: "MemeIsMine uses your photo library to create memes from your images.",
-      NSCameraUsageDescription: "MemeIsMine uses your camera to capture original memes.",
-      NSPhotoLibraryAddUsageDescription: "MemeIsMine saves exported memes to your photo library."
-    }
-  },
+
   android: {
     edgeToEdgeEnabled: true,
     permissions: ["CAMERA", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
