@@ -6,10 +6,10 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Check, Clock3, Download, Save, Volume2, VolumeX } from "lucide-react-native";
-import { getVideos, videoUri } from "../../../src/lib/api";
-import { colors, radius } from "../../../src/theme";
-import { getVideoDrafts, saveVideoDraft, type VideoDraft } from "../../../src/lib/storage";
-import type { VideoTemplate } from "../../../src/types";
+import { getVideos, videoUri } from "../../src/lib/api";
+import { colors, radius } from "../../src/theme";
+import { getVideoDrafts, saveVideoDraft, type VideoDraft } from "../../src/lib/storage";
+import type { VideoTemplate } from "../../src/types";
 
 const sizes=[{label:"Square",ratio:1},{label:"Story",ratio:9/16},{label:"Landscape",ratio:16/9},{label:"Portrait",ratio:4/5}];
 export default function NativeVideoEditorScreen(){
@@ -40,7 +40,7 @@ export default function NativeVideoEditorScreen(){
  },[id,draftId]);
  const source=useMemo(()=>template?.mediaType==="video"?{uri:videoUri(template.url,template.sourcePage)}:null,[template]);
  const player=useVideoPlayer(source,p=>{p.loop=true;p.muted=muted;p.play()});
- const {playing}=useEvent(player,"playingChange",{playing:player.playing});
+ const playing=useEvent(player,"playingChange",{isPlaying:player.playing})?.isPlaying ?? player.playing;
  useEffect(()=>{player.playbackRate=speed;player.muted=muted},[player,speed,muted]);
  function togglePlay(){if(playing)player.pause();else player.play()}
  function toggleMute(){const next=!muted;setMuted(next);player.muted=next}
