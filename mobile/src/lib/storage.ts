@@ -68,3 +68,9 @@ export async function saveVideoDraft(draft: VideoDraft) {
   await AsyncStorage.setItem(VIDEO_DRAFTS_KEY, JSON.stringify(next));
   return next;
 }
+
+export async function removeVideoDraft(id: string) {
+  const next = (await getVideoDrafts()).filter((draft) => draft.id !== id);
+  await AsyncStorage.setItem(VIDEO_DRAFTS_KEY, JSON.stringify(next));
+  return next;
+}
