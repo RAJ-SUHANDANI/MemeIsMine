@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Image } from "expo-image";
-import ViewShot, { type ViewShotRef } from "react-native-view-shot";
+import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, router } from "expo-router";
@@ -27,7 +27,7 @@ export default function ImageEditorScreen() {
   const [stroke, setStroke] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const shot = useRef<ViewShotRef>(null);
+  const shot = useRef<ViewShot>(null);
   const customImage = id === "upload" ? uploadedUri : undefined;
 
   useEffect(() => {
