@@ -45,7 +45,7 @@ export default function MemeVaultScreen() {
     else Alert.alert("Sharing unavailable","Sharing isn't available on this device.");
   }
   async function download(item:VaultSticker){
-    const permission=await MediaLibrary.requestPermissionsAsync();
+    const permission=await MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
     if(!permission.granted){Alert.alert("Photo access needed","Allow photo access to save stickers.");return;}
     await MediaLibrary.saveToLibraryAsync(item.uri);
     Alert.alert("Saved","Sticker saved to your photo library.");
