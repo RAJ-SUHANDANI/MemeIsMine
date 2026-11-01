@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useEvent } from "expo";
-import { VideoView, useVideoPlayer } from "expo-video";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bookmark, Film, Pause, Play, Volume2, VolumeX } from "lucide-react-native";
@@ -17,6 +17,7 @@ export default function VideoTemplateScreen() {
   const [saved, setSaved] = useState(false);
   const [muted, setMuted] = useState(true);
   const [error, setError] = useState("");
+
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
@@ -30,7 +31,7 @@ export default function VideoTemplateScreen() {
     return () => { alive = false; controller.abort(); };
   }, [id]);
 
-  const source = useMemo(() => template ? videoUri(template.url, template.sourcePage) : null, [template]);
+  const source = useMemo(() => template?.mediaType === "video" ? { uri: videoUri(template.url, template.sourcePage) } : null, [template]);
   const player = useVideoPlayer(source, (instance) => {
     instance.loop = true;
     instance.muted = true;
@@ -44,7 +45,7 @@ export default function VideoTemplateScreen() {
     const next = await toggleBookmark(`video:${id}`);
     setSaved(next.includes(`video:${id}`));
   }
-  async function togglePlayback() {
+  function togglePlayback() {
     try { if (playing) player.pause(); else player.play(); }
     catch { Alert.alert("Playback unavailable", "This clip could not be played on this device."); }
   }
@@ -65,17 +66,17 @@ export default function VideoTemplateScreen() {
         <Text style={styles.kicker}>{template?.mediaType === "gif" ? "ANIMATED GIF" : "VIDEO TEMPLATE"}</Text>
         <Text style={styles.title}>{template?.name || "Loading clip…"}</Text>
         <View style={styles.playerFrame}>
-          {template?.mediaType === "video" && source ? (
+          {template?.mediaType === "video" ? (
             <VideoView player={player} style={styles.player} contentFit="contain" nativeControls={false} allowsFullscreen allowsPictureInPicture/>
-          ) : poster ? (
+          ) : template?.mediaType === "gif" && poster ? (
             <Image source={{ uri: poster }} style={styles.player} contentFit="contain" />
           ) : (
             <View style={styles.placeholder}><Film size={27} color={colors.red}/>{error ? <Text style={styles.error}>{error}</Text> : <ActivityIndicator color={colors.red}/>}</View>
           )}
           {!!template && <View style={styles.controls}>
-            <Pressable onPress={() => void togglePlayback()} style={styles.control}><Text>{playing ? <Pause size={17} color={colors.surface}/> : <Play size={17} color={colors.surface}/>}</Text></Pressable>
+            <Pressable onPress={togglePlayback} style={styles.control}>{playing ? <Pause size={17} color={colors.surface}/> : <Play size={17} color={colors.surface}/>}</Pressable>
             {template.mediaType === "video" && <Pressable onPress={toggleAudio} style={styles.control}>{muted ? <VolumeX size={16} color={colors.surface}/> : <Volume2 size={16} color={colors.surface}/>}</Pressable>}
-            <Text style={styles.controlLabel}>{status === "error" || playerError ? "PREVIEW UNAVAILABLE" : playing ? "PLAYING" : "PAUSED"}</Text>
+            <Text style={styles.controlLabel}>{template.mediaType === "gif" ? "ANIMATED PREVIEW" : status === "error" || playerError ? "PREVIEW UNAVAILABLE" : playing ? "PLAYING" : "PAUSED"}</Text>
           </View>}
         </View>
         {!!error && <Text style={styles.error}>{error}</Text>}
