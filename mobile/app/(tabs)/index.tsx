@@ -7,7 +7,7 @@ import { router, useFocusEffect } from "expo-router";
 import { TemplateCard } from "../../src/components/TemplateCard";
 import { getMemes, imageUri } from "../../src/lib/api";
 import { getBookmarks, toggleBookmark } from "../../src/lib/storage";
-import { colors, radius, spacing } from "../../src/theme";
+import { colors, radius } from "../../src/theme";
 import type { MemeTemplate } from "../../src/types";
 
 export default function HomeScreen() {
@@ -37,7 +37,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.red}/>}>
         <View style={styles.topbar}>
-          <View style={styles.brand}><View style={styles.mark}><Text style={styles.markText}>m</Text></View><Text style={styles.brandText}>meme is mine<span/></Text></View>
+          <View style={styles.brand}><View style={styles.mark}><Text style={styles.markText}>m</Text></View><Text style={styles.brandText}>meme is mine</Text></View>
           <Pressable onPress={() => router.push("/upload")} style={styles.create}><Plus size={17} color={colors.surface}/><Text style={styles.createText}>Create</Text></Pressable>
         </View>
         <View style={styles.hero}>
