@@ -59,5 +59,9 @@ Next.js App Router, React, TypeScript, Motion, Lucide icons, Tailwind CSS v4 and
 - Local image uploads are limited to 2.5 MB so data-URL drafts can remain in browser storage.
 - No hosted user database, email-verification service or external authentication provider is required.
 
+## Native mobile app
+
+The Expo / React Native companion app lives in [`mobile/`](mobile/). It includes image and video meme editing, native MP4 export, Meme Battle, MemeCam and MemeVault. See the [mobile app setup and release guide](mobile/README.md) for development, EAS builds, permissions and current platform-testing requirements. The mobile app is maintained separately from the website source and API.
+
 ## Deployment
 Import the repository into Vercel and use the standard Next.js build settings. Build command: `npm run build`.
