@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEvent } from "expo";
 import { Image } from "expo-image";
-import { useVideoPlayer, VideoView } from "expo-video";
+import { useVideoPlayer, VideoView } from "expo-video";\nimport * as FileSystem from "expo-file-system/legacy";\nimport * as Sharing from "expo-sharing";\nimport * as MediaLibrary from "expo-media-library";\nimport { execute } from "munim-ffmpeg";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Check, Clock3, Download, Save, Volume2, VolumeX } from "lucide-react-native";
@@ -11,7 +11,23 @@ import { colors, radius } from "../../src/theme";
 import { getVideoDrafts, saveVideoDraft, type VideoDraft } from "../../src/lib/storage";
 import type { VideoTemplate } from "../../src/types";
 
-const sizes=[{label:"Square",ratio:1},{label:"Story",ratio:9/16},{label:"Landscape",ratio:16/9},{label:"Portrait",ratio:4/5}];
+const sizes=[{label:"Square",ratio:1,width:1080,height:1080},{label:"Story",ratio:9/16,width:1080,height:1920},{label:"Landscape",ratio:16/9,width:1920,height:1080},{label:"Portrait",ratio:4/5,width:1080,height:1350}];
+function assColour(hex:string){const value=hex.replace("#","");return "&H00"+value.slice(4,6)+value.slice(2,4)+value.slice(0,2);}
+function assText(value:string){return value.replace(/\\\\/g,"\\\\\\\\").replace(/{/g,"\\\\{").replace(/}/g,"\\\\}").replace(/\\r?\\n/g,"\\\\N");}
+function makeAss(width:number,height:number,fontSize:number,color:string,outline:boolean,top:string,bottom:string,duration:number){
+ const end="0:00:"+String(duration).padStart(2,"0")+".00";
+ return [
+  "[Script Info]","ScriptType: v4.00+","PlayResX: "+width,"PlayResY: "+height,"WrapStyle: 2","ScaledBorderAndShadow: yes","",
+  "[V4+ Styles]",
+  "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+  "Style: Main,Arial,"+fontSize+","+assColour(color)+",&H000000FF,&H00000000,&H64000000,1,0,0,0,100,100,0,0,1,"+(outline?4:0)+",2,2,60,60,80,1",
+  "Style: Top,Arial,"+Math.round(fontSize*.78)+","+assColour(color)+",&H000000FF,&H00000000,&H64000000,1,0,0,0,100,100,0,0,1,"+(outline?4:0)+",2,8,60,60,80,1","",
+  "[Events]","Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+  top.trim()?"Dialogue: 0,0:00:00.00,"+end+",Top,,0,0,0,,"+assText(top):"",
+  bottom.trim()?"Dialogue: 0,0:00:00.00,"+end+",Main,,0,0,0,,"+assText(bottom):""
+ ].join("\\n");
+}
+
 export default function NativeVideoEditorScreen(){
  const {id,draft:draftId}=useLocalSearchParams<{id:string;draft?:string}>();
  const [template,setTemplate]=useState<VideoTemplate|null>(null);
@@ -26,7 +42,7 @@ export default function NativeVideoEditorScreen(){
  const [muted,setMuted]=useState(true);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
- const [message,setMessage]=useState("");
+ const [message,setMessage]=useState("");\n const [exporting,setExporting]=useState(false);\n const [progress,setProgress]=useState(0);\n const [outputUri,setOutputUri]=useState("");
  useEffect(()=>{
   let alive=true;const controller=new AbortController();
   void getVideos({limit:100,signal:controller.signal}).then(async data=>{
