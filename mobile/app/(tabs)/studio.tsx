@@ -27,7 +27,8 @@ export default function StudioScreen() {
       { text: "Remove", style: "destructive", onPress: async () => setDrafts(await removeDraft(id)) },
     ]);
   }
-  async function unsave(id: string) { setSaved(await toggleBookmark(id)); }\n  function openSaved(id: string) { const video = id.startsWith("video:"); const templateId = video ? id.slice(6) : id; router.push(video ? { pathname: "/video/[id]", params: { id: templateId } } : { pathname: "/editor/[id]", params: { id: templateId } }); }
+  async function unsave(id: string) { setSaved(await toggleBookmark(id)); }
+  function openSaved(id: string) { const video = id.startsWith("video:"); const templateId = video ? id.slice(6) : id; router.push(video ? { pathname: "/video/[id]", params: { id: templateId } } : { pathname: "/editor/[id]", params: { id: templateId } }); }
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.header}><Text style={styles.kicker}>YOUR CORNER OF THE INTERNET</Text><Text style={styles.title}>The{"\n"}<Text style={styles.italic}>studio.</Text></Text><Text style={styles.copy}>Your unfinished punchlines and saved favourites.</Text></View>
