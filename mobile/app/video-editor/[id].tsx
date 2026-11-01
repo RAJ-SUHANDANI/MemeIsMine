@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEvent } from "expo";
 import { Image } from "expo-image";
-import { useVideoPlayer, VideoView } from "expo-video";\nimport * as FileSystem from "expo-file-system/legacy";\nimport * as Sharing from "expo-sharing";\nimport * as MediaLibrary from "expo-media-library";\nimport { execute } from "munim-ffmpeg";
+import { useVideoPlayer, VideoView } from "expo-video";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import * as MediaLibrary from "expo-media-library";
+import { execute } from "munim-ffmpeg";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Check, Clock3, Download, Save, Volume2, VolumeX } from "lucide-react-native";
@@ -13,7 +17,8 @@ import type { VideoTemplate } from "../../src/types";
 
 const sizes=[{label:"Square",ratio:1,width:1080,height:1080},{label:"Story",ratio:9/16,width:1080,height:1920},{label:"Landscape",ratio:16/9,width:1920,height:1080},{label:"Portrait",ratio:4/5,width:1080,height:1350}];
 function assColour(hex:string){const value=hex.replace("#","");return "&H00"+value.slice(4,6)+value.slice(2,4)+value.slice(0,2);}
-function assText(value:string){return value.replace(/\\\\/g,"\\\\\\\\").replace(/{/g,"\\\\{").replace(/}/g,"\\\\}").replace(/\\r?\\n/g,"\\\\N");}
+function assText(value:string){return value.replace(/\\\\/g,"\\\\\\\\").replace(/{/g,"\\\\{").replace(/}/g,"\\\\}").replace(/\\r?\
+/g,"\\\\N");}
 function makeAss(width:number,height:number,fontSize:number,color:string,outline:boolean,top:string,bottom:string,duration:number){
  const end="0:00:"+String(duration).padStart(2,"0")+".00";
  return [
@@ -25,7 +30,8 @@ function makeAss(width:number,height:number,fontSize:number,color:string,outline
   "[Events]","Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
   top.trim()?"Dialogue: 0,0:00:00.00,"+end+",Top,,0,0,0,,"+assText(top):"",
   bottom.trim()?"Dialogue: 0,0:00:00.00,"+end+",Main,,0,0,0,,"+assText(bottom):""
- ].join("\\n");
+ ].join("\
+");
 }
 
 export default function NativeVideoEditorScreen(){
@@ -42,7 +48,10 @@ export default function NativeVideoEditorScreen(){
  const [muted,setMuted]=useState(true);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
- const [message,setMessage]=useState("");\n const [exporting,setExporting]=useState(false);\n const [progress,setProgress]=useState(0);\n const [outputUri,setOutputUri]=useState("");
+ const [message,setMessage]=useState("");
+ const [exporting,setExporting]=useState(false);
+ const [progress,setProgress]=useState(0);
+ const [outputUri,setOutputUri]=useState("");
  useEffect(()=>{
   let alive=true;const controller=new AbortController();
   void getVideos({limit:100,signal:controller.signal}).then(async data=>{
