@@ -114,9 +114,9 @@ The repository includes a manual GitHub Actions workflow at `.github/workflows/m
 
 One-time setup:
 
-1. Create or link the Expo project from `mobile/` with `npx eas-cli@latest login` and `npx eas-cli@latest init`.
-2. Copy the EAS project UUID and make it available as `EAS_PROJECT_ID` in the local build environment.
-3. In GitHub, add an Actions secret named `EXPO_TOKEN` (an Expo access token) and an Actions variable named `EAS_PROJECT_ID` (the project UUID).
+1. The Expo project is already linked in `app.config.ts` with project ID `7f86e6b8-c220-4874-aecb-cbac0ee55d1d`. Do not run `eas init` again unless you intend to link a different Expo project.
+2. From `mobile/`, run `npx eas-cli@latest login` and confirm the project with `npx eas-cli@latest project:info`.
+3. In GitHub, add an Actions secret named `EXPO_TOKEN` containing an Expo access token. No `EAS_PROJECT_ID` Actions variable is needed; the project ID is stored in the Expo app config.
 4. Trigger the workflow from the `app` branch with a commit message containing a build target:
    - `[native-build:android:preview]`
    - `[native-build:ios:production]`
