@@ -12,7 +12,9 @@ export default function MemeCamScreen() {
   const [caption, setCaption] = useState("WHEN THE PLAN ACTUALLY WORKS");
   const [flash, setFlash] = useState(false);
   const camera = useRef<CameraView>(null);
-  const [busy, setBusy] = useState(false);\n  const [focused, setFocused] = useState(true);\n  useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false); }, []));
+  const [busy, setBusy] = useState(false);
+  const [focused, setFocused] = useState(true);
+  useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false); }, []));
   async function capture() {
     if (!camera.current || busy) return;
     setBusy(true);
