@@ -11,7 +11,9 @@ npm install
 npx expo start
 ```
 
-Android: npm run android · iOS simulator: npm run ios · TypeScript: npm run typecheck\n\nFor native FFmpeg/camera builds, configure EAS and run `npx eas-cli build --profile development --platform android` (or `ios`). Install the resulting development build on a device; Expo Go does not include the native FFmpeg module.
+Android: npm run android · iOS simulator: npm run ios · TypeScript: npm run typecheck
+
+For native FFmpeg/camera builds, configure EAS and run `npx eas-cli build --profile development --platform android` (or `ios`). Install the resulting development build on a device; Expo Go does not include the native FFmpeg module.
 
 Requires Node.js 22 and an Android device/emulator or macOS with an iOS simulator. Camera, native FFmpeg and video features require a development build or device. Expo Go cannot load the FFmpeg native module.
 
