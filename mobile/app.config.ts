@@ -5,8 +5,10 @@ const config: ExpoConfig = {
   slug: "memeismine",
   scheme: "memeismine",
   version: "1.0.0",
+  description: "A playful mobile meme studio with image editing, motion templates, MemeCam, Meme Battle and a personal sticker vault.",
   ios: {
     bundleIdentifier: "com.memeismine.app",
+    buildNumber: "1.0.0",
     supportsTablet: true,
     infoPlist: {
       NSPhotoLibraryUsageDescription: "MemeIsMine uses your photo library to create memes from your images.",
@@ -23,14 +25,22 @@ const config: ExpoConfig = {
     ["expo-image-picker", {
       photosPermission: "MemeIsMine uses your photo library to create memes from your images."
     }],
-    "expo-media-library",
+    ["expo-media-library", {
+      photosPermission: "MemeIsMine accesses photos you choose to create memes and stickers.",
+      savePhotosPermission: "MemeIsMine saves memes, stickers and edited videos to your photo library.",
+      granularPermissions: ["photo", "video"]
+    }],
     "expo-video",
     "munim-ffmpeg"
   ],
   experiments: { typedRoutes: true },
+  extra: {
+    eas: { projectId: process.env.EAS_PROJECT_ID }
+  },
 
   android: {
     package: "com.memeismine.app",
+    versionCode: 1,
     edgeToEdgeEnabled: true,
     permissions: ["CAMERA", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
   }
