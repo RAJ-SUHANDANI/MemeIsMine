@@ -42,7 +42,7 @@ export default function ImageEditorScreen() {
         if (draft && active) {
           setTopText(draft.topText);
           setBottomText(draft.bottomText);
-          setTemplate({ id: draft.templateId, name: draft.name, url: draft.imageUrl, width: 0, height: 0 });
+          if (draft.imageUrl) setTemplate({ id: draft.templateId, name: draft.name, url: draft.imageUrl, width: 0, height: 0 });
         }
       }
     }).catch((reason) => { if (active) setMessage(reason instanceof Error ? reason.message : "Could not load template."); });
@@ -57,7 +57,7 @@ export default function ImageEditorScreen() {
     setBottomText("BUT MAKE IT YOURS");
   }, [catalog]);
 
-  const previewUri = useMemo(() => customImage || (template ? imageUri(template.url) : null), [template, customImage]);
+  const previewUri = useMemo(() => customImage || (template?.url ? imageUri(template.url) : null), [template, customImage]);
   const templateId = template?.id ?? "upload";
   const templateName = template?.name ?? "My image";
   async function persist() {
