@@ -28,7 +28,8 @@ export default function BattleScreen() {
   const [entries, setEntries] = useState<Awaited<ReturnType<typeof getBattleEntries>>>([]);
   const [busy, setBusy] = useState(false);
   const shot = useRef<ViewShotRef>(null);
-  useEffect(() => { let alive = true; void getBattleEntries().then((items) => { if (alive) setEntries(items); }); return () => { alive = false; }; }, []);\n  const todaysEntry = entries.find((entry) => entry.dateKey === today);
+  useEffect(() => { let alive = true; void getBattleEntries().then((items) => { if (alive) setEntries(items); }); return () => { alive = false; }; }, []);
+  const todaysEntry = entries.find((entry) => entry.dateKey === today);
   async function choosePhoto() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) { Alert.alert("Photo access needed", "Allow photo access to enter today's challenge."); return; }
