@@ -33,7 +33,7 @@
     "react-native-svg": "15.12.1",
     "react-native-view-shot": "4.0.3",
     "expo-camera": "~17.0.8",
-    "lucide-react-native": "^0.468.0"
+    "lucide-react-native": "^1.66.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
