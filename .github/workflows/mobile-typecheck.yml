@@ -32,3 +32,11 @@ jobs:
         run: npm run typecheck
       - name: Expo Doctor
         run: npx expo-doctor
+      - name: Bundle Android JavaScript
+        run: npx expo export --platform android --output-dir /tmp/memeismine-android-export
+      - name: Bundle iOS JavaScript
+        run: npx expo export --platform ios --output-dir /tmp/memeismine-ios-export
+      - name: Validate Android native prebuild
+        run: npx expo prebuild --clean --platform android --no-install
+      - name: Validate iOS native prebuild
+        run: npx expo prebuild --clean --platform ios --no-install
