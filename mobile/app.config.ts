@@ -23,6 +23,7 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   plugins: [
     "expo-router",
+    ["expo-splash-screen", { image: "./assets/icon.png", imageWidth: 160, resizeMode: "contain", backgroundColor: "#F4F0E8" }],
     ["expo-camera", { cameraPermission: "MemeIsMine uses your camera to create memes." }],
     ["expo-image-picker", {
       photosPermission: "MemeIsMine uses your photo library to create memes from your images."
