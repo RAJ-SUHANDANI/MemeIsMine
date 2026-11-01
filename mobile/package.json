@@ -35,7 +35,8 @@
     "expo-camera": "~17.0.8",
     "lucide-react-native": "^1.66.0",
     "munim-ffmpeg": "^0.9.2",
-    "react-native-nitro-modules": "^0.36.5"
+    "react-native-nitro-modules": "^0.36.5",
+    "expo-dev-client": "~6.0.20"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
