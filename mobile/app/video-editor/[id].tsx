@@ -87,7 +87,8 @@ export default function NativeVideoEditorScreen(){
    const output=base+"memeismine-"+stamp+".mp4";
    const script=makeAss(dimensions.width,dimensions.height,fontSize,color,outline,topCaption,caption,duration);
    await FileSystem.writeAsStringAsync(assUri,script,{encoding:FileSystem.EncodingType.UTF8});
-   const assPath=assUri.replace(/^file:\/\//,"");\n   const filter="scale="+dimensions.width+":"+dimensions.height+":force_original_aspect_ratio=decrease,pad="+dimensions.width+":"+dimensions.height+":(ow-iw)/2:(oh-ih)/2,ass="+assPath+",setpts=PTS/"+speed;
+   const assPath=assUri.replace(/^file:\/\//,"");
+   const filter="scale="+dimensions.width+":"+dimensions.height+":force_original_aspect_ratio=decrease,pad="+dimensions.width+":"+dimensions.height+":(ow-iw)/2:(oh-ih)/2,ass="+assPath+",setpts=PTS/"+speed;
    const result=await execute([
     "-y","-stream_loop","-1","-i",source,
     "-t",String(duration*speed),
