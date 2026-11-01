@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { ArrowRight, Plus, Sparkles } from "lucide-react-native";
+import { ArrowRight, Camera, Crown, Plus, Sparkles, Sticker } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { TemplateCard } from "../../src/components/TemplateCard";
@@ -67,6 +67,11 @@ export default function HomeScreen() {
           <View style={{ flex: 1 }}><Text style={styles.bannerTag}>NOT JUST A STILL FRAME</Text><Text style={styles.bannerTitle}>Give it a little motion.</Text><Text style={styles.bannerCopy}>GIFs, clips and moving reactions.</Text></View>
           <View style={styles.bannerArrow}><ArrowRight color={colors.surface}/></View>
         </Pressable>
+        <View style={styles.exclusiveHead}><Text style={styles.kicker}>ONLY ON THE APP</Text><Text style={styles.exclusiveTitle}>Your new favourite habits.</Text></View>
+        <Pressable style={styles.exclusiveCard} onPress={() => router.push("/(tabs)/battle")}><View style={styles.exclusiveIcon}><Crown color={colors.orange} size={20}/></View><View style={styles.exclusiveCopy}><Text style={styles.exclusiveTag}>DAILY CHALLENGE</Text><Text style={styles.exclusiveName}>Meme Battle</Text><Text style={styles.exclusiveDesc}>A fresh prompt. Your funniest take.</Text></View><ArrowRight color={colors.surface} size={18}/></Pressable>
+        <Pressable style={styles.exclusiveCard} onPress={() => router.push("/(tabs)/memecam")}><View style={styles.exclusiveIcon}><Camera color={colors.red} size={20}/></View><View style={styles.exclusiveCopy}><Text style={styles.exclusiveTag}>LIVE CAMERA</Text><Text style={styles.exclusiveName}>MemeCam</Text><Text style={styles.exclusiveDesc}>Catch the moment. Caption it live.</Text></View><ArrowRight color={colors.surface} size={18}/></Pressable>
+        <Pressable style={styles.exclusiveCard} onPress={() => router.push("/(tabs)/vault")}><View style={styles.exclusiveIcon}><Sticker color={colors.lilac} size={20}/></View><View style={styles.exclusiveCopy}><Text style={styles.exclusiveTag}>YOUR REACTIONS</Text><Text style={styles.exclusiveName}>MemeVault</Text><Text style={styles.exclusiveDesc}>Build a sticker collection of your own.</Text></View><ArrowRight color={colors.surface} size={18}/></Pressable>
+        <View style={styles.utilityLinks}><Pressable onPress={() => router.push("/(tabs)/explore")}><Text style={styles.utilityLink}>Explore image memes ↗</Text></Pressable><Pressable onPress={() => router.push("/(tabs)/videos")}><Text style={styles.utilityLink}>Browse video memes ↗</Text></Pressable></View>
         <View style={styles.footer}><Text style={styles.footerBrand}>MEME IS MINE.</Text><Text style={styles.footerCopy}>A small studio for big reactions.</Text></View>
       </ScrollView>
     </SafeAreaView>
@@ -109,7 +114,17 @@ const styles = StyleSheet.create({
   bannerTitle: { color: colors.surface, fontSize: 22, fontWeight: "900", letterSpacing: -0.8, marginTop: 9 },
   bannerCopy: { color: "#BDB6AC", fontSize: 11, marginTop: 5 },
   bannerArrow: { width: 42, height: 42, backgroundColor: colors.red, borderRadius: 21, alignItems: "center", justifyContent: "center" },
-  footer: { paddingHorizontal: 22, paddingBottom: 28, paddingTop: 6 },
+  exclusiveHead: { paddingHorizontal: 22, marginTop: 20, marginBottom: 13 },
+  exclusiveTitle: { color: colors.ink, fontSize: 22, fontWeight: "900", letterSpacing: -0.8, marginTop: 5 },
+  exclusiveCard: { marginHorizontal: 22, marginBottom: 9, padding: 13, borderRadius: radius.md, backgroundColor: colors.ink, flexDirection: "row", alignItems: "center", gap: 12 },
+  exclusiveIcon: { width: 43, height: 43, borderRadius: 14, backgroundColor: "#34312A", alignItems: "center", justifyContent: "center" },
+  exclusiveCopy: { flex: 1 },
+  exclusiveTag: { color: colors.orange, fontSize: 7, fontWeight: "900", letterSpacing: 1.2 },
+  exclusiveName: { color: colors.surface, fontSize: 15, fontWeight: "900", marginTop: 3 },
+  exclusiveDesc: { color: "#BDB6AC", fontSize: 9, marginTop: 3 },
+  utilityLinks: { paddingHorizontal: 22, paddingTop: 12, flexDirection: "row", justifyContent: "space-between" },
+  utilityLink: { color: colors.red, fontSize: 9, fontWeight: "900" },
+  footer: { paddingHorizontal: 22, paddingBottom: 28, paddingTop: 20 },
   footerBrand: { color: colors.ink, fontSize: 15, fontWeight: "900", letterSpacing: 1.1 },
   footerCopy: { color: colors.muted, fontSize: 10, marginTop: 5 },
 });
