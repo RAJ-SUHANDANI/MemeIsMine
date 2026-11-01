@@ -15,7 +15,7 @@ const config: ExpoConfig = {
       photosPermission: "MemeIsMine uses your photo library to create memes from your images."
     }],
     "expo-media-library",
-    "expo-video"
+    "expo-video",\n    "munim-ffmpeg"
   ],
   experiments: { typedRoutes: true },
   ios: {
