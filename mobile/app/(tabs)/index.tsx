@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { ArrowRight, Camera, Crown, Plus, Sparkles, Sticker } from "lucide-react-native";
+import { ArrowRight, Camera, Crown, Plus, Shuffle, Sparkles, Sticker, UserRound } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { TemplateCard } from "../../src/components/TemplateCard";
@@ -38,7 +38,7 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.red}/>}>
         <View style={styles.topbar}>
           <View style={styles.brand}><View style={styles.mark}><Text style={styles.markText}>m</Text></View><Text style={styles.brandText}>meme is mine</Text></View>
-          <Pressable onPress={() => router.push("/upload")} style={styles.create}><Plus size={17} color={colors.surface}/><Text style={styles.createText}>Create</Text></Pressable>
+          <View style={styles.topActions}><Pressable onPress={() => router.push("/(tabs)/profile")} accessibilityRole="button" accessibilityLabel="Open profile" style={styles.profile}><UserRound size={17} color={colors.ink}/></Pressable><Pressable onPress={() => router.push("/upload")} style={styles.create}><Plus size={17} color={colors.surface}/><Text style={styles.createText}>Create</Text></Pressable></View>
         </View>
         <View style={styles.hero}>
           <Text style={styles.kicker}>THE INTERNET, YOUR CANVAS</Text>
@@ -46,7 +46,7 @@ export default function HomeScreen() {
           <Text style={styles.intro}>Find the format. Add your twist. Send it into the group chat.</Text>
           <View style={styles.heroActions}>
             <Pressable onPress={() => router.push("/(tabs)/explore")} style={styles.primary}><Text style={styles.primaryText}>Find your meme</Text><ArrowRight size={16} color={colors.surface}/></Pressable>
-            <Text style={styles.edition}>EDITION 01 / MEME CULTURE</Text>
+            <Pressable onPress={() => { if (memes.length) { const item = memes[Math.floor(Math.random() * memes.length)]; router.push({ pathname: "/editor/[id]", params: { id: item.id } }); } else { router.push("/(tabs)/explore"); } }} style={styles.surprise} accessibilityRole="button" accessibilityLabel="Surprise me with a random meme"><Shuffle size={14} color={colors.red}/><Text style={styles.surpriseText}>Surprise me</Text></Pressable>
           </View>
           {spotlight ? (
             <Pressable style={styles.spotlight} onPress={() => router.push({ pathname: "/editor/[id]", params: { id: spotlight.id } })}>
@@ -85,6 +85,8 @@ const styles = StyleSheet.create({
   mark: { backgroundColor: colors.red, width: 29, height: 29, borderRadius: 9, alignItems: "center", justifyContent: "center", transform: [{ rotate: "-7deg" }] },
   markText: { color: colors.white, fontSize: 22, fontWeight: "900", fontStyle: "italic", marginTop: -2 },
   brandText: { color: colors.ink, fontSize: 17, fontWeight: "900", letterSpacing: -0.8 },
+  topActions: { flexDirection: "row", alignItems: "center", gap: 9 },
+  profile: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
   create: { backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 15, paddingVertical: 10, flexDirection: "row", gap: 6, alignItems: "center" },
   createText: { color: colors.surface, fontSize: 12, fontWeight: "800" },
   hero: { paddingHorizontal: 22, paddingTop: 34 },
@@ -95,7 +97,8 @@ const styles = StyleSheet.create({
   heroActions: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 19, marginBottom: 22 },
   primary: { backgroundColor: colors.red, paddingVertical: 13, paddingHorizontal: 17, borderRadius: radius.pill, flexDirection: "row", gap: 13, alignItems: "center" },
   primaryText: { color: colors.surface, fontSize: 12, fontWeight: "800" },
-  edition: { color: colors.muted, fontSize: 8, fontWeight: "700", letterSpacing: 1 },
+  surprise: { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 10, paddingHorizontal: 2 },
+  surpriseText: { color: colors.red, fontSize: 10, fontWeight: "900" },
   spotlight: { height: 245, borderRadius: radius.lg, overflow: "hidden", backgroundColor: "#D7C9B8", justifyContent: "space-between" },
   spotLabel: { alignSelf: "flex-start", margin: 13, backgroundColor: "rgba(24,23,19,.78)", borderRadius: 4, paddingHorizontal: 10, paddingVertical: 8, flexDirection: "row", gap: 7, alignItems: "center" },
   spotLabelText: { color: colors.surface, fontSize: 8, fontWeight: "900", letterSpacing: 1.2 },
