@@ -37,8 +37,8 @@ export default function VideoTemplateScreen() {
     instance.muted = true;
     instance.play();
   });
-  const { playing } = useEvent(player, "playingChange", { playing: player.playing });
-  const { status, error: playerError } = useEvent(player, "statusChange", { status: player.status, error: player.error });
+  const playing = useEvent(player, "playingChange", { isPlaying: player.playing })?.isPlaying ?? player.playing;
+  const status = useEvent(player, "statusChange", { status: player.status })?.status ?? player.status;
   const poster = template?.posterUrl || (template?.mediaType === "gif" ? template.url : null);
 
   async function toggleSave() {
@@ -76,7 +76,7 @@ export default function VideoTemplateScreen() {
           {!!template && <View style={styles.controls}>
             <Pressable onPress={togglePlayback} style={styles.control}>{playing ? <Pause size={17} color={colors.surface}/> : <Play size={17} color={colors.surface}/>}</Pressable>
             {template.mediaType === "video" && <Pressable onPress={toggleAudio} style={styles.control}>{muted ? <VolumeX size={16} color={colors.surface}/> : <Volume2 size={16} color={colors.surface}/>}</Pressable>}
-            <Text style={styles.controlLabel}>{template.mediaType === "gif" ? "ANIMATED PREVIEW" : status === "error" || playerError ? "PREVIEW UNAVAILABLE" : playing ? "PLAYING" : "PAUSED"}</Text>
+            <Text style={styles.controlLabel}>{template.mediaType === "gif" ? "ANIMATED PREVIEW" : status === "error" ? "PREVIEW UNAVAILABLE" : playing ? "PLAYING" : "PAUSED"}</Text>
           </View>}
         </View>
         {!!error && <Text style={styles.error}>{error}</Text>}
