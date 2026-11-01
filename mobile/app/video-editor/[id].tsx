@@ -139,9 +139,9 @@ export default function NativeVideoEditorScreen(){
    <View style={styles.chips}>{[.5,.75,1,1.25,1.5,2].map(v=><Pressable key={v} onPress={()=>setSpeed(v)} style={[styles.chip,speed===v&&styles.chipActive]}><Text style={[styles.chipText,speed===v&&styles.chipTextActive]}>{v}×</Text></Pressable>)}</View>
    <View style={styles.chips}>{sizes.map(v=><Pressable key={v.label} onPress={()=>setRatio(v.ratio)} style={[styles.chip,ratio===v.ratio&&styles.chipActive]}><Text style={[styles.chipText,ratio===v.ratio&&styles.chipTextActive]}>{v.label}</Text></Pressable>)}</View>
    <Pressable onPress={()=>void save()} disabled={saving} style={styles.primary}><Check size={16} color={colors.surface}/><Text style={styles.primaryText}>{saving?"Saving…":"Save video project"}</Text></Pressable>
-   <Pressable onPress={()=>void shareSource()} style={styles.secondary}><Download size={15} color={colors.ink}/><Text style={styles.secondaryText}>Export availability</Text></Pressable>
+   <Pressable onPress={()=>void exportVideo()} disabled={exporting||!template} style={[styles.primary,(exporting||!template)&&{opacity:.55}]}><Download size={16} color={colors.surface}/><Text style={styles.primaryText}>{exporting?"Rendering MP4…":"Render edited MP4"}</Text></Pressable>{exporting&&<View style={styles.progressTrack}><View style={[styles.progressFill,{width:progress+"%"}]}/></View>}{!!outputUri&&<View style={styles.outputActions}><Pressable onPress={()=>void shareVideo()} style={styles.outputButton}><Download size={14} color={colors.ink}/><Text style={styles.outputText}>Share MP4</Text></Pressable><Pressable onPress={()=>void saveToPhotos()} style={styles.outputButton}><Check size={14} color={colors.ink}/><Text style={styles.outputText}>Save to Photos</Text></Pressable></View>}
    {!!message&&<Text style={styles.message}>{message}</Text>}
-   <View style={styles.note}><Text style={styles.noteTitle}>ABOUT NATIVE VIDEO EXPORT</Text><Text style={styles.noteText}>This editor saves caption layers, duration, speed and format settings locally and previews them over the clip. A native MP4 renderer that composites these layers and preserves source audio still needs a native FFmpeg/media pipeline; this build does not claim to export a finished edited MP4.</Text></View>
+   <View style={styles.note}><Text style={styles.noteTitle}>ABOUT NATIVE VIDEO EXPORT</Text><Text style={styles.noteText}>The app renders your captions into the video with native FFmpeg, preserves the original audio when present, applies speed and aspect-ratio settings, and creates an MP4 on your device. A development or release build is required; Expo Go cannot load the native encoder.</Text></View>
   </ScrollView>
  </SafeAreaView>
 }
@@ -167,11 +167,11 @@ const styles=StyleSheet.create({
  chips:{flexDirection:"row",flexWrap:"wrap",gap:7,marginBottom:9},
  chip:{paddingHorizontal:12,paddingVertical:8,borderRadius:18,borderWidth:1,borderColor:colors.line},
  chipActive:{backgroundColor:colors.ink,borderColor:colors.ink},chipText:{color:colors.muted,fontSize:9,fontWeight:"800"},chipTextActive:{color:colors.surface},
- primary:{height:48,backgroundColor:colors.red,borderRadius:24,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:8,marginTop:18},
+ primary:{height:48,backgroundColor:colors.red,borderRadius:24,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:8,marginTop:12},
  primaryText:{color:colors.surface,fontSize:11,fontWeight:"900"},
  secondary:{height:43,borderRadius:22,borderWidth:1,borderColor:colors.line,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:7,marginTop:8},
  secondaryText:{color:colors.ink,fontSize:10,fontWeight:"800"},
- message:{color:colors.green,fontSize:10,textAlign:"center",marginTop:10},
+ progressTrack:{height:6,backgroundColor:"#E1D8CB",borderRadius:4,overflow:"hidden",marginTop:10},\n progressFill:{height:6,backgroundColor:colors.red,borderRadius:4},\n outputActions:{flexDirection:"row",gap:8,marginTop:10},\n outputButton:{flex:1,height:42,borderWidth:1,borderColor:colors.line,borderRadius:22,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:6},\n outputText:{color:colors.ink,fontSize:10,fontWeight:"900"},\n message:{color:colors.green,fontSize:10,textAlign:"center",marginTop:10},
  note:{backgroundColor:"#E8E1D7",padding:13,borderRadius:radius.md,marginTop:18},
  noteTitle:{color:colors.red,fontSize:8,fontWeight:"900",letterSpacing:1},noteText:{color:colors.muted,fontSize:10,lineHeight:16,marginTop:6}
 });
