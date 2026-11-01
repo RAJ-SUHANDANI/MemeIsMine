@@ -5,7 +5,7 @@ import { useEvent } from "expo";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Bookmark, Film, Pause, Play, Volume2, VolumeX } from "lucide-react-native";
+import { ArrowLeft, Bookmark, Film, Pause, Play, Volume2, VolumeX, WandSparkles } from "lucide-react-native";
 import { getVideos, videoUri } from "../../src/lib/api";
 import { getBookmarks, toggleBookmark } from "../../src/lib/storage";
 import { colors, radius } from "../../src/theme";
@@ -80,6 +80,7 @@ export default function VideoTemplateScreen() {
           </View>}
         </View>
         {!!error && <Text style={styles.error}>{error}</Text>}
+        {template?.mediaType === "video" && <Pressable onPress={() => router.push({ pathname: "/video-editor/[id]", params: { id } })} style={styles.editButton}><WandSparkles size={16} color={colors.surface}/><Text style={styles.editButtonText}>Open native video editor</Text></Pressable>}
         <View style={styles.meta}>
           <View><Text style={styles.metaLabel}>FORMAT</Text><Text style={styles.metaValue}>{template?.mediaType === "gif" ? "LOOPING GIF" : "VIDEO CLIP"}</Text></View>
           <View><Text style={styles.metaLabel}>COLLECTION</Text><Text style={styles.metaValue}>{template?.category || "VIDEO MEMES"}</Text></View>
@@ -105,6 +106,8 @@ const styles = StyleSheet.create({
   controls: { position: "absolute", bottom: 12, left: 12, right: 12, flexDirection: "row", alignItems: "center", gap: 8 },
   control: { width: 36, height: 36, backgroundColor: "rgba(24,23,19,.86)", borderRadius: 18, alignItems: "center", justifyContent: "center" },
   controlLabel: { color: colors.surface, fontSize: 8, fontWeight: "900", letterSpacing: 1, marginLeft: 4 },
+  editButton: { height: 48, backgroundColor: colors.red, borderRadius: radius.pill, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 17 },
+  editButtonText: { color: colors.surface, fontSize: 11, fontWeight: "900" },
   meta: { flexDirection: "row", gap: 35, marginTop: 21, paddingBottom: 18, borderBottomWidth: 1, borderColor: colors.line },
   metaLabel: { color: colors.muted, fontSize: 8, fontWeight: "900", letterSpacing: 1.1 },
   metaValue: { color: colors.ink, fontSize: 11, fontWeight: "800", marginTop: 5 },
