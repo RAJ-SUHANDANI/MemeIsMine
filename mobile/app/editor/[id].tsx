@@ -18,7 +18,8 @@ const defaultBottom = "JUST RIGHT";
 export default function ImageEditorScreen() {
   const { id, draft: draftId, uri: uploadedUri, top: initialTop } = useLocalSearchParams<{ id: string; draft?: string; uri?: string; top?: string }>();
   const [catalog, setCatalog] = useState<MemeTemplate[]>([]);
-  const [template, setTemplate] = useState<MemeTemplate | null>(null);\n  const [restoredLocalUri, setRestoredLocalUri] = useState<string | undefined>();
+  const [template, setTemplate] = useState<MemeTemplate | null>(null);
+  const [restoredLocalUri, setRestoredLocalUri] = useState<string | undefined>();
   const [topText, setTopText] = useState(initialTop || defaultTop);
   const [bottomText, setBottomText] = useState(defaultBottom);
   const [fontSize, setFontSize] = useState(27);
@@ -42,7 +43,8 @@ export default function ImageEditorScreen() {
         if (draft && active) {
           setTopText(draft.topText);
           setBottomText(draft.bottomText);
-          if (draft.imageUrl?.startsWith("file:") || draft.imageUrl?.startsWith("content:")) setRestoredLocalUri(draft.imageUrl);\n          else if (draft.imageUrl) setTemplate({ id: draft.templateId, name: draft.name, url: draft.imageUrl, width: 0, height: 0 });
+          if (draft.imageUrl?.startsWith("file:") || draft.imageUrl?.startsWith("content:")) setRestoredLocalUri(draft.imageUrl);
+          else if (draft.imageUrl) setTemplate({ id: draft.templateId, name: draft.name, url: draft.imageUrl, width: 0, height: 0 });
         }
       }
     }).catch((reason) => { if (active) setMessage(reason instanceof Error ? reason.message : "Could not load template."); });
