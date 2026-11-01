@@ -1,11 +1,11 @@
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { ArrowUpRight, Github, Globe2, Heart, Mail, ShieldCheck, Smartphone } from "lucide-react-native";
+import { ArrowUpRight, GitBranch, Globe2, Heart, Mail, ShieldCheck, Smartphone } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius } from "../../src/theme";
 
 const links = [
   { label: "MemeIsMine on the web", url: "https://memeismine.vercel.app/", icon: Globe2 },
-  { label: "Source code", url: "https://github.com/RAJ-SUHANDANI/MemeIsMine", icon: Github },
+  { label: "Source code", url: "https://github.com/RAJ-SUHANDANI/MemeIsMine", icon: GitBranch },
   { label: "Contact the creator", url: "mailto:rajsuhandani28@gmail.com", icon: Mail },
 ];
 export default function ProfileScreen() {
