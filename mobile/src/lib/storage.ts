@@ -30,3 +30,27 @@ export async function toggleBookmark(id: string) {
   await AsyncStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next));
   return next;
 }
+
+const BATTLE_KEY = "mim-mobile-battle-entries-v1";
+const VAULT_KEY = "mim-mobile-stickers-v1";
+export type BattleEntry = { id: string; dateKey: string; prompt: string; uri: string; caption: string; createdAt: string; votes: number };
+export type VaultSticker = { id: string; name: string; uri: string; mood: string; createdAt: string };
+export const getBattleEntries = () => readArray<BattleEntry>(BATTLE_KEY);
+export async function saveBattleEntry(entry: BattleEntry) {
+  const entries = await getBattleEntries();
+  const next = [entry, ...entries.filter((item) => item.id !== entry.id)].slice(0, 100);
+  await AsyncStorage.setItem(BATTLE_KEY, JSON.stringify(next));
+  return next;
+}
+export const getVaultStickers = () => readArray<VaultSticker>(VAULT_KEY);
+export async function saveVaultSticker(sticker: VaultSticker) {
+  const stickers = await getVaultStickers();
+  const next = [sticker, ...stickers.filter((item) => item.id !== sticker.id)].slice(0, 200);
+  await AsyncStorage.setItem(VAULT_KEY, JSON.stringify(next));
+  return next;
+}
+export async function removeVaultSticker(id: string) {
+  const next = (await getVaultStickers()).filter((item) => item.id !== id);
+  await AsyncStorage.setItem(VAULT_KEY, JSON.stringify(next));
+  return next;
+}
