@@ -27,7 +27,7 @@ export default function StudioScreen() {
       { text: "Remove", style: "destructive", onPress: async () => setDrafts(await removeDraft(id)) },
     ]);
   }
-  async function unsave(id: string) { setSaved(await toggleBookmark(id)); }
+  async function unsave(id: string) { setSaved(await toggleBookmark(id)); }\n  function openSaved(id: string) { const video = id.startsWith("video:"); const templateId = video ? id.slice(6) : id; router.push(video ? { pathname: "/video/[id]", params: { id: templateId } } : { pathname: "/editor/[id]", params: { id: templateId } }); }
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.header}><Text style={styles.kicker}>YOUR CORNER OF THE INTERNET</Text><Text style={styles.title}>The{"\n"}<Text style={styles.italic}>studio.</Text></Text><Text style={styles.copy}>Your unfinished punchlines and saved favourites.</Text></View>
@@ -45,7 +45,7 @@ export default function StudioScreen() {
         renderItem={({ item }) => (
           <View style={styles.item}>
             <View style={styles.thumb}>{item.imageUrl ? <Image source={{ uri: imageUri(item.imageUrl) }} style={StyleSheet.absoluteFill} contentFit="cover"/> : <View style={styles.blank}><Bookmark size={19} color={colors.red}/></View>}</View>
-            <View style={styles.details}><Text numberOfLines={2} style={styles.name}>{item.name}</Text><View style={styles.time}><Clock3 size={11} color={colors.muted}/><Text style={styles.date}>{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "Template saved"}</Text></View><Pressable onPress={() => mode === "drafts" ? router.push({ pathname: "/editor/[id]", params: { id: item.templateId, draft: item.id } }) : router.push(item.id.startsWith("video:") ? { pathname: "/video/[id]", params: { id: item.templateId } } : { pathname: "/editor/[id]", params: { id: item.templateId } })}><Text style={styles.open}>{mode === "drafts" ? "CONTINUE EDITING ↗" : "OPEN TEMPLATE ↗"}</Text></Pressable></View>
+            <View style={styles.details}><Text numberOfLines={2} style={styles.name}>{item.name}</Text><View style={styles.time}><Clock3 size={11} color={colors.muted}/><Text style={styles.date}>{item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : "Template saved"}</Text></View><Pressable onPress={() => mode === "drafts" ? router.push({ pathname: "/editor/[id]", params: { id: item.templateId, draft: item.id } }) : openSaved(item.id)}><Text style={styles.open}>{mode === "drafts" ? "CONTINUE EDITING ↗" : "OPEN TEMPLATE ↗"}</Text></Pressable></View>
             <Pressable hitSlop={10} onPress={() => mode === "drafts" ? deleteItem(item.id) : unsave(item.id)} style={styles.remove}>{mode === "drafts" ? <Trash2 size={16} color={colors.muted}/> : <Bookmark size={16} fill={colors.red} color={colors.red}/>}</Pressable>
           </View>
         )}
