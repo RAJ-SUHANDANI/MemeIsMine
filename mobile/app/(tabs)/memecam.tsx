@@ -34,7 +34,7 @@ export default function MemeCamScreen() {
       <View style={styles.cameraFrame}>
         {focused ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} flash={flash ? "on" : "off"}>
           <View style={styles.liveOverlay} pointerEvents="none"><Text numberOfLines={3} adjustsFontSizeToFit style={styles.liveCaption}>{caption || "YOUR REACTION HERE"}</Text><Text style={styles.liveMark}>MEMECAM · MEME IS MINE</Text></View>
-        </CameraView>
+        </CameraView> : <View style={StyleSheet.absoluteFill} />}
       </View>
       <View style={styles.controls}>
         <Text style={styles.label}>LIVE CAPTION</Text>
