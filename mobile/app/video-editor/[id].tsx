@@ -86,7 +86,7 @@ export default function NativeVideoEditorScreen(){
    assUri=base+"memeismine-"+stamp+".ass";
    const output=base+"memeismine-"+stamp+".mp4";
    const exportFontSize=Math.round(fontSize*dimensions.width/360);
-   const script=makeAss(dimensions.width,dimensions.height,exportFontSize,color,outline,topCaption,caption,duration);
+   const script=makeAss(dimensions.width,dimensions.height,exportFontSize,color,outline,topCaption,caption,duration*speed);
    await FileSystem.writeAsStringAsync(assUri,script,{encoding:FileSystem.EncodingType.UTF8});
    const assPath=assUri.replace(/^file:\/\//,"");
    const filter="scale="+dimensions.width+":"+dimensions.height+":force_original_aspect_ratio=decrease,pad="+dimensions.width+":"+dimensions.height+":(ow-iw)/2:(oh-ih)/2,ass="+assPath+",setpts=PTS/"+speed;
