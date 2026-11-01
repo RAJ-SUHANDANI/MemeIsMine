@@ -6,6 +6,7 @@ import { colors, radius } from "../../src/theme";
 const links = [
   { label: "MemeIsMine on the web", url: "https://memeismine.vercel.app/", icon: Globe2 },
   { label: "Source code", url: "https://github.com/RAJ-SUHANDANI/MemeIsMine", icon: GitBranch },
+  { label: "Privacy information", url: "https://memeismine.vercel.app/privacy", icon: ShieldCheck },
   { label: "Contact the creator", url: "mailto:rajsuhandani28@gmail.com", icon: Mail },
 ];
 export default function ProfileScreen() {
@@ -29,7 +30,7 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.privacy}>
           <ShieldCheck size={17} color={colors.green}/>
-          <View style={{ flex: 1 }}><Text style={styles.privacyTitle}>Your drafts stay yours.</Text><Text style={styles.privacyCopy}>Drafts and bookmarks are stored locally on this device. This version does not offer an account or cross-device sync.</Text></View>
+          <View style={{ flex: 1 }}><Text style={styles.privacyTitle}>Your drafts stay yours.</Text><Text style={styles.privacyCopy}>Drafts, bookmarks, Battle entries and stickers are stored locally on this device. This version does not offer accounts or cloud sync.</Text></View>
         </View>
         <View style={styles.end}><Heart color={colors.red} size={13}/><Text style={styles.endText}>A little creativity goes a long way.</Text></View>
       </ScrollView>
