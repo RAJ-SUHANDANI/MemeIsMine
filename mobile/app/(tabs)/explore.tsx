@@ -17,17 +17,25 @@ export default function ExploreScreen() {
   const [saved, setSaved] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const load = useCallback(async () => {
+  useEffect(() => {
     const controller = new AbortController();
-    try {
-      setLoading(true); setError("");
-      const [data, bookmarks] = await Promise.all([getMemes({ q: query.trim(), sort, limit: 100, signal: controller.signal }), getBookmarks()]);
-      setItems(data); setSaved(bookmarks);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load memes."); }
-    finally { setLoading(false); }
-    return () => controller.abort();
+    let alive = true;
+    setLoading(true);
+    setError("");
+    void Promise.all([
+      getMemes({ q: query.trim(), sort, limit: 100, signal: controller.signal }),
+      getBookmarks()
+    ]).then(([data, bookmarks]) => {
+      if (!alive) return;
+      setItems(data);
+      setSaved(bookmarks);
+    }).catch((reason) => {
+      if (alive && !(reason instanceof Error && reason.name === "AbortError")) {
+        setError(reason instanceof Error ? reason.message : "Could not load memes.");
+      }
+    }).finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; controller.abort(); };
   }, [query, sort]);
-  useEffect(() => { let cancel: (() => void) | undefined; void load().then((cleanup) => { cancel = cleanup; }); return () => cancel?.(); }, [load]);
   useFocusEffect(useCallback(() => { void getBookmarks().then(setSaved); }, []));
   async function bookmark(id: string) { setSaved(await toggleBookmark(id)); }
   const subtitle = useMemo(() => query ? `MATCHES FOR “${query.toUpperCase()}”` : "THE IMGFLIP IMAGE INDEX", [query]);
