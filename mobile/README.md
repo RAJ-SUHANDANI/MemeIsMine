@@ -173,6 +173,6 @@ Before shipping a store build:
 
 ## Continuous integration
 
-The GitHub Actions workflow at `.github/workflows/mobile-typecheck.yml` checks Expo dependency compatibility, TypeScript and Expo Doctor for changes to the mobile app and the app branch. The manual `.github/workflows/mobile-eas-build.yml` workflow starts cloud preview or production builds after EAS credentials and project configuration are added.
+The GitHub Actions workflow at `.github/workflows/mobile-typecheck.yml` checks Expo dependency compatibility, TypeScript, Expo Doctor, Android/iOS JavaScript bundles and clean native prebuild generation for changes to the mobile app and the app branch. The manual `.github/workflows/mobile-eas-build.yml` workflow starts cloud preview or production builds after EAS credentials and project configuration are added.
 
 A passing workflow confirms dependency compatibility and static type validation; it does **not** confirm that a native build launches or that camera and media export work on a physical device.
