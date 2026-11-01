@@ -10,6 +10,7 @@ The native MemeIsMine app is an Expo / React Native companion to the MemeIsMine 
 - [App-exclusive features](#app-exclusive-features)
 - [Getting started](#getting-started)
 - [Native development builds](#native-development-builds)
+- [Automated EAS builds](#automated-eas-builds)
 - [API configuration](#api-configuration)
 - [Data and storage](#data-and-storage)
 - [Known limitations](#known-limitations)
@@ -105,7 +106,20 @@ After installing the generated development build on your device, run:
 npx expo start --dev-client
 ```
 
-Build profiles are defined in `eas.json`. Review the app identifiers, permission strings and native plugins in `app.config.ts` before creating store builds.
+Build profiles are defined in `eas.json`. The app icon and splash artwork are in `assets/icon.png`. Review the app identifiers, permission strings and native plugins in `app.config.ts` before creating store builds.
+
+## Automated EAS builds
+
+The repository includes a manual GitHub Actions workflow at `.github/workflows/mobile-eas-build.yml` for preview and production builds on Android, iOS or both.
+
+One-time setup:
+
+1. Create or link the Expo project from `mobile/` with `npx eas-cli@latest login` and `npx eas-cli@latest init`.
+2. Copy the EAS project UUID and make it available as `EAS_PROJECT_ID` in the local build environment.
+3. In GitHub, add an Actions secret named `EXPO_TOKEN` (an Expo access token) and an Actions variable named `EAS_PROJECT_ID` (the project UUID).
+4. Open **Actions → Native Mobile Build → Run workflow**, then choose the platform and `preview` or `production` profile.
+
+The preview profile creates an Android APK for internal device testing. The production profile creates store-oriented builds (Android App Bundle by default). EAS signing credentials and Apple/Google store accounts must be configured on the Expo project by its owner; this repository does not contain signing keys or store credentials.
 
 ## API configuration
 
@@ -140,7 +154,7 @@ Media is loaded through the existing API proxy routes rather than changing the w
 
 - **Backend/community features:** Meme Battle voting, public submissions, anti-abuse controls, global leaderboards and server-side streaks require backend services and are not implemented.
 - **Cloud sync:** local drafts, stickers, bookmarks and battle entries do not sync between devices.
-- **Native QA:** the MP4 pipeline is implemented, but a successful TypeScript/CI check does not replace native build and physical-device testing. Verify rendering, audio, permissions, sharing and saving on real Android and iOS devices before release.
+- **Native QA:** the MP4 pipeline is implemented, but a successful TypeScript/CI check does not replace native build and physical-device testing. Verify rendering, audio, permissions, sharing and saving on real Android and iOS devices before release. The repository does not include device-test results or a signed store binary yet.
 - **Video timeline:** duration selection limits the rendered output. Frame-accurate timeline trimming, keyframed caption animation and multi-layer video overlays are not implemented.
 - **Sticker packs:** MemeVault currently exports individual transparent PNGs; ZIP export and keyboard integration remain future work.
 - **FFmpeg licensing and size:** the bundled FFmpeg dependency uses LGPLv3 binaries. Review its licence obligations and native binary size before publishing.
@@ -159,6 +173,6 @@ Before shipping a store build:
 
 ## Continuous integration
 
-The GitHub Actions workflow at `.github/workflows/mobile-typecheck.yml` checks Expo dependency compatibility and runs the TypeScript typecheck for changes to the mobile app and the app branch.
+The GitHub Actions workflow at `.github/workflows/mobile-typecheck.yml` checks Expo dependency compatibility, TypeScript and Expo Doctor for changes to the mobile app and the app branch. The manual `.github/workflows/mobile-eas-build.yml` workflow starts cloud preview or production builds after EAS credentials and project configuration are added.
 
 A passing workflow confirms dependency compatibility and static type validation; it does **not** confirm that a native build launches or that camera and media export work on a physical device.
