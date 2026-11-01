@@ -30,6 +30,7 @@ const config: ExpoConfig = {
   experiments: { typedRoutes: true },
 
   android: {
+    package: "com.memeismine.app",
     edgeToEdgeEnabled: true,
     permissions: ["CAMERA", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
   }
