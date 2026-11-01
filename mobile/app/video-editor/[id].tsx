@@ -62,8 +62,8 @@ export default function NativeVideoEditorScreen(){
   }).catch(e=>{if(alive)setMessage(e instanceof Error?e.message:"Could not load this video.");}).finally(()=>{if(alive)setLoading(false)});
   return()=>{alive=false;controller.abort()};
  },[id,draftId]);
- const source=useMemo(()=>template?.mediaType==="video"?{uri:videoUri(template.url,template.sourcePage)}:null,[template]);
- const player=useVideoPlayer(source,p=>{p.loop=true;p.muted=muted;p.play()});
+ const source=useMemo(()=>template?videoUri(template.url,template.sourcePage):null,[template]);
+ const player=useVideoPlayer(template?.mediaType==="video"&&source?{uri:source}:null,p=>{p.loop=true;p.muted=muted;p.play()});
  const playing=useEvent(player,"playingChange",{isPlaying:player.playing})?.isPlaying ?? player.playing;
  useEffect(()=>{player.playbackRate=speed;player.muted=muted},[player,speed,muted]);
  function togglePlay(){if(playing)player.pause();else player.play()}
