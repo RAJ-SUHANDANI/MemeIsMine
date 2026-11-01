@@ -3,7 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
-import ViewShot, { type ViewShotRef } from "react-native-view-shot";
+import ViewShot from "react-native-view-shot";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { ArrowRight, Camera, Crown, Flame, Share2, Sparkles, Trophy } from "lucide-react-native";
@@ -27,7 +27,7 @@ export default function BattleScreen() {
   const [caption, setCaption] = useState("");
   const [entries, setEntries] = useState<Awaited<ReturnType<typeof getBattleEntries>>>([]);
   const [busy, setBusy] = useState(false);
-  const shot = useRef<ViewShotRef>(null);
+  const shot = useRef<ViewShot>(null);
   useEffect(() => { let alive = true; void getBattleEntries().then((items) => { if (alive) setEntries(items); }); return () => { alive = false; }; }, []);
   const todaysEntry = entries.find((entry) => entry.dateKey === today);
   async function choosePhoto() {
