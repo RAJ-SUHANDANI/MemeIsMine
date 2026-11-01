@@ -85,7 +85,7 @@ export default function VideoTemplateScreen() {
           <View><Text style={styles.metaLabel}>FORMAT</Text><Text style={styles.metaValue}>{template?.mediaType === "gif" ? "LOOPING GIF" : "VIDEO CLIP"}</Text></View>
           <View><Text style={styles.metaLabel}>COLLECTION</Text><Text style={styles.metaValue}>{template?.category || "VIDEO MEMES"}</Text></View>
         </View>
-        <View style={styles.note}><Text style={styles.noteTitle}>A NOTE ON VIDEO EDITING</Text><Text style={styles.noteCopy}>This screen previews the original moving template. Native video caption rendering and MP4 export are not yet connected; the web editor’s browser-based WebM renderer cannot be reused directly in Expo.</Text></View>
+        <View style={styles.note}><Text style={styles.noteTitle}>A NOTE ON VIDEO EDITING</Text><Text style={styles.noteCopy}>The native motion editor can add caption layers, adjust playback speed and aspect ratio, then render an MP4 on this device. Export requires a custom native build.</Text></View>
       </ScrollView>
     </SafeAreaView>
   );
