@@ -74,9 +74,47 @@ export default function NativeVideoEditorScreen(){
   catch(e){setMessage(e instanceof Error?e.message:"Could not save video edit.");}
   finally{setSaving(false)}
  }
- async function shareSource(){
-  if(!template)return;
-  Alert.alert("Share original clip","The native editor can save your edit settings and preview the caption overlay. Composited MP4 rendering is not yet available on device; this shares the original source clip.",[{text:"Cancel",style:"cancel"},{text:"Continue",onPress:()=>Alert.alert("Use the template preview","Open the template page to share the original source.")}]);
+ async function exportVideo(){
+  if(!template||!source||exporting)return;
+  setExporting(true);setProgress(0);setOutputUri("");setMessage("Preparing your video…");
+  let assUri="";
+  try{
+   const dimensions=sizes.find(item=>item.ratio===ratio)??sizes[0];
+   const base=FileSystem.cacheDirectory??FileSystem.documentDirectory;
+   if(!base)throw new Error("The app storage directory is unavailable.");
+   const stamp=Date.now();
+   assUri=base+"memeismine-"+stamp+".ass";
+   const output=base+"memeismine-"+stamp+".mp4";
+   const script=makeAss(dimensions.width,dimensions.height,fontSize,color,outline,topCaption,caption,duration);
+   await FileSystem.writeAsStringAsync(assUri,script,{encoding:FileSystem.EncodingType.UTF8});
+   const filter="scale="+dimensions.width+":"+dimensions.height+":force_original_aspect_ratio=decrease,pad="+dimensions.width+":"+dimensions.height+":(ow-iw)/2:(oh-ih)/2,ass="+assUri+",setpts=PTS/"+speed;
+   const result=await execute([
+    "-y","-stream_loop","-1","-i",source,
+    "-t",String(duration*speed),
+    "-map","0:v:0","-map","0:a?",
+    "-vf",filter,"-af","atempo="+speed,
+    "-r","30","-c:v","libopenh264","-pix_fmt","yuv420p",
+    "-c:a","aac","-b:a","128k","-movflags","+faststart",
+    "-shortest",output
+   ],log=>setMessage(log.slice(-180)),timeMs=>setProgress(Math.min(99,Math.round(timeMs/(duration*1000)*100))));
+   if(!result.success||result.cancelled)throw new Error(result.failStackTrace||result.output||"Video encoding did not complete.");
+   const info=await FileSystem.getInfoAsync(output);
+   if(!info.exists||!("size" in info)||!info.size)throw new Error("The video encoder returned an empty file.");
+   setOutputUri(output);setProgress(100);setMessage("Your edited MP4 is ready.");
+  }catch(error){setMessage(error instanceof Error?error.message:"Could not render this video.");}
+  finally{if(assUri)void FileSystem.deleteAsync(assUri,{idempotent:true}).catch(()=>undefined);setExporting(false);}
+ }
+ async function shareVideo(){
+  if(!outputUri)return;
+  if(await Sharing.isAvailableAsync())await Sharing.shareAsync(outputUri,{mimeType:"video/mp4",dialogTitle:"Share your MemeIsMine video"});
+  else Alert.alert("Sharing unavailable","The share sheet is not available on this device.");
+ }
+ async function saveToPhotos(){
+  if(!outputUri)return;
+  const permission=await MediaLibrary.requestPermissionsAsync();
+  if(!permission.granted){Alert.alert("Photo access needed","Allow photo access to save your exported video.");return;}
+  await MediaLibrary.saveToLibraryAsync(outputUri);
+  Alert.alert("Saved","Your edited MP4 is now in your photo library.");
  }
  return <SafeAreaView style={styles.safe} edges={["top"]}>
   <View style={styles.header}><Pressable onPress={()=>router.back()} style={styles.back}><ArrowLeft size={18} color={colors.ink}/></Pressable><View style={{flex:1}}><Text style={styles.kicker}>NATIVE MOTION STUDIO</Text><Text style={styles.headerTitle}>Edit your video.</Text></View><Pressable onPress={()=>void save()} style={styles.save}><Save size={14} color={colors.ink}/><Text style={styles.saveText}>Save</Text></Pressable></View>
