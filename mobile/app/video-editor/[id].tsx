@@ -29,8 +29,7 @@ function makeAss(width:number,height:number,fontSize:number,color:string,outline
   "[Events]","Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
   top.trim()?"Dialogue: 0,0:00:00.00,"+end+",Top,,0,0,0,,"+assText(top):"",
   bottom.trim()?"Dialogue: 0,0:00:00.00,"+end+",Main,,0,0,0,,"+assText(bottom):""
- ].join("\
-");
+ ].join(String.fromCharCode(10));
 }
 
 export default function NativeVideoEditorScreen(){
