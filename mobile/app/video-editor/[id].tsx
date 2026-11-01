@@ -171,7 +171,12 @@ const styles=StyleSheet.create({
  primaryText:{color:colors.surface,fontSize:11,fontWeight:"900"},
  secondary:{height:43,borderRadius:22,borderWidth:1,borderColor:colors.line,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:7,marginTop:8},
  secondaryText:{color:colors.ink,fontSize:10,fontWeight:"800"},
- progressTrack:{height:6,backgroundColor:"#E1D8CB",borderRadius:4,overflow:"hidden",marginTop:10},\n progressFill:{height:6,backgroundColor:colors.red,borderRadius:4},\n outputActions:{flexDirection:"row",gap:8,marginTop:10},\n outputButton:{flex:1,height:42,borderWidth:1,borderColor:colors.line,borderRadius:22,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:6},\n outputText:{color:colors.ink,fontSize:10,fontWeight:"900"},\n message:{color:colors.green,fontSize:10,textAlign:"center",marginTop:10},
+ progressTrack:{height:6,backgroundColor:"#E1D8CB",borderRadius:4,overflow:"hidden",marginTop:10},
+ progressFill:{height:6,backgroundColor:colors.red,borderRadius:4},
+ outputActions:{flexDirection:"row",gap:8,marginTop:10},
+ outputButton:{flex:1,height:42,borderWidth:1,borderColor:colors.line,borderRadius:22,flexDirection:"row",alignItems:"center",justifyContent:"center",gap:6},
+ outputText:{color:colors.ink,fontSize:10,fontWeight:"900"},
+ message:{color:colors.green,fontSize:10,textAlign:"center",marginTop:10},
  note:{backgroundColor:"#E8E1D7",padding:13,borderRadius:radius.md,marginTop:18},
  noteTitle:{color:colors.red,fontSize:8,fontWeight:"900",letterSpacing:1},noteText:{color:colors.muted,fontSize:10,lineHeight:16,marginTop:6}
 });
