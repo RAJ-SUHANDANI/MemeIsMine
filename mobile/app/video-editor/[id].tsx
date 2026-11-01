@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useEvent } from "expo";\nimport { Image } from "expo-image";
+import { useEvent } from "expo";
+import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,7 +40,8 @@ export default function NativeVideoEditorScreen(){
  },[id,draftId]);
  const source=useMemo(()=>template?.mediaType==="video"?{uri:videoUri(template.url,template.sourcePage)}:null,[template]);
  const player=useVideoPlayer(source,p=>{p.loop=true;p.muted=muted;p.play()});
- const {playing}=useEvent(player,"playingChange",{playing:player.playing});\n useEffect(()=>{player.playbackRate=speed;player.muted=muted},[player,speed,muted]);
+ const {playing}=useEvent(player,"playingChange",{playing:player.playing});
+ useEffect(()=>{player.playbackRate=speed;player.muted=muted},[player,speed,muted]);
  function togglePlay(){if(playing)player.pause();else player.play()}
  function toggleMute(){const next=!muted;setMuted(next);player.muted=next}
  async function save(){
