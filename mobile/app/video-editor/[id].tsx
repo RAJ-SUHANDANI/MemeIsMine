@@ -113,7 +113,7 @@ export default function NativeVideoEditorScreen(){
  }
  async function saveToPhotos(){
   if(!outputUri)return;
-  const permission=await MediaLibrary.requestPermissionsAsync();
+  const permission=await MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
   if(!permission.granted){Alert.alert("Photo access needed","Allow photo access to save your exported video.");return;}
   await MediaLibrary.saveToLibraryAsync(outputUri);
   Alert.alert("Saved","Your edited MP4 is now in your photo library.");
