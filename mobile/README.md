@@ -117,7 +117,12 @@ One-time setup:
 1. Create or link the Expo project from `mobile/` with `npx eas-cli@latest login` and `npx eas-cli@latest init`.
 2. Copy the EAS project UUID and make it available as `EAS_PROJECT_ID` in the local build environment.
 3. In GitHub, add an Actions secret named `EXPO_TOKEN` (an Expo access token) and an Actions variable named `EAS_PROJECT_ID` (the project UUID).
-4. Open **Actions → Native Mobile Build → Run workflow**, then choose the platform and `preview` or `production` profile.
+4. Trigger the workflow from the `app` branch with a commit message containing a build target:
+   - `[native-build:android:preview]`
+   - `[native-build:ios:production]`
+   - `[native-build:all:preview]`
+
+A plain `[native-build]` tag defaults to an all-platform preview build. If the workflow's **Run workflow** control is available in GitHub Actions, you can also select the platform and profile there.
 
 The preview profile creates an Android APK for internal device testing. The production profile creates store-oriented builds (Android App Bundle by default). EAS signing credentials and Apple/Google store accounts must be configured on the Expo project by its owner; this repository does not contain signing keys or store credentials.
 
