@@ -14,7 +14,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper }, animation: "fade_from_bottom" }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="editor/[id]" options={{ animation: "slide_from_right" }} />
-            <Stack.Screen name="video/[id]" options={{ animation: "slide_from_right" }} />
+            <Stack.Screen name="video/[id]" options={{ animation: "slide_from_right" }} />\n            <Stack.Screen name="video-editor/[id]" options={{ animation: "slide_from_right" }} />
             <Stack.Screen name="upload" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
           </Stack>
         </View>
