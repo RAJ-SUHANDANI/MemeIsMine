@@ -18,17 +18,25 @@ export default function VideosScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [seed, setSeed] = useState(1);
-  const load = useCallback(async () => {
+  useEffect(() => {
     const controller = new AbortController();
-    try {
-      setLoading(true); setError("");
-      const [data, bookmarks] = await Promise.all([getVideos({ q: query.trim(), sort, page: 1, limit: 60, signal: controller.signal }), getBookmarks()]);
-      setItems(data.templates); setSaved(bookmarks);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load moving templates."); }
-    finally { setLoading(false); }
-    return () => controller.abort();
-  }, [query, sort]);
-  useEffect(() => { let cancel: (() => void) | undefined; void load().then((cleanup) => { cancel = cleanup; }); return () => cancel?.(); }, [load, seed]);
+    let alive = true;
+    setLoading(true);
+    setError("");
+    void Promise.all([
+      getVideos({ q: query.trim(), sort, page: 1, limit: 60, signal: controller.signal }),
+      getBookmarks()
+    ]).then(([data, bookmarks]) => {
+      if (!alive) return;
+      setItems(data.templates);
+      setSaved(bookmarks);
+    }).catch((reason) => {
+      if (alive && !(reason instanceof Error && reason.name === "AbortError")) {
+        setError(reason instanceof Error ? reason.message : "Could not load moving templates.");
+      }
+    }).finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; controller.abort(); };
+  }, [query, sort, seed]);
   useFocusEffect(useCallback(() => { void getBookmarks().then(setSaved); }, []));
   async function bookmark(id: string) { setSaved(await toggleBookmark(`video:${id}`)); }
   function choose(key: string) { setSort(key); if (key === "surprise") setSeed((value) => value + 1); }
