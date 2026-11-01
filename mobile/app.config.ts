@@ -38,7 +38,7 @@ const config: ExpoConfig = {
   ],
   experiments: { typedRoutes: true },
   extra: {
-    eas: { projectId: process.env.EAS_PROJECT_ID }
+    eas: { projectId: "7f86e6b8-c220-4874-aecb-cbac0ee55d1d" }
   },
 
   android: {
