@@ -80,7 +80,7 @@ export default function VideoTemplateScreen() {
           </View>}
         </View>
         {!!error && <Text style={styles.error}>{error}</Text>}
-        {template?.mediaType === "video" && <Pressable onPress={() => router.push({ pathname: "/video-editor/[id]", params: { id } })} style={styles.editButton}><WandSparkles size={16} color={colors.surface}/><Text style={styles.editButtonText}>Open native video editor</Text></Pressable>}
+        {!!template && <Pressable onPress={() => router.push({ pathname: "/video-editor/[id]", params: { id } })} style={styles.editButton}><WandSparkles size={16} color={colors.surface}/><Text style={styles.editButtonText}>Open native motion editor</Text></Pressable>}
         <View style={styles.meta}>
           <View><Text style={styles.metaLabel}>FORMAT</Text><Text style={styles.metaValue}>{template?.mediaType === "gif" ? "LOOPING GIF" : "VIDEO CLIP"}</Text></View>
           <View><Text style={styles.metaLabel}>COLLECTION</Text><Text style={styles.metaValue}>{template?.category || "VIDEO MEMES"}</Text></View>
