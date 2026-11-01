@@ -17,8 +17,7 @@ import type { VideoTemplate } from "../../src/types";
 
 const sizes=[{label:"Square",ratio:1,width:1080,height:1080},{label:"Story",ratio:9/16,width:1080,height:1920},{label:"Landscape",ratio:16/9,width:1920,height:1080},{label:"Portrait",ratio:4/5,width:1080,height:1350}];
 function assColour(hex:string){const value=hex.replace("#","");return "&H00"+value.slice(4,6)+value.slice(2,4)+value.slice(0,2);}
-function assText(value:string){return value.replace(/\\\\/g,"\\\\\\\\").replace(/{/g,"\\\\{").replace(/}/g,"\\\\}").replace(/\\r?\
-/g,"\\\\N");}
+function assText(value:string){return value.replace(/\\/g,"\\\\").replace(/{/g,"\\{").replace(/}/g,"\\}").replace(/\r?\n/g,"\\N");}
 function makeAss(width:number,height:number,fontSize:number,color:string,outline:boolean,top:string,bottom:string,duration:number){
  const end="0:00:"+String(duration).padStart(2,"0")+".00";
  return [
