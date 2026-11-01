@@ -86,7 +86,7 @@ export default function ImageEditorScreen() {
       const available = await Sharing.isAvailableAsync();
       if (available) await Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: "Share your meme" });
       else {
-        const permission = await MediaLibrary.requestPermissionsAsync();
+        const permission = await MediaLibrary.requestPermissionsAsync(false, ["photo", "video"]);
         if (!permission.granted) throw new Error("Allow photo access to save your meme.");
         await MediaLibrary.saveToLibraryAsync(uri);
         setMessage("Meme saved to your photos.");
