@@ -54,3 +54,17 @@ export async function removeVaultSticker(id: string) {
   await AsyncStorage.setItem(VAULT_KEY, JSON.stringify(next));
   return next;
 }
+
+export type VideoDraft = {
+  id: string; templateId: string; name: string; caption: string; topCaption: string;
+  fontSize: number; color: string; outline: boolean; duration: number; speed: number;
+  ratio: number; muted: boolean; updatedAt: string;
+};
+const VIDEO_DRAFTS_KEY = "mim-mobile-video-drafts-v1";
+export const getVideoDrafts = () => readArray<VideoDraft>(VIDEO_DRAFTS_KEY);
+export async function saveVideoDraft(draft: VideoDraft) {
+  const drafts = await getVideoDrafts();
+  const next = [draft, ...drafts.filter((item) => item.id !== draft.id)].slice(0, 50);
+  await AsyncStorage.setItem(VIDEO_DRAFTS_KEY, JSON.stringify(next));
+  return next;
+}
