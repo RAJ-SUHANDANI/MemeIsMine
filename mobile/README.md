@@ -1,42 +1,52 @@
-# MemeIsMine — Expo mobile app
+# MemeIsMine — Expo mobile application
 
-This directory is the native mobile application. The existing Next.js website remains at the repository root and is not modified by mobile development.
+The native application lives in this directory. The existing Next.js website and APIs at the repository root are unchanged.
 
-## Product scope
+## Current mobile features
 
-- Discover Imgflip still-image templates.
-- Browse the animated GIF/video collection.
-- Search and sort both template collections.
-- Create image memes with draggable text, styling and overlays.
-- Save drafts and bookmarks on-device.
-- Preview and export images to the device share sheet.
-- Preview supported GIF/video templates; video editing/export will use native media capabilities and must be tested on physical devices.
+- Home, Explore, Motion, Studio and profile tabs.
+- Live Imgflip image template discovery from the deployed MemeIsMine API.
+- Search and sorting for image templates.
+- Animated GIF/video template discovery with search and sort.
+- Native GIF and video preview (Expo Video for video sources).
+- Local bookmarks and image-editor drafts using AsyncStorage.
+- Camera-roll image selection.
+- Image meme editor with top/bottom captions, text size, colour and outline controls.
+- PNG rendering with `react-native-view-shot` and device share-sheet export.
 
-## API integration
+## Existing API use
 
-The app consumes the existing deployed web API:
-- `GET https://memeismine.vercel.app/api/memes?limit=100&q=...`
-- `GET https://memeismine.vercel.app/api/video-templates?page=1&limit=24&sort=popular&q=...`
-- `GET https://memeismine.vercel.app/api/image?url=...`
-- `GET https://memeismine.vercel.app/api/video-source?url=...`
+The app consumes the existing deployed API:
+- `GET /api/memes?limit=100&q=...`
+- `GET /api/video-templates?page=1&limit=30&sort=popular&q=...`
+- `GET /api/image?url=...`
+- `GET /api/video-source?url=...`
 
-The image/video endpoints enforce host allowlists. Do not bypass them by proxying arbitrary user-provided URLs.
+Base URL defaults to `https://memeismine.vercel.app`. Set `EXPO_PUBLIC_API_BASE_URL` to use another deployment. Only use the existing allowlisted API proxies for external media.
 
-Drafts/bookmarks remain local to the device unless a backend account/sync service is intentionally added in a later iteration. Do not claim cross-device sync.
+## Honest limitations
 
-## Development
+- Drafts and bookmarks are local to one device; there is no account system or cross-device sync.
+- Native video caption compositing, timeline editing, video export, and audio-track export are not implemented. The web editor uses browser Canvas/MediaRecorder and this is not automatically available in React Native.
+- User-uploaded photo URIs are kept as local editor input; draft restoration for custom local photos is limited because app-private URI persistence should be implemented with a managed file copy before relying on it long-term.
+- The application has been added to GitHub, but an Expo install, type-check, emulator launch, and on-device QA have not been run in this environment.
 
-Use the Expo SDK-compatible dependencies declared in this directory. From `mobile/` run:
+## Run locally
+
+Requires Node.js and an Android emulator/device or macOS with the iOS simulator.
 
 ```bash
+cd mobile
 npm install
 npx expo start
 ```
 
-Run Android with `npx expo start --android`, iOS with `npx expo start --ios` (macOS required for the iOS simulator), and web with `npx expo start --web`.
+Android: `npm run android`
 
-## Configuration
+iOS simulator (macOS): `npm run ios`
 
-Set `EXPO_PUBLIC_API_BASE_URL` to the deployed API origin when using a different deployment. The default is `https://memeismine.vercel.app`.
+Web preview: `npm run web`
 
-No private API keys belong in Expo public environment variables.
+Type-check: `npm run typecheck`
+
+For a native release, configure EAS Build and review the permissions and app identifiers in `app.config.ts`.
