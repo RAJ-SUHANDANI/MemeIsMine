@@ -5,6 +5,8 @@ const config: ExpoConfig = {
   slug: "memeismine",
   scheme: "memeismine",
   version: "1.0.0",
+  icon: "./assets/icon.png",
+  splash: { image: "./assets/icon.png", resizeMode: "contain", backgroundColor: "#F4F0E8" },
   description: "A playful mobile meme studio with image editing, motion templates, MemeCam, Meme Battle and a personal sticker vault.",
   ios: {
     bundleIdentifier: "com.memeismine.app",
@@ -40,6 +42,7 @@ const config: ExpoConfig = {
 
   android: {
     package: "com.memeismine.app",
+    adaptiveIcon: { foregroundImage: "./assets/icon.png", backgroundColor: "#181713" },
     versionCode: 1,
     edgeToEdgeEnabled: true,
     permissions: ["CAMERA", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"]
