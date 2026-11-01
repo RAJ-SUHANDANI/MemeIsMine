@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Sharing from "expo-sharing";
 import * as MediaLibrary from "expo-media-library";
-import ViewShot, { type ViewShotRef } from "react-native-view-shot";
+import ViewShot from "react-native-view-shot";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Download, PackagePlus, Plus, Share2, Sticker, Trash2 } from "lucide-react-native";
@@ -19,7 +19,7 @@ export default function MemeVaultScreen() {
   const [mood,setMood]=useState(moods[0]);
   const [shape,setShape]=useState<"circle"|"rounded">("circle");
   const [busy,setBusy]=useState(false);
-  const shot=useRef<ViewShotRef>(null);
+  const shot=useRef<ViewShot>(null);
   useEffect(()=>{void getVaultStickers().then(setStickers)},[]);
   async function choose(){
     const permission=await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -62,7 +62,7 @@ export default function MemeVaultScreen() {
             {uri?<Image source={{uri}} style={StyleSheet.absoluteFill} contentFit="contain"/>:<><Plus color={colors.red} size={22}/><Text style={styles.chooseText}>Choose a photo</Text><Text style={styles.muted}>Use a face, pet, object or meme</Text></>}
           </Pressable>
           {!!uri&&<>
-            <ViewShot ref={shot} options={{format:"png",quality:1,result:"tmpfile",backgroundColor:"transparent"}} style={styles.stickerStage}>
+            <ViewShot ref={shot} options={{format:"png",quality:1,result:"tmpfile"}} style={styles.stickerStage}>
               <View style={[styles.stickerShape,shape==="circle"?styles.circle:styles.rounded]}>
                 <Image source={{uri}} style={StyleSheet.absoluteFill} contentFit="cover"/>
                 <View style={styles.stickerShade}><Text style={styles.stickerMood}>{mood}</Text></View>
