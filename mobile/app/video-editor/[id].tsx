@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useEvent } from "expo";
+import { useEvent } from "expo";\nimport { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,7 +39,7 @@ export default function NativeVideoEditorScreen(){
  },[id,draftId]);
  const source=useMemo(()=>template?.mediaType==="video"?{uri:videoUri(template.url,template.sourcePage)}:null,[template]);
  const player=useVideoPlayer(source,p=>{p.loop=true;p.muted=muted;p.play()});
- const {playing}=useEvent(player,"playingChange",{playing:player.playing});
+ const {playing}=useEvent(player,"playingChange",{playing:player.playing});\n useEffect(()=>{player.playbackRate=speed;player.muted=muted},[player,speed,muted]);
  function togglePlay(){if(playing)player.pause();else player.play()}
  function toggleMute(){const next=!muted;setMuted(next);player.muted=next}
  async function save(){
@@ -58,7 +58,7 @@ export default function NativeVideoEditorScreen(){
   <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
    <Text style={styles.name}>{template?.name||"Loading template…"}</Text>
    <View style={[styles.preview,{aspectRatio:ratio}]}>
-    {template?.mediaType==="video"?<VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false}/>:template?.mediaType==="gif"?<Text style={styles.gifNote}>Animated GIF preview is available on the template screen.</Text>:<Text style={styles.gifNote}>{loading?"Loading…":message}</Text>}
+    {template?.mediaType==="video"?<VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls={false}/>:template?.mediaType==="gif"?<Image source={{uri:videoUri(template.url,template.sourcePage)}} style={StyleSheet.absoluteFill} contentFit="contain"/>:<Text style={styles.gifNote}>{loading?"Loading…":message}</Text>}
     <View pointerEvents="none" style={styles.overlay}>
      {!!topCaption&&<Text style={[styles.overlayText,{fontSize:fontSize*.75,color,textShadowColor:outline?"#000":"transparent"}]}>{topCaption}</Text>}
      <Text style={[styles.overlayText,{fontSize,color,textShadowColor:outline?"#000":"transparent"}]}>{caption||" "}</Text>
