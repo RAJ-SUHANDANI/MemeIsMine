@@ -32,7 +32,6 @@ jobs:
         working-directory: mobile
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
     steps:
       - name: Check out app source
         uses: actions/checkout@v4
@@ -46,10 +45,6 @@ jobs:
         run: |
           if [ -z "$EXPO_TOKEN" ]; then
             echo "::error::Add EXPO_TOKEN as a GitHub Actions secret."
-            exit 1
-          fi
-          if [ -z "$EAS_PROJECT_ID" ]; then
-            echo "::error::Add EAS_PROJECT_ID as a GitHub Actions variable after running eas init."
             exit 1
           fi
       - name: Resolve build target
