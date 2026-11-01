@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions, type CameraType } from "expo-camera";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { ArrowLeft, Camera, FlipHorizontal, Zap } from "lucide-react-native";
 import { colors, radius } from "../../src/theme";
 
@@ -12,7 +12,7 @@ export default function MemeCamScreen() {
   const [caption, setCaption] = useState("WHEN THE PLAN ACTUALLY WORKS");
   const [flash, setFlash] = useState(false);
   const camera = useRef<CameraView>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);\n  const [focused, setFocused] = useState(true);\n  useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false); }, []));
   async function capture() {
     if (!camera.current || busy) return;
     setBusy(true);
@@ -30,7 +30,7 @@ export default function MemeCamScreen() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.header}><View><Text style={styles.kicker}>APP ORIGINAL · LIVE CAMERA</Text><Text style={styles.title}>Meme<Text style={styles.italic}>Cam.</Text></Text></View><Pressable onPress={() => setFacing((v) => v === "back" ? "front" : "back")} style={styles.flip}><FlipHorizontal color={colors.ink} size={19}/></Pressable></View>
       <View style={styles.cameraFrame}>
-        <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} flash={flash ? "on" : "off"}>
+        {focused ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} flash={flash ? "on" : "off"}>
           <View style={styles.liveOverlay} pointerEvents="none"><Text numberOfLines={3} adjustsFontSizeToFit style={styles.liveCaption}>{caption || "YOUR REACTION HERE"}</Text><Text style={styles.liveMark}>MEMECAM · MEME IS MINE</Text></View>
         </CameraView>
       </View>
