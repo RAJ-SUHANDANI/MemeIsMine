@@ -1,47 +1,389 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Bookmark, Clapperboard, FileImage, Trash2 } from "lucide-react";
+import {
+  ArrowUpRight,
+  Bookmark,
+  Clapperboard,
+  FileImage,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
-type Draft={id:string;templateId:string;name:string;url:string;topText:string;bottomText:string;fontSize?:number;outline?:boolean;updatedAt:string;source?:string};
-type VideoDraft={id:string;templateId:string;name:string;url:string;mediaType:"gif"|"video";updatedAt:string};
-type VideoTemplateInfo={id:string;name:string;url:string;posterUrl:string;mediaType:"gif"|"video"};
-const DRAFTS_KEY="mim-drafts";const BOOKMARKS_KEY="mim-bookmarks";
-export default function StudioPage(){
-  const[drafts,setDrafts]=useState<Draft[]>([]);const[videoDrafts,setVideoDrafts]=useState<VideoDraft[]>([]);const[videoTemplates,setVideoTemplates]=useState<VideoTemplateInfo[]>([]);const[savedIds,setSavedIds]=useState<string[]>([]);const[memes,setMemes]=useState<MemeTemplate[]>(starterMemes);
-  useEffect(()=>{
-    try{setDrafts(JSON.parse(localStorage.getItem(DRAFTS_KEY)??"[]"))}catch{setDrafts([])}
-    try{setVideoDrafts(JSON.parse(localStorage.getItem("mim-video-drafts")??"[]"))}catch{setVideoDrafts([])}
-    try{setSavedIds(JSON.parse(localStorage.getItem(BOOKMARKS_KEY)??"[]"))}catch{setSavedIds([])}
-    fetch("/api/memes?limit=100").then((res)=>res.json()).then((data)=>{if(data.success&&data.memes?.length)setMemes(data.memes)}).catch(()=>undefined);
-    fetch("/api/video-templates?limit=100&sort=popular").then((res)=>res.json()).then((data)=>{if(data.success&&Array.isArray(data.templates))setVideoTemplates(data.templates)}).catch(()=>undefined);
-    const refresh=()=>{try{setSavedIds(JSON.parse(localStorage.getItem(BOOKMARKS_KEY)??"[]"))}catch{setSavedIds([])}};
-    window.addEventListener("mim-bookmarks-updated",refresh);window.addEventListener("storage",refresh);
-    return()=>{window.removeEventListener("mim-bookmarks-updated",refresh);window.removeEventListener("storage",refresh)};
-  },[]);
-  function deleteDraft(id:string){const next=drafts.filter((draft)=>draft.id!==id);setDrafts(next);localStorage.setItem(DRAFTS_KEY,JSON.stringify(next))}
-  const savedMemes=memes.filter((meme)=>savedIds.includes(meme.id));
-  const savedVideoIds=savedIds.filter((id)=>id.startsWith("video:")).map((id)=>id.slice(6));
-  const savedVideos=videoTemplates.filter((template)=>savedVideoIds.includes(template.id));
-  return <main className="paper-noise"><SiteHeader/>
-    <section className="page-hero"><div className="container studio-header"><div><span className="eyebrow">Your space on this device</span><h1>Your <span>studio.</span></h1><p>Drafts and saved formats, ready when the next idea hits.</p></div><Link href="/explore" className="button button-dark">Find another format <ArrowUpRight size={15}/></Link></div></section>
-    <section className="section" style={{paddingTop:44}}><div className="container">
-      <div className="section-head"><div><span className="eyebrow">01 / In progress</span><h2 className="section-title" style={{fontSize:46}}>Your drafts</h2></div><p className="section-note">Saved in local storage on this browser. No account, no remote database.</p></div>
-      {drafts.length?<div className="template-grid">{drafts.map((draft)=><article className="draft-card" key={draft.id}><div className="draft-preview">{draft.url?<img src={draft.url} alt={draft.name}/>:<div className="canvas-placeholder"><FileImage size={25}/><span>Text draft</span></div>}</div><h3 className="draft-title">{draft.name}</h3><p className="draft-date">Saved {new Date(draft.updatedAt).toLocaleString()}</p><p className="control-help">{draft.topText} / {draft.bottomText}</p><div className="draft-actions"><Link href={`/create/${draft.templateId}?draft=${encodeURIComponent(draft.id)}${draft.source === "indian" ? "&source=indian" : ""}`} className="button button-dark button-small">Continue <ArrowUpRight size={13}/></Link><button className="button button-paper button-small" onClick={()=>deleteDraft(draft.id)} aria-label="Delete draft"><Trash2 size={14}/></button></div></article>)}</div>:<div className="empty-state"><FileImage size={29}/><h2>Nothing in the works. Yet.</h2><p>Make a meme, then save the draft to pick up where you left off.</p><Link href="/explore" className="button button-dark button-small" style={{marginTop:13}}>Find a template <ArrowUpRight size={14}/></Link></div>}
-    </div></section>
-    <section className="section" style={{paddingTop:10}}><div className="container">
-      <div className="section-head"><div><span className="eyebrow">02 / Saved for later</span><h2 className="section-title" style={{fontSize:46}}>Your bookmarks</h2></div><p className="section-note">Keep your favourite formats close. They stay on this device.</p></div>
-      {savedMemes.length?<div className="template-grid">{savedMemes.map((meme)=><article key={meme.id}><div className="draft-preview" style={{marginBottom:8}}><img src={meme.url} alt={meme.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/></div><p className="draft-title">{meme.name}</p><Link href={`/create/${meme.id}`} className="text-link">Use this format <ArrowUpRight size={13}/></Link></article>)}</div>:<div className="empty-state"><Bookmark size={28}/><h2>Save the good ones.</h2><p>Tap the bookmark on any template and it’ll show up here.</p><Link href="/explore" className="text-link" style={{marginTop:12}}>Explore templates <ArrowUpRight size={14}/></Link></div>}
-    </div></section>
-    <section className="section" style={{paddingTop:10}}><div className="container">
-      <div className="section-head"><div><span className="eyebrow">03 / Video work in progress</span><h2 className="section-title" style={{fontSize:46}}>Video drafts</h2></div><p className="section-note">Video editor settings and layers are saved locally in this browser.</p></div>
-      {videoDrafts.length?<div className="template-grid">{videoDrafts.map((draft)=><article className="draft-card" key={draft.id}><div className="draft-preview">{draft.url?<img src={draft.url} alt={draft.name}/>:<div className="canvas-placeholder"><Clapperboard size={25}/><span>Video draft</span></div>}</div><h3 className="draft-title">{draft.name}</h3><p className="draft-date">Saved {new Date(draft.updatedAt).toLocaleString()}</p><div className="draft-actions"><Link href={"/video-editor/"+encodeURIComponent(draft.templateId)+"?draft="+encodeURIComponent(draft.id)} className="button button-dark button-small">Continue <ArrowUpRight size={13}/></Link><button className="button button-paper button-small" onClick={()=>{const next=videoDrafts.filter((item)=>item.id!==draft.id);setVideoDrafts(next);localStorage.setItem("mim-video-drafts",JSON.stringify(next));}} aria-label="Delete video draft"><Trash2 size={14}/></button></div></article>)}</div>:<div className="empty-state"><Clapperboard size={28}/><h2>Your video ideas belong here.</h2><p>Open a video template, add captions or overlays, and choose Save to studio.</p><Link href="/video-templates" className="button button-dark button-small" style={{marginTop:13}}>Browse video templates <ArrowUpRight size={14}/></Link></div>}
-    </div></section>
-    <section className="section" style={{paddingTop:10}}><div className="container">
-      <div className="section-head"><div><span className="eyebrow">04 / Saved motion formats</span><h2 className="section-title" style={{fontSize:46}}>Video bookmarks</h2></div><p className="section-note">Your bookmarked video templates stay on this device.</p></div>
-      {savedVideoIds.length?<div className="template-grid">{savedVideoIds.map((id)=>{const template=videoTemplates.find((item)=>item.id===id);return <article key={id} className="draft-card"><div className="draft-preview">{template?.posterUrl?<img src={template.posterUrl} alt={template.name}/>:<Clapperboard size={28}/>}</div><h3 className="draft-title">{template?.name??id}</h3><div className="draft-actions"><Link href={"/video-editor/"+encodeURIComponent(id)} className="button button-dark button-small">Use template <ArrowUpRight size={13}/></Link><button className="button button-paper button-small" onClick={()=>{const next=savedIds.filter((item)=>item!=="video:"+id);setSavedIds(next);localStorage.setItem(BOOKMARKS_KEY,JSON.stringify(next));window.dispatchEvent(new Event("mim-bookmarks-updated"));}} aria-label="Remove video bookmark"><Trash2 size={14}/></button></div></article>})}</div>:<p className="control-help">Bookmark a video template to find it here.</p>}
-    </div></section>
-    <footer className="site-footer"><div className="container footer-inner"><div className="footer-copy">Meme Is Mine · Studio</div><div className="footer-links"><Link href="/">Home</Link><Link href="/explore">Explore templates</Link></div><span className="footer-copy">Private by default. Stored locally.</span></div></footer>
-  </main>;
+type Draft = {
+  id: string;
+  templateId: string;
+  name: string;
+  url: string;
+  updatedAt: string;
+  source?: string;
+};
+type VideoTemplate = { id: string; name: string; posterUrl: string };
+type Removed = { key: string; draft: Draft };
+function readArray<T>(key: string, valid: (value: unknown) => value is T): T[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) ?? "[]");
+    return Array.isArray(value) ? value.filter(valid) : [];
+  } catch {
+    return [];
+  }
+}
+function isDraft(value: unknown): value is Draft {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "templateId" in value &&
+    typeof value.templateId === "string" &&
+    "name" in value &&
+    typeof value.name === "string"
+  );
+}
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+function isTemplate(value: unknown): value is MemeTemplate {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "name" in value &&
+    typeof value.name === "string" &&
+    "url" in value &&
+    typeof value.url === "string"
+  );
+}
+export default function StudioPage() {
+  const [drafts, setDrafts] = useState<Draft[]>([]),
+    [videoDrafts, setVideoDrafts] = useState<Draft[]>([]),
+    [savedIds, setSavedIds] = useState<string[]>([]),
+    [memes, setMemes] = useState<MemeTemplate[]>(starterMemes),
+    [videos, setVideos] = useState<VideoTemplate[]>([]),
+    [removed, setRemoved] = useState<Removed | null>(null),
+    [notice, setNotice] = useState("");
+  useEffect(() => {
+    const refresh = () => {
+      setDrafts(readArray("mim-drafts", isDraft));
+      setVideoDrafts(readArray("mim-video-drafts", isDraft));
+      setSavedIds(readArray("mim-bookmarks", isString));
+    };
+    refresh();
+    fetch("/api/memes?limit=100")
+      .then((r) => r.json())
+      .then((data) => {
+        const base = Array.isArray(data.memes)
+          ? data.memes.filter(isTemplate)
+          : starterMemes;
+        setMemes(
+          Array.from(
+            new Map(
+              [...base, ...readArray("mim-bookmark-templates", isTemplate)].map(
+                (m) => [m.id, m],
+              ),
+            ).values(),
+          ),
+        );
+      })
+      .catch(() =>
+        setMemes([
+          ...starterMemes,
+          ...readArray("mim-bookmark-templates", isTemplate),
+        ]),
+      );
+    fetch("/api/video-templates?limit=100&sort=popular")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.templates)) setVideos(data.templates);
+      })
+      .catch(() => undefined);
+    window.addEventListener("storage", refresh);
+    window.addEventListener("mim-bookmarks-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("mim-bookmarks-updated", refresh);
+    };
+  }, []);
+  function removeDraft(key: string, draft: Draft) {
+    try {
+      const list = readArray(key, isDraft).filter((d) => d.id !== draft.id);
+      localStorage.setItem(key, JSON.stringify(list));
+      (key === "mim-drafts" ? setDrafts : setVideoDrafts)(list);
+      setRemoved({ key, draft });
+      setNotice("Draft removed.");
+    } catch {
+      setNotice(
+        "This browser could not update your drafts. Check site storage and try again.",
+      );
+    }
+  }
+  function undo() {
+    if (!removed) return;
+    try {
+      const list = [
+        removed.draft,
+        ...readArray(removed.key, isDraft).filter(
+          (d) => d.id !== removed.draft.id,
+        ),
+      ];
+      localStorage.setItem(removed.key, JSON.stringify(list));
+      (removed.key === "mim-drafts" ? setDrafts : setVideoDrafts)(list);
+      setRemoved(null);
+      setNotice("Draft restored.");
+    } catch {
+      setNotice(
+        "Could not restore the draft. Free some site storage and try Undo again.",
+      );
+    }
+  }
+  function unsave(id: string) {
+    try {
+      const next = savedIds.filter((item) => item !== id);
+      localStorage.setItem("mim-bookmarks", JSON.stringify(next));
+      setSavedIds(next);
+      window.dispatchEvent(new Event("mim-bookmarks-updated"));
+    } catch {
+      setNotice(
+        "Could not update bookmarks. Check site storage and try again.",
+      );
+    }
+  }
+  const savedMemes = memes.filter((m) => savedIds.includes(m.id));
+  const date = (raw: string) => {
+    const value = new Date(raw);
+    return Number.isNaN(value.getTime())
+      ? "Saved on this device"
+      : new Intl.DateTimeFormat(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(value);
+  };
+  return (
+    <main id="main-content" tabIndex={-1} className="paper-noise">
+      <SiteHeader />
+      <section className="page-hero">
+        <div className="container studio-header">
+          <div>
+            <h1>
+              Your <span>studio.</span>
+            </h1>
+            <p>
+              Half-finished punchlines. Favourite formats. All right here on
+              this device.
+            </p>
+          </div>
+          <Link href="/explore" className="button button-dark">
+            Make something new <ArrowUpRight size={17} />
+          </Link>
+        </div>
+      </section>
+      <div className="container studio-local-banner">
+        <Bookmark size={18} />
+        <p>
+          Saved in this browser. Your drafts do not sync across devices.
+          Clearing site data removes them.
+        </p>
+        <Link href="/create/upload" className="text-link">
+          <Upload size={16} /> Start with an image
+        </Link>
+      </div>
+      {[
+        {
+          title: "Image drafts",
+          items: drafts,
+          key: "mim-drafts",
+          route: "/create/",
+          href: "/explore",
+          icon: FileImage,
+        },
+        {
+          title: "Video drafts",
+          items: videoDrafts,
+          key: "mim-video-drafts",
+          route: "/video-editor/",
+          href: "/video-templates",
+          icon: Clapperboard,
+        },
+      ].map((group) => (
+        <section className="section" key={group.key}>
+          <div className="container">
+            <div className="section-head">
+              <h2 className="section-title">{group.title}</h2>
+              <p className="section-note">
+                {group.items.length} saved on this device
+              </p>
+            </div>
+            {group.items.length ? (
+              <div className="template-grid">
+                {group.items.map((d) => (
+                  <article className="draft-card" key={d.id}>
+                    <div className="draft-preview">
+                      {d.url ? (
+                        <Image width={600} height={400} src={d.url} alt={d.name} loading="lazy" />
+                      ) : (
+                        <group.icon size={32} />
+                      )}
+                    </div>
+                    <h3 className="draft-title">{d.name}</h3>
+                    <p className="draft-date">{date(d.updatedAt)}</p>
+                    <div className="draft-actions">
+                      <Link
+                        href={
+                          group.route +
+                          encodeURIComponent(d.templateId) +
+                          "?draft=" +
+                          encodeURIComponent(d.id) +
+                          (d.source === "indian" ? "&source=indian" : "")
+                        }
+                        className="button button-dark button-small"
+                      >
+                        Continue editing <ArrowUpRight size={15} />
+                      </Link>
+                      <button
+                        className="button button-paper button-small"
+                        onClick={() => removeDraft(group.key, d)}
+                        aria-label={"Delete " + d.name + " draft"}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <group.icon size={30} />
+                <h3>No {group.title.toLowerCase()} yet.</h3>
+                <p>
+                  Open an editor and choose Save to studio. Your next idea will
+                  be waiting here.
+                </p>
+                <Link href={group.href} className="text-link">
+                  Find a format <ArrowUpRight size={17} />
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+      ))}
+      <section className="section">
+        <div className="container">
+          <div className="section-head">
+            <h2 className="section-title">Saved formats</h2>
+            <p className="section-note">
+              The bookmark button keeps the good ones close.
+            </p>
+          </div>
+          {savedIds.length ? (
+            <div className="template-grid">
+              {savedMemes.map((m) => (
+                <article className="draft-card" key={m.id}>
+                  <div className="draft-preview">
+                    <Image width={600} height={400} src={m.url} alt={m.name} loading="lazy" />
+                  </div>
+                  <h3 className="draft-title">{m.name}</h3>
+                  <div className="draft-actions">
+                    <Link
+                      className="button button-dark button-small"
+                      href={
+                        "/create/" +
+                        encodeURIComponent(m.id) +
+                        (m.source === "indian" ||
+                        m.source === "indianmemetemplates"
+                          ? "?source=indian"
+                          : "")
+                      }
+                    >
+                      Use template <ArrowUpRight size={15} />
+                    </Link>
+                    <button
+                      className="button button-paper button-small"
+                      onClick={() => unsave(m.id)}
+                      aria-label={"Remove " + m.name + " bookmark"}
+                    >
+                      <Bookmark size={16} />
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {savedIds
+                .filter((id) => id.startsWith("video:"))
+                .map((id) => {
+                  const v = videos.find((v) => v.id === id.slice(6));
+                  return (
+                    <article key={id} className="draft-card">
+                      <div className="draft-preview">
+                        {v?.posterUrl ? (
+                          <Image width={600} height={400} src={v.posterUrl} alt={v.name} loading="lazy" />
+                        ) : (
+                          <Clapperboard size={32} />
+                        )}
+                      </div>
+                      <h3 className="draft-title">
+                        {v?.name ?? "Saved video template"}
+                      </h3>
+                      <div className="draft-actions">
+                        <Link
+                          href={
+                            "/video-editor/" + encodeURIComponent(id.slice(6))
+                          }
+                          className="button button-dark button-small"
+                        >
+                          Use template <ArrowUpRight size={15} />
+                        </Link>
+                        <button
+                          className="button button-paper button-small"
+                          onClick={() => unsave(id)}
+                          aria-label="Remove video bookmark"
+                        >
+                          <Bookmark size={16} />
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <Bookmark size={30} />
+              <h3>Your next favourite is out there.</h3>
+              <p>Bookmark an image or video template to bring it here.</p>
+              <Link href="/explore" className="text-link">
+                Browse templates <ArrowUpRight size={17} />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+      {notice && (
+        <div className="storage-notice" role="status">
+          <span>{notice}</span>
+          {removed && <button onClick={undo}>Undo</button>}
+          <button
+            aria-label="Dismiss notification"
+            onClick={() => {
+              setNotice("");
+              setRemoved(null);
+            }}
+          >
+            Close
+          </button>
+        </div>
+      )}
+      <footer className="site-footer">
+        <div className="container footer-inner">
+          <p className="footer-copy">Meme Is Mine · Your studio</p>
+          <div className="footer-links">
+            <Link href="/">Home</Link>
+            <Link href="/explore">Image templates</Link>
+            <Link href="/video-templates">Video templates</Link>
+          </div>
+          <p className="footer-copy">Your ideas stay on this device.</p>
+        </div>
+      </footer>
+    </main>
+  );
 }

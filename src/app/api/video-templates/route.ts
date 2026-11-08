@@ -92,26 +92,9 @@ function extractMedia(html: string, base: string): { url: string; kind: MediaKin
   }
   return found.find((item) => item.kind === "video") ?? found.find((item) => item.kind === "gif") ?? null;
 }
-function extractPosts(html: string): { id: string; name: string; originalUrl: string; posterUrl: string | null; index: number }[] {
-  const articles = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
-  const blocks = articles.length ? articles : html.split(/(?=<h[1-3]\b)/i).slice(1);
-  const posts: { id: string; name: string; originalUrl: string; posterUrl: string | null; index: number }[] = [];
-  for (const block of blocks) {
-    const heading = block.match(/<h[1-3]\b[^>]*>[\s\S]*?<a\b[^>]*href=(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[1-3]>/i);
-    if (!heading) continue;
-    let url: URL;
-    try { url = new URL(decodeEntities(heading[2]), SITE); } catch { continue; }
-    if (url.protocol !== "https:" || !["indianmemetemplates.com", "www.indianmemetemplates.com"].includes(url.hostname)) continue;
-    if (url.pathname.startsWith("/category/") || url.pathname.startsWith("/tag/")) continue;
-    const name = plainText(heading[3]);
-    const id = url.pathname.split("/").filter(Boolean).pop();
-    if (!name || !id || posts.some((item) => item.id === id)) continue;
-    posts.push({ id, name, originalUrl: url.toString(), posterUrl: extractPoster(block, SITE), index: posts.length });
-  }
-  return posts;
-}
 function publicTemplate(item: VideoTemplate) {
   const { source: _source, originalUrl, ...publicItem } = item;
+  void _source;
   return { ...publicItem, sourcePage: originalUrl };
 }
 function parseRobots(text: string): { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] {

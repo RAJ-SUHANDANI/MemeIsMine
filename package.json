@@ -8,16 +8,20 @@
     "start": "next start",
     "lint": "eslint .",
     "sync:indian-videos": "node scripts/sync-indian-video-templates.mjs",
-    "sync:indian-images": "node scripts/sync-indian-meme-templates.mjs"
+    "sync:indian-images": "node scripts/sync-indian-meme-templates.mjs",
+    "typecheck": "tsc --noEmit",
+    "qa:smoke": "node scripts/smoke-check.mjs"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "@fontsource-variable/dm-sans": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "lucide-react": "^0.468.0",
     "motion": "^12.23.24",
     "next": "^15.5.4",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "@ffmpeg/ffmpeg": "^0.12.15",
-    "@ffmpeg/util": "^0.12.2"
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -29,5 +33,11 @@
     "eslint-config-next": "^15.5.4",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.23",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   }
 }

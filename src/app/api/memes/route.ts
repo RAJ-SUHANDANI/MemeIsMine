@@ -40,5 +40,6 @@ export async function GET(request: Request) {
   else if (sort === "newest" || sort === "recent") filtered.sort((a, b) => Number(b.id) - Number(a.id) || (b.id ?? "").localeCompare(a.id ?? "", undefined, { numeric: true }));
   else filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
   const result = filtered.slice(0, limit);
-  return NextResponse.json({ success: true, source, count: result.length, total: filtered.length, memes: result }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
+  const localImages: Record<string, string> = { "181913649": "drake.jpg", "87743020": "two-buttons.jpg", "112126428": "distracted-boyfriend.jpg", "188390779": "woman-cat.jpg", "129242436": "change-my-mind.jpg" };
+  return NextResponse.json({ success: true, source, count: result.length, total: filtered.length, memes: result.map(meme => localImages[meme.id] ? { ...meme, url: "/templates/" + localImages[meme.id] } : meme) }, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
 }

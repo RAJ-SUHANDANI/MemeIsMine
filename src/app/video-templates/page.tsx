@@ -1,15 +1,43 @@
+/* Native images preserve uploaded data URLs, archive GIF playback and direct editor media references. */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Bookmark, Clapperboard, Download, Film, Search, Sparkles, Video, Volume2, VolumeX } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Bookmark,
+  Clapperboard,
+  Download,
+  Film,
+  Play,
+  Search,
+  Sparkles,
+  Video,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site";
 
 type VideoTemplate = {
-  id: string; name: string; url: string; posterUrl: string; category: string;
-  mediaType: "gif" | "video"; publishedAt: string | null;
-  trending: boolean; popularity: number; sourcePage?: string;
+  id: string;
+  name: string;
+  url: string;
+  posterUrl: string;
+  category: string;
+  mediaType: "gif" | "video";
+  publishedAt: string | null;
+  trending: boolean;
+  popularity: number;
+  sourcePage?: string;
 };
 const filters = [
   { key: "popular", label: "Popular" },
@@ -20,9 +48,12 @@ const filters = [
 ];
 function sourceUrl(template: VideoTemplate, fresh = false, referrer?: string) {
   const page = referrer ?? template.sourcePage;
-  return "/api/video-source?url=" + encodeURIComponent(template.url)
-    + (page ? "&referrer=" + encodeURIComponent(page) : "")
-    + (fresh ? "&fresh=1" : "");
+  return (
+    "/api/video-source?url=" +
+    encodeURIComponent(template.url) +
+    (page ? "&referrer=" + encodeURIComponent(page) : "") +
+    (fresh ? "&fresh=1" : "")
+  );
 }
 
 function VideoPreview({ template }: { template: VideoTemplate }) {
@@ -49,27 +80,7 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
     setArchiveFallbackTried(false);
     setDirectFallbackTried(false);
     setActive(false);
-  }, [template.id, template.url]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setActive(true);
-      return;
-    }
-    const observer = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      if (entry.isIntersecting) {
-        setActive(true);
-      } else {
-        video.pause();
-      }
-    }, { rootMargin: "260px 0px" });
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [template.id]);
+  }, [template]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -83,9 +94,12 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
       if (!current) return;
       current.muted = true;
       setMuted(true);
-      void current.play().then(() => setReady(true)).catch(() => undefined);
+      void current
+        .play()
+        .then(() => setReady(true))
+        .catch(() => undefined);
     });
-  }, [active, videoSrc]);
+  }, [active, videoSrc, muted]);
 
   async function recoverVideo() {
     if (refreshAttempted) {
@@ -93,7 +107,13 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
         // Some source hosts require the archive root instead of the article page
         // as the hotlink referrer; retry through the same proxy with fresh bytes.
         setArchiveFallbackTried(true);
-        setVideoSrc(sourceUrl({ ...template, url: resolvedUrl }, true, "https://indianmemetemplates.com/"));
+        setVideoSrc(
+          sourceUrl(
+            { ...template, url: resolvedUrl },
+            true,
+            "https://indianmemetemplates.com/",
+          ),
+        );
         setFailed(false);
         setReady(false);
         return;
@@ -112,13 +132,27 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
 
     setRefreshAttempted(true);
     try {
-      const response = await fetch("/api/video-templates?slug=" + encodeURIComponent(template.id) + "&refresh=1", { cache: "no-store" });
+      const response = await fetch(
+        "/api/video-templates?slug=" +
+          encodeURIComponent(template.id) +
+          "&refresh=1",
+        { cache: "no-store" },
+      );
       const data = await response.json();
       const freshUrl = data?.template?.url as string | undefined;
       const freshPage = data?.template?.sourcePage as string | undefined;
       if (response.ok && data?.success && freshUrl) {
         setResolvedUrl(freshUrl);
-        setVideoSrc(sourceUrl({ ...template, url: freshUrl, sourcePage: freshPage ?? template.sourcePage }, true));
+        setVideoSrc(
+          sourceUrl(
+            {
+              ...template,
+              url: freshUrl,
+              sourcePage: freshPage ?? template.sourcePage,
+            },
+            true,
+          ),
+        );
         setFailed(false);
         setReady(false);
         return;
@@ -127,7 +161,13 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
       // Retry with a different valid referer if the archive refresh is unavailable.
     }
     setArchiveFallbackTried(true);
-    setVideoSrc(sourceUrl({ ...template, url: resolvedUrl }, true, "https://indianmemetemplates.com/"));
+    setVideoSrc(
+      sourceUrl(
+        { ...template, url: resolvedUrl },
+        true,
+        "https://indianmemetemplates.com/",
+      ),
+    );
     setFailed(false);
     setReady(false);
   }
@@ -141,38 +181,82 @@ function VideoPreview({ template }: { template: VideoTemplate }) {
     video.muted = nextMuted;
     if (!nextMuted) video.volume = 1;
     setMuted(nextMuted);
-    if (video.paused) void video.play().catch(() => {
-      video.muted = true;
-      setMuted(true);
-    });
+    if (video.paused)
+      void video.play().catch(() => {
+        video.muted = true;
+        setMuted(true);
+      });
   }
 
-  return <div className="video-preview-player">
-    {(!ready || failed) && <div className="video-preview-placeholder">
-      {template.posterUrl && !posterFailed
-        ? <img src={template.posterUrl} alt="" loading="lazy" onError={() => setPosterFailed(true)}/>
-        : <div className="video-preview-placeholder-art"><Clapperboard size={30}/><span>{failed ? "PREVIEW UNAVAILABLE" : "VIDEO PREVIEW"}</span></div>}
-    </div>}
-    <video
-      ref={videoRef}
-      className={ready && !failed ? "video-preview-video is-ready" : "video-preview-video"}
-      src={active ? videoSrc : undefined}
-      poster={template.posterUrl || undefined}
-      muted={muted}
-      autoPlay={active}
-      loop
-      playsInline
-      preload={active ? "metadata" : "none"}
-      onLoadedData={() => { setReady(true); setFailed(false); }}
-      onCanPlay={() => { setReady(true); setFailed(false); }}
-      onError={() => { void recoverVideo(); }}
-      aria-label={template.name}
-    />
-    <button type="button" className="video-audio-toggle" onClick={toggleMute} aria-label={muted ? "Unmute video" : "Mute video"} title={muted ? "Unmute video" : "Mute video"}>
-      {muted ? <VolumeX size={15}/> : <Volume2 size={15}/>}
-      <span>{muted ? "Unmute" : "Mute"}</span>
-    </button>
-  </div>;
+  return (
+    <div className="video-preview-player">
+      {!active && (
+        <button
+          type="button"
+          className="video-start-preview"
+          onClick={() => setActive(true)}
+          aria-label={"Play preview of " + template.name}
+        >
+          <Play size={22} fill="currentColor" />
+        </button>
+      )}
+      {(!ready || failed) && (
+        <div className="video-preview-placeholder">
+          {template.posterUrl && !posterFailed ? (
+            <img
+              src={template.posterUrl}
+              alt=""
+              loading="lazy"
+              onError={() => setPosterFailed(true)}
+            />
+          ) : (
+            <div className="video-preview-placeholder-art">
+              <Clapperboard size={30} />
+              <span>{failed ? "PREVIEW UNAVAILABLE" : "VIDEO PREVIEW"}</span>
+            </div>
+          )}
+        </div>
+      )}
+      <video
+        ref={videoRef}
+        className={
+          ready && !failed
+            ? "video-preview-video is-ready"
+            : "video-preview-video"
+        }
+        src={active ? videoSrc : undefined}
+        poster={template.posterUrl || undefined}
+        muted={muted}
+        autoPlay={active}
+        controls={active}
+        loop
+        playsInline
+        preload={active ? "metadata" : "none"}
+        onLoadedData={() => {
+          setReady(true);
+          setFailed(false);
+        }}
+        onCanPlay={() => {
+          setReady(true);
+          setFailed(false);
+        }}
+        onError={() => {
+          void recoverVideo();
+        }}
+        aria-label={template.name}
+      />
+      <button
+        type="button"
+        className="video-audio-toggle"
+        onClick={toggleMute}
+        aria-label={muted ? "Unmute video" : "Mute video"}
+        title={muted ? "Unmute video" : "Mute video"}
+      >
+        {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+        <span>{muted ? "Unmute" : "Mute"}</span>
+      </button>
+    </div>
+  );
 }
 
 const BOOKMARKS_KEY = "mim-bookmarks";
@@ -181,12 +265,29 @@ export default function VideoTemplatesPage() {
   const reduce = useReducedMotion();
   const [templates, setTemplates] = useState<VideoTemplate[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
-  useEffect(() => { try { const ids = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) ?? "[]"); setSavedIds(Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : []); } catch { setSavedIds([]); } }, []);
+  useEffect(() => {
+    try {
+      const ids = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) ?? "[]");
+      setSavedIds(
+        Array.isArray(ids)
+          ? ids.filter((id): id is string => typeof id === "string")
+          : [],
+      );
+    } catch {
+      setSavedIds([]);
+    }
+  }, []);
   function toggleBookmark(id: string) {
     const key = "video:" + id;
     setSavedIds((current) => {
-      const next = current.includes(key) ? current.filter((item) => item !== key) : [...current, key];
-      try { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next)); } catch { /* Browser storage may be unavailable. */ }
+      const next = current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key];
+      try {
+        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next));
+      } catch {
+        /* Browser storage may be unavailable. */
+      }
       window.dispatchEvent(new Event("mim-bookmarks-updated"));
       return next;
     });
@@ -196,7 +297,9 @@ export default function VideoTemplatesPage() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [surpriseSeed, setSurpriseSeed] = useState(() => Math.floor(Math.random() * 2147483647));
+  const [surpriseSeed, setSurpriseSeed] = useState(() =>
+    Math.floor(Math.random() * 2147483647),
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -209,61 +312,327 @@ export default function VideoTemplatesPage() {
     setLoading(true);
     setError("");
     setTemplates([]);
-    const params = new URLSearchParams({ page: String(page), limit: "24", sort: filter });
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: "24",
+      sort: filter,
+    });
     if (filter === "surprise") params.set("seed", String(surpriseSeed));
     if (debouncedQuery) params.set("q", debouncedQuery);
-    fetch("/api/video-templates?" + params.toString(), { signal: controller.signal })
+    fetch("/api/video-templates?" + params.toString(), {
+      signal: controller.signal,
+    })
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok || !data.success) throw new Error(data.error ?? "Could not load video templates.");
+        if (!response.ok || !data.success)
+          throw new Error(data.error ?? "Could not load video templates.");
         if (!alive) return;
         setTemplates(Array.isArray(data.templates) ? data.templates : []);
         setTotalPages(Math.max(1, Number(data.totalPages) || 1));
       })
       .catch((reason: unknown) => {
-        if (!alive || (reason instanceof DOMException && reason.name === "AbortError")) return;
-        setError(reason instanceof Error ? reason.message : "Could not load video templates.");
+        if (
+          !alive ||
+          (reason instanceof DOMException && reason.name === "AbortError")
+        )
+          return;
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : "Could not load video templates.",
+        );
         setTemplates([]);
       })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; controller.abort(); };
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+      controller.abort();
+    };
   }, [page, filter, debouncedQuery, surpriseSeed]);
   function chooseFilter(key: string) {
     setFilter(key);
     setPage(1);
-    if (key === "surprise") setSurpriseSeed((seed) => (seed + 104729) % 2147483647);
+    if (key === "surprise")
+      setSurpriseSeed((seed) => (seed + 104729) % 2147483647);
   }
-  return <main className="paper-noise video-templates-page">
-    <SiteHeader/>
-    <section className="page-hero video-hero"><div className="container video-hero-grid">
-      <div><span className="eyebrow">Moving memes, ready to remix</span><h1>Video templates.<br/><span>More reaction.</span></h1><p>Pick a GIF or video clip, position your captions, add overlays, and export your own version.</p>
-        <div className="video-hero-points"><span><Film size={14}/> GIF and video formats</span><span><MoveIcon/> Editable text layers</span><span><Download size={14}/> Browser export</span></div>
-      </div>
-      <motion.div className="video-hero-art" initial={reduce ? false : { opacity: 0, y: 20, rotate: -3 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ duration: .5 }} whileHover={reduce ? undefined : { rotate: 2, y: -5 }}>
-        <div className="video-art-top"><span>MEME IS MINE / MOTION DEPT.</span><Clapperboard size={19}/></div>
-        <div className="video-art-window"><div className="video-art-stamp">NOT<br/>A STILL.</div><div className="video-art-lines">SAY IT<br/><em>WITH</em><br/>MOTION.</div><span className="video-art-play">▶</span></div>
-        <div className="video-art-bottom"><span>CAPTIONS. LAYERS. ACTION.</span><span>↗</span></div>
-      </motion.div>
-    </div></section>
-    <section className="container video-directory">
-      <div className="video-directory-heading"><div><span className="eyebrow">The moving collection</span><h2 className="section-title">Find the <span className="serif-italic">moment.</span></h2></div><span className="video-count"><Video size={15}/> {loading ? "Checking the archive" : templates.length + " templates on this page"}</span></div>
-      <div className="video-filter-bar">
-        <label className="search-wrap"><Search size={16}/><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Search video memes…" aria-label="Search video templates"/></label>
-        <div className="filter-row" role="group" aria-label="Filter video templates">{filters.map((item) => <button key={item.key} type="button" aria-pressed={filter === item.key} className={filter === item.key ? "filter-pill active" : "filter-pill"} onClick={() => chooseFilter(item.key)}>{item.label}</button>)}</div>
-      </div>
-      {loading && <div className="template-loading"><span className="tiny-dot"/> Updating the motion collection…</div>}
-      {error && <div className="archive-message"><p>{error}</p></div>}
-      {!loading && !error && templates.length === 0 && <div className="video-empty-state"><div className="video-empty-icon"><Clapperboard size={28}/></div><h2>The motion catalog is syncing.</h2><p>Video clips are kept in their original format. New templates will appear here as the video catalog refreshes.</p><div className="video-empty-actions"><Link className="button button-paper" href="/templates">Browse image templates <ArrowRight size={15}/></Link></div></div>}
-      {templates.length > 0 && <div className="video-template-grid">{templates.map((template, index) => <motion.article key={template.id} className="video-template-card" initial={reduce ? false : { opacity: 0, y: 18, rotate: index % 2 ? 1 : -1 }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: .08 }} transition={{ duration: .35, delay: Math.min(index % 6, 5) * .035 }} whileHover={reduce ? undefined : { y: -6, rotate: index % 2 ? 1 : -1 }}>
-        <div className="video-template-preview">
-          {template.mediaType === "gif" ? <Link className="video-template-media-link" href={"/video-editor/" + encodeURIComponent(template.id)} aria-label={"Edit " + template.name}><img src={sourceUrl(template)} alt={template.name} loading={index < 4 ? "eager" : "lazy"}/></Link> : <VideoPreview template={template}/>}
-          <span className="video-kind-pill">{template.mediaType === "gif" ? "GIF" : "VIDEO"}</span><Link className={template.mediaType === "video" ? "video-edit-cue video-edit-cue-video" : "video-edit-cue"} href={"/video-editor/" + encodeURIComponent(template.id)}><Sparkles size={13}/> Edit this template <ArrowUpRight size={14}/></Link>
+  return (
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="paper-noise video-templates-page"
+    >
+      <SiteHeader />
+      <section className="page-hero video-hero">
+        <div className="container video-hero-grid">
+          <div>
+            <span className="eyebrow">Moving memes, ready to remix</span>
+            <h1>
+              Video templates.
+              <br />
+              <span>More reaction.</span>
+            </h1>
+            <p>
+              Pick a GIF or video clip, position your captions, add overlays,
+              and export your own version.
+            </p>
+            <div className="video-hero-points">
+              <span>
+                <Film size={14} /> GIF and video formats
+              </span>
+              <span>
+                <MoveIcon /> Editable text layers
+              </span>
+              <span>
+                <Download size={14} /> Browser export
+              </span>
+            </div>
+          </div>
+          <motion.div
+            className="video-hero-art"
+            initial={reduce ? false : { opacity: 0, y: 20, rotate: -3 }}
+            animate={{ opacity: 1, y: 0, rotate: 0 }}
+            transition={{ duration: 0.5 }}
+            whileHover={reduce ? undefined : { rotate: 2, y: -5 }}
+          >
+            <div className="video-art-top">
+              <span>MEME IS MINE / MOTION DEPT.</span>
+              <Clapperboard size={19} />
+            </div>
+            <div className="video-art-window">
+              <div className="video-art-stamp">
+                NOT
+                <br />A STILL.
+              </div>
+              <div className="video-art-lines">
+                SAY IT
+                <br />
+                <em>WITH</em>
+                <br />
+                MOTION.
+              </div>
+              <span className="video-art-play">▶</span>
+            </div>
+            <div className="video-art-bottom">
+              <span>CAPTIONS. LAYERS. ACTION.</span>
+              <span>↗</span>
+            </div>
+          </motion.div>
         </div>
-        <div className="video-template-meta"><div><Link href={"/video-editor/" + encodeURIComponent(template.id)} className="video-template-name">{template.name}</Link><span>{template.trending ? "Trending" : template.category}</span></div><button type="button" className={savedIds.includes("video:" + template.id) ? "save-button is-saved" : "save-button"} onClick={() => toggleBookmark(template.id)} aria-label={savedIds.includes("video:" + template.id) ? "Remove video template bookmark" : "Bookmark video template"} aria-pressed={savedIds.includes("video:" + template.id)} title={savedIds.includes("video:" + template.id) ? "Remove bookmark" : "Save video template"}><Bookmark size={17} fill={savedIds.includes("video:" + template.id) ? "currentColor" : "none"} strokeWidth={1.8}/></button></div>
-      </motion.article>)}</div>}
-      {totalPages > 1 && <div className="archive-pagination"><button className="button button-paper button-small" disabled={loading || page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}><ArrowLeft size={14}/> Previous</button><span>Page <strong>{page}</strong> of {totalPages}</span><button className="button button-dark button-small" disabled={loading || page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next page <ArrowRight size={14}/></button></div>}
-    </section>
-    <footer className="site-footer"><div className="container footer-inner"><div className="footer-copy">Meme Is Mine · Video templates</div><div className="footer-links"><Link href="/explore">Image templates</Link><Link href="/how-it-works">How it works</Link><Link href="/about">About</Link></div><span className="footer-copy">Make a moment of it.</span></div></footer>
-  </main>;
+      </section>
+      <section className="container video-directory">
+        <div className="video-directory-heading">
+          <div>
+            <span className="eyebrow">The moving collection</span>
+            <h2 className="section-title">
+              Find the <span className="serif-italic">moment.</span>
+            </h2>
+          </div>
+          <span className="video-count">
+            <Video size={15} />{" "}
+            {loading
+              ? "Checking the archive"
+              : templates.length + " templates on this page"}
+          </span>
+        </div>
+        <div className="video-filter-bar">
+          <label className="search-wrap">
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search video memes…"
+              aria-label="Search video templates"
+            />
+          </label>
+          <div
+            className="filter-row"
+            role="group"
+            aria-label="Filter video templates"
+          >
+            {filters.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                aria-pressed={filter === item.key}
+                className={
+                  filter === item.key ? "filter-pill active" : "filter-pill"
+                }
+                onClick={() => chooseFilter(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {loading && (
+          <div className="template-loading">
+            <span className="tiny-dot" /> Updating the motion collection…
+          </div>
+        )}
+        {error && (
+          <div className="archive-message">
+            <p>{error}</p>
+          </div>
+        )}
+        {!loading && !error && templates.length === 0 && (
+          <div className="video-empty-state">
+            <div className="video-empty-icon">
+              <Clapperboard size={28} />
+            </div>
+            <h2>The motion catalog is syncing.</h2>
+            <p>
+              Video clips are kept in their original format. New templates will
+              appear here as the video catalog refreshes.
+            </p>
+            <div className="video-empty-actions">
+              <Link className="button button-paper" href="/templates">
+                Browse image templates <ArrowRight size={15} />
+              </Link>
+            </div>
+          </div>
+        )}
+        {templates.length > 0 && (
+          <div className="video-template-grid">
+            {templates.map((template, index) => (
+              <motion.article
+                key={template.id}
+                className="video-template-card"
+                initial={
+                  reduce
+                    ? false
+                    : { opacity: 0, y: 18, rotate: index % 2 ? 1 : -1 }
+                }
+                whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+                viewport={{ once: true, amount: 0.08 }}
+                transition={{
+                  duration: 0.35,
+                  delay: Math.min(index % 6, 5) * 0.035,
+                }}
+                whileHover={
+                  reduce ? undefined : { y: -6, rotate: index % 2 ? 1 : -1 }
+                }
+              >
+                <div className="video-template-preview">
+                  {template.mediaType === "gif" ? (
+                    <Link
+                      className="video-template-media-link"
+                      href={"/video-editor/" + encodeURIComponent(template.id)}
+                      aria-label={"Edit " + template.name}
+                    >
+                      <img
+                        src={sourceUrl(template)}
+                        alt={template.name}
+                        loading={index < 4 ? "eager" : "lazy"}
+                      />
+                    </Link>
+                  ) : (
+                    <VideoPreview template={template} />
+                  )}
+                  <span className="video-kind-pill">
+                    {template.mediaType === "gif" ? "GIF" : "VIDEO"}
+                  </span>
+                  <Link
+                    className={
+                      template.mediaType === "video"
+                        ? "video-edit-cue video-edit-cue-video"
+                        : "video-edit-cue"
+                    }
+                    href={"/video-editor/" + encodeURIComponent(template.id)}
+                  >
+                    <Sparkles size={13} /> Edit this template{" "}
+                    <ArrowUpRight size={14} />
+                  </Link>
+                </div>
+                <div className="video-template-meta">
+                  <div>
+                    <Link
+                      href={"/video-editor/" + encodeURIComponent(template.id)}
+                      className="video-template-name"
+                    >
+                      {template.name}
+                    </Link>
+                    <span>
+                      {template.trending ? "Trending" : template.category}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={
+                      savedIds.includes("video:" + template.id)
+                        ? "save-button is-saved"
+                        : "save-button"
+                    }
+                    onClick={() => toggleBookmark(template.id)}
+                    aria-label={
+                      savedIds.includes("video:" + template.id)
+                        ? "Remove video template bookmark"
+                        : "Bookmark video template"
+                    }
+                    aria-pressed={savedIds.includes("video:" + template.id)}
+                    title={
+                      savedIds.includes("video:" + template.id)
+                        ? "Remove bookmark"
+                        : "Save video template"
+                    }
+                  >
+                    <Bookmark
+                      size={17}
+                      fill={
+                        savedIds.includes("video:" + template.id)
+                          ? "currentColor"
+                          : "none"
+                      }
+                      strokeWidth={1.8}
+                    />
+                  </button>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="archive-pagination">
+            <button
+              className="button button-paper button-small"
+              disabled={loading || page <= 1}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+            >
+              <ArrowLeft size={14} /> Previous
+            </button>
+            <span>
+              Page <strong>{page}</strong> of {totalPages}
+            </span>
+            <button
+              className="button button-dark button-small"
+              disabled={loading || page >= totalPages}
+              onClick={() =>
+                setPage((value) => Math.min(totalPages, value + 1))
+              }
+            >
+              Next page <ArrowRight size={14} />
+            </button>
+          </div>
+        )}
+      </section>
+      <footer className="site-footer">
+        <div className="container footer-inner">
+          <div className="footer-copy">Meme Is Mine · Video templates</div>
+          <div className="footer-links">
+            <Link href="/explore">Image templates</Link>
+            <Link href="/how-it-works">How it works</Link>
+            <Link href="/about">About</Link>
+          </div>
+          <span className="footer-copy">Make a moment of it.</span>
+        </div>
+      </footer>
+    </main>
+  );
 }
-function MoveIcon() { return <span className="video-mini-move">↗</span>; }
+function MoveIcon() {
+  return <span className="video-mini-move">↗</span>;
+}
