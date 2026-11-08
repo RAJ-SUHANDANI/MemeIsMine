@@ -1592,3 +1592,5 @@ summary:focus-visible {
     font-size: 11px;
   }
 }
+/* Paper actions retain readable ink labels on dark and accent sections. */
+.button-paper{color:var(--ink)}
