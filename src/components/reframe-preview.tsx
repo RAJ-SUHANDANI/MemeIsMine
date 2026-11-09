@@ -21,6 +21,8 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
   const titleId = useId();
   const path = usePathname();
   const panel = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   const reduced = useReducedMotion();
   const likes = useTemplateLikes(item.kind + ":" + (item.likeId ?? item.id));
   const [copied,setCopied] = useState(false);
@@ -33,7 +35,7 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
     document.body.style.overflow = "hidden";
     panel.current?.focus();
     function keydown(e:KeyboardEvent) {
-      if (e.key==="Escape") {e.preventDefault();onClose();}
+      if (e.key==="Escape") {e.preventDefault();closeRef.current();}
       if(e.key!=="Tab" || !panel.current) return;
       const controls = Array.from(panel.current.querySelectorAll<HTMLElement>("button:not([disabled]),a[href]"));
       if(!controls.length) return;
@@ -42,7 +44,7 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
     }
     window.addEventListener("keydown",keydown);
     return () => { document.body.style.overflow=oldOverflow;window.removeEventListener("keydown",keydown);previous?.focus(); };
-  },[onClose]);
+  },[]);
   function doubleTap() {
     if (!likes.state?.signedIn) {setGuestHint(true);return false;}
     void likes.react(true);
