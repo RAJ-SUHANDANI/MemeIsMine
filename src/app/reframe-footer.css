@@ -1,0 +1,19 @@
+/* Branded closing sequence, used by every public page. */
+.rf-footer{background:#181a17;color:#f4eee4;overflow:hidden;padding-top:clamp(70px,8vw,130px)}
+.rf-footer-top{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(40px,7vw,110px);padding-bottom:clamp(75px,8vw,130px)}
+.rf-footer-intro h2{font:750 clamp(65px,8vw,135px)/.9 var(--display,Arial,sans-serif);letter-spacing:-.07em;margin:25px 0 40px}
+.rf-footer-intro h2 em{font:400 .88em var(--rf-serif);color:#e56b50}
+.rf-footer-cta{display:inline-flex;align-items:center;gap:35px;color:#181a17;background:#f4eee4;padding:19px 24px;font:700 13px var(--body,Arial,sans-serif);text-decoration:none}
+.rf-footer-cta:hover{background:var(--rf-accent);color:white}
+.rf-footer-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px}
+.rf-footer-columns nav{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.rf-footer-columns h3{color:#9a9f93;font:700 11px monospace;letter-spacing:.12em;margin:0 0 12px;text-transform:uppercase}
+.rf-footer-columns a{color:#f4eee4;text-decoration:none;font:600 15px var(--body,Arial,sans-serif);transition:color .18s}
+.rf-footer-columns a:hover{color:#e56b50}
+.rf-footer-wordmark{display:flex;align-items:baseline;white-space:nowrap;justify-content:space-between;font:850 clamp(68px,12.4vw,205px)/.8 var(--display,Arial,sans-serif);letter-spacing:-.09em;border-bottom:1px solid #ffffff50;padding-bottom:29px}
+.rf-footer-wordmark span{font-weight:400;font-size:.45em;color:#e56b50;margin-left:15px}
+.rf-footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-top:23px;padding-bottom:33px;font:700 10px/1.4 monospace;letter-spacing:.07em;color:#a9a99f}
+.rf-footer-bottom a{color:#f4eee4;text-decoration:none}
+.rf-footer a:focus-visible{outline:3px solid #e56b50;outline-offset:4px}
+@media(max-width:880px){.rf-footer-top{grid-template-columns:1fr}.rf-footer-wordmark{font-size:12vw}}
+@media(max-width:520px){.rf-footer-top{gap:65px}.rf-footer-columns{gap:25px}.rf-footer-wordmark{font-size:11.5vw;padding-bottom:17px}.rf-footer-bottom{font-size:9px}.rf-footer-intro h2{font-size:clamp(60px,14vw,90px)}}
