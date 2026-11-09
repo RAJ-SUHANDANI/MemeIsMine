@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "redesign/**"]
+    branches: [main, redesign, "redesign/**"]
 
 jobs:
   build:
@@ -20,5 +20,9 @@ jobs:
         run: npm ci
       - name: Validate catalog crawler syntax
         run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs
+      - name: Lint application
+        run: npm run lint
+      - name: Typecheck application
+        run: npm run typecheck
       - name: Build application
         run: npm run build
