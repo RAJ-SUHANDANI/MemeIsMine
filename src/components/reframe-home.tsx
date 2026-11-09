@@ -106,7 +106,7 @@ export function ReframeHome() {
    <div className="container">
     <Reveal className="rf-section-heading">
       <div><span className="rf-kicker">03 / THE MOVING IMAGE DEPARTMENT</span><h2>Some moments<br/><em>need motion.</em></h2></div>
-      <p>When one frame just doesn't do it. Moving memes, GIFs and clips ready for your next caption.</p>
+      <p>When one frame just does not do it. Moving memes, GIFs and clips ready for your next caption.</p>
     </Reveal>
     {videos.length?<ReframeGallery items={videos.map(asVideo)} kind="video" variant="objects" path="/video-templates"/>:
       <div className="rf-motion-teaser"><Clapperboard size={58}/><h3>The moving archive.</h3><p>Watch the moment, then make it yours.</p><Link href="/video-templates">Browse video formats <ArrowUpRight size={18}/></Link></div>}
@@ -125,7 +125,7 @@ export function ReframeHome() {
    <div className="rf-maker-photo"><Image src="/raj-suhandani-portrait.webp" width={700} height={850} alt="Portrait of the Meme Is Mine creator"/></div>
    <Reveal><span className="rf-kicker">06 / ONE PERSON, TOO MANY TABS</span><h2>Made by a<br/><em>fellow internet person.</em></h2><p>Meme Is Mine is an independent project built for the little moments that need a better punchline. Less friction, more personality, and the freedom to make something your friends will actually send around.</p><Link href="/about">The story behind the site <ArrowUpRight size={18}/></Link></Reveal>
   </div></section>
-  <section className="rf-home-last"><div className="container"><span className="rf-kicker">THE NEXT ONE'S YOURS</span><h2>Enough scrolling.<br/><em>Make the meme.</em></h2><Link href="/explore">Get started <ArrowUpRight size={23}/></Link></div></section>
+  <section className="rf-home-last"><div className="container"><span className="rf-kicker">THE NEXT ONE IS YOURS</span><h2>Enough scrolling.<br/><em>Make the meme.</em></h2><Link href="/explore">Get started <ArrowUpRight size={23}/></Link></div></section>
   <SiteFooter/>
  </main>;
 }
