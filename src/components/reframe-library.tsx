@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, ImagePlus, Search, Shuffle, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "./site";
 import { SiteFooter } from "./site-chrome";
 import { ReframeGallery } from "./reframe-gallery";
