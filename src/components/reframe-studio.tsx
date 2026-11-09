@@ -76,6 +76,8 @@ export function ReframeStudio(){
  }
  useEffect(()=>{
   refresh();
+  const requested=new URL(window.location.href).searchParams.get("tab");
+  if(requested==="overview"||requested==="drafts"||requested==="saved"||requested==="collections"||requested==="backup")setTab(requested);
   const controller=new AbortController();
   fetch("/api/video-templates?limit=100",{signal:controller.signal}).then(r=>r.json()).then(data=>{
    if(!controller.signal.aborted&&Array.isArray(data.templates))setVideos(data.templates.filter((v:unknown):v is StoredVideo=>isRecord(v)&&typeof v.id==="string"&&typeof v.name==="string"));
