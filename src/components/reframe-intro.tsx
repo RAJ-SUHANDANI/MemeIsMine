@@ -13,12 +13,12 @@ const cards=[
 
 export function ReframeIntro() {
   const reduced=useReducedMotion();
-  const [visible,setVisible]=useState(false);
+  const [visible,setVisible]=useState(true);
   useEffect(()=>{
-    if(reduced) return;
+    if(reduced) {setVisible(false);return;}
     let seen=false;
     try {seen=sessionStorage.getItem("mim-intro-played")==="1";} catch {}
-    if(seen) return;
+    if(seen) {setVisible(false);return;}
     setVisible(true);
     const timeout=window.setTimeout(()=>{
       setVisible(false);
