@@ -14,7 +14,7 @@ import { SiteHeader } from "@/components/site";
 export default function AboutPage() {
   const reduce = useReducedMotion();
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
       <SiteHeader />
       <section className="page-hero">
         <div className="container">
@@ -154,7 +154,7 @@ export default function AboutPage() {
               <small>03 / ACCESS</small>
               <h3>Built for people.</h3>
               <p>
-                Responsive layouts, motion controls, and no forced signup for a
+                Responsive layouts, motion controls, and no signup needed to preview a
                 quick meme.
               </p>
             </article>
