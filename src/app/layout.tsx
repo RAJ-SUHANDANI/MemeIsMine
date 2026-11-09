@@ -8,6 +8,7 @@ import "./site-membership.css";
 import "./gallery-experience.css";
 import "./reframe.css";
 import "./reframe-home.css";
+import "./reframe-studio.css";
 import { MotionProvider } from "@/components/motion-provider";
 export const metadata: Metadata = {
   title: {
