@@ -6,6 +6,7 @@ import "./studio-design.css";
 import "./format-library.css";
 import "./site-membership.css";
 import "./gallery-experience.css";
+import "./reframe.css";
 import { MotionProvider } from "@/components/motion-provider";
 export const metadata: Metadata = {
   title: {
