@@ -4,7 +4,8 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight, Clapperboard, Compass, House, ImagePlus, LayoutDashboard, Menu, Plus, Search, UserRound, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { BrandLogo } from "./site";
+import Image from "next/image";
+function BrandLogo(){return <Link href="/" aria-label="Meme Is Mine home" className="rf-brand"><Image src="/meme-is-mine-logo.svg" alt="Meme Is Mine" width={174} height={44}/></Link>;}
 
 const desktopLinks = [
   {href:"/explore",name:"Discover"},
