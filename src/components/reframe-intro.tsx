@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const cards=[
   {src:"/templates/drake.jpg",angle:-16,x:-220,y:-80,z:-170},
@@ -14,6 +14,7 @@ const cards=[
 export function ReframeIntro() {
   const reduced=useReducedMotion();
   const [visible,setVisible]=useState(true);
+  const skipButton=useRef<HTMLButtonElement>(null);
   useEffect(()=>{
     if(reduced) {setVisible(false);return;}
     let seen=false;
@@ -27,15 +28,26 @@ export function ReframeIntro() {
     return ()=>window.clearTimeout(timeout);
   },[reduced]);
   useEffect(()=>{
-    if(!visible)return;
-    function key(event:KeyboardEvent){if(event.key==="Escape"||event.key==="Enter"){setVisible(false);try{sessionStorage.setItem("mim-intro-played","1");}catch{}}}
+    if(!visible||reduced)return;
+    const previous=document.activeElement as HTMLElement|null;
+    const overflow=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    skipButton.current?.focus();
+    function key(event:KeyboardEvent){
+      if(event.key==="Escape"){setVisible(false);try{sessionStorage.setItem("mim-intro-played","1");}catch{}}
+      if(event.key==="Tab"){event.preventDefault();skipButton.current?.focus();}
+    }
     window.addEventListener("keydown",key);
-    return()=>window.removeEventListener("keydown",key);
-  },[visible]);
+    return()=>{
+      document.body.style.overflow=overflow;
+      window.removeEventListener("keydown",key);
+      previous?.focus();
+    };
+  },[visible,reduced]);
   function skip(){setVisible(false);try{sessionStorage.setItem("mim-intro-played","1");}catch{}}
   return <AnimatePresence>
-    {visible && <motion.div className="rf-intro" role="dialog" aria-modal="true" aria-label="Meme Is Mine introduction" initial={{opacity:1}} exit={{opacity:0,clipPath:"inset(0 0 100% 0)"}} transition={{duration:.55,ease:[.76,0,.24,1]}}>
-      <div className="rf-intro-top"><span>MEME IS MINE <b>✳</b> THE INTERNET IS YOURS</span><button type="button" onClick={skip}>Skip intro <ArrowUpRight size={16}/></button></div>
+    {visible && !reduced && <motion.div className="rf-intro" role="dialog" aria-modal="true" aria-label="Meme Is Mine introduction" initial={{opacity:1}} exit={{opacity:0,clipPath:"inset(0 0 100% 0)"}} transition={{duration:.55,ease:[.76,0,.24,1]}}>
+      <div className="rf-intro-top"><span>MEME IS MINE <b>✳</b> THE INTERNET IS YOURS</span><button ref={skipButton} type="button" onClick={skip}>Skip intro <ArrowUpRight size={16}/></button></div>
       <div className="rf-intro-stage">
         <div className="rf-intro-orbit" aria-hidden="true">
           {cards.map((card,index)=><motion.div key={card.src} className="rf-intro-card"
