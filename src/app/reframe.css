@@ -182,3 +182,16 @@
  .rf-gallery-overprint,.rf-gallery-object,.rf-gallery-object-inner,.rf-header-action{transition:none!important}
  .rf-gallery-loading div{animation:none}
 }
+
+/* Motion archive: a gallery of objects seen as an angled collection, not a uniform card database. */
+@media(min-width:801px) and (prefers-reduced-motion:no-preference){
+ .rf-gallery-objects{overflow:clip;padding:0 8px 35px}
+ .rf-gallery-objects .rf-gallery-stage[data-layout=grid]{padding:50px 32px 65px;transform:perspective(1900px) rotateX(6deg) rotateZ(-1.7deg);transform-origin:center 10%;gap:clamp(14px,2vw,34px)}
+ .rf-gallery-objects .rf-gallery-stage[data-layout=grid] .rf-gallery-object:nth-child(4n+2){transform:translateY(23px) rotate(1.2deg)}
+ .rf-gallery-objects .rf-gallery-stage[data-layout=grid] .rf-gallery-object:nth-child(4n+3){transform:translateY(-14px) rotate(-1deg)}
+ .rf-gallery-objects .rf-gallery-stage[data-layout=grid] .rf-gallery-object-inner{box-shadow:11px 14px 0 #211e1c20}
+ .rf-gallery-objects .rf-gallery-stage[data-layout=grid] .rf-gallery-object:hover{z-index:5}
+}
+@media(max-width:800px){
+ .rf-gallery-objects .rf-gallery-stage[data-layout=grid]{transform:none}
+}
