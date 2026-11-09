@@ -50,7 +50,7 @@ const questions = [
 export default function FAQPage() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
       <SiteHeader />
       <section className="page-hero">
         <div className="container">
