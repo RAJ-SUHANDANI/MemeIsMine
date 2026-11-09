@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, ImagePlus, Search, Shuffle, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "./site";
 import { SiteFooter } from "./site-chrome";
@@ -62,9 +62,9 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
   fetch(endpoint+"?"+params.toString(),{signal:controller.signal})
    .then(async r=>{const data=await r.json();if(!r.ok||!data.success)throw Error(data.error??"The archive is unavailable.");
      if(controller.signal.aborted)return;
-     const records=kind==="video"?(data.templates as ApiVideo[]):(data.memes as ApiImage[]);
+     const records:unknown=kind==="video"?data.templates:data.memes;
      if(!Array.isArray(records))throw Error("The archive returned an unexpected response.");
-     setItems(kind==="video"?records.map(videoItem):(records as ApiImage[]).map(imageItem));
+     setItems(kind==="video"?(records as ApiVideo[]).map(videoItem):(records as ApiImage[]).map(imageItem));
      const count=Number(kind==="video"?data.totalItems:data.total);
      setTotal(Number.isFinite(count)?count:records.length);
      setPages(Math.max(1,kind==="video"?Number(data.totalPages)||1:Math.ceil((Number.isFinite(count)?count:records.length)/pageSize)));
