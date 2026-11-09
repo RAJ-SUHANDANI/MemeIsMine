@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight, Bookmark, Maximize2 } from "lucide-react";
+import { ArrowUpRight, Bookmark, Maximize2, Menu, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import { usePathname } from "next/navigation";
 import {
   useEffect,
+  useRef,
   useState,
   type CSSProperties,
   type MouseEvent,
@@ -33,7 +35,122 @@ export function BrandLogo({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function SiteHeader() { return <ReframeHeader />; }
+export function SiteHeader() {
+  const pathname = usePathname();
+  return pathname.startsWith("/create/") || pathname.startsWith("/video-editor/") ? <LegacyHeader /> : <ReframeHeader />;
+}
+
+function LegacyHeader() {
+  const pathname = usePathname();
+  const currentNavPath = pathname === "/templates" ? "/explore" : pathname;
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/account", { signal: controller.signal })
+      .then((response) => response.json())
+      .then((data) => setSignedIn(data.signedIn === true))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        menuRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [open]);
+  const links = [
+    { href: "/explore", label: "Image templates" },
+    { href: "/video-templates", label: "Video templates" },
+    { href: "/studio", label: "Studio" },
+    { href: "/how-it-works", label: "How it works" },
+  ];
+  return (
+    <header className="site-header">
+      <div className="header-inner">
+        <BrandLogo />
+        <nav className="desktop-nav" aria-label="Main navigation">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={currentNavPath === link.href ? "page" : undefined}
+              className={
+                currentNavPath === link.href ? "nav-link active" : "nav-link"
+              }
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="header-actions">
+          <Link
+            className="header-quiet header-account"
+            href={signedIn ? "/account" : "/login"}
+          >
+            {signedIn ? "Account" : "Sign in"}
+          </Link>
+          <Link className="button button-dark header-cta" href="/explore">
+            Browse memes <ArrowUpRight size={15} />
+          </Link>
+        </div>
+        <button
+          ref={menuRef}
+          className="mobile-menu-toggle"
+          type="button"
+          aria-expanded={open}
+          aria-controls="mobile-navigation"
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? <X /> : <Menu />}
+        </button>
+      </div>
+      {open && (
+        <nav
+          id="mobile-navigation"
+          className="mobile-nav"
+          aria-label="Mobile navigation"
+        >
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              aria-current={currentNavPath === link.href ? "page" : undefined}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link href="/create/upload" onClick={() => setOpen(false)}>
+            Upload your own
+          </Link>
+          <div className="mobile-nav-account">
+            <Link
+              href={signedIn ? "/account" : "/login"}
+              onClick={() => setOpen(false)}
+            >
+              {signedIn ? "Your account" : "Sign in"}
+            </Link>
+            {!signedIn && (
+              <Link href="/signup" onClick={() => setOpen(false)}>
+                Create an account
+              </Link>
+            )}
+          </div>
+        </nav>
+      )}
+    </header>
+  );
+}
+
+
 
 const BOOKMARKS_KEY = "mim-bookmarks";
 const CARD_IMAGE_SIZES =
