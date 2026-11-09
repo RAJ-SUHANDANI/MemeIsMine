@@ -26,3 +26,13 @@ jobs:
         run: npm run typecheck
       - name: Build application
         run: npm run build
+      - name: Test production routes and APIs
+        run: |
+          npm run start -- -p 3001 > /tmp/mim-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://localhost:3001/ > /dev/null; then break; fi
+            sleep 2
+          done
+          npm run qa:smoke
