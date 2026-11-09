@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Bookmark, Clapperboard, Download, Layers3, Play, UploadCloud } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Bookmark, Clapperboard, Download, Layers3, UploadCloud } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
@@ -83,7 +83,7 @@ export function ReframeHome() {
    <div className="container">
     <Reveal className="rf-section-heading">
       <div><span className="rf-kicker">01 / THE STILL IMAGE DEPARTMENT</span><h2>Every face<br/>has <em>a story.</em></h2></div>
-      <p>For the thoughts you can't explain without a reaction image. Arrange the gallery however you want.</p>
+      <p>For the thoughts you cannot explain without a reaction image. Arrange the gallery however you want.</p>
     </Reveal>
     <ReframeGallery kind="image" variant="showcase" path="/explore" items={images.map(asImage)}/>
     <div className="rf-section-end"><span>{catalogError?"Showing a small offline-ready collection.":"A FEW FRAMES FROM THE ARCHIVE."}</span><Link href="/templates">See every image <ArrowUpRight size={18}/></Link></div>
@@ -92,7 +92,7 @@ export function ReframeHome() {
   <section className="rf-home-editor-section">
    <div className="container rf-home-editor-layout">
     <Reveal className="rf-home-editor-copy"><span className="rf-kicker">02 / GET HANDS-ON</span>
-      <h2>The joke is yours.<br/><em>So are the details.</em></h2><p>Take a format and make something that couldn't have come from anyone else. Move your captions, layer your graphics and pick your export.</p>
+      <h2>The joke is yours.<br/><em>So are the details.</em></h2><p>Take a format and make something that could not have come from anyone else. Move your captions, layer your graphics and pick your export.</p>
       <div className="rf-home-feature-list"><span><Layers3 size={21}/> Layer every detail</span><span><Bookmark size={21}/> Save for later</span><span><Download size={21}/> Download your result</span></div>
       <Link href="/explore" className="rf-inline-arrow">Find something to edit <ArrowUpRight size={19}/></Link>
     </Reveal>
