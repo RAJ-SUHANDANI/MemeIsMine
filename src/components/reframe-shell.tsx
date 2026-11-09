@@ -39,6 +39,7 @@ export function ReframeHeader() {
   useEffect(() => {
     if(!create) return;
     const oldOverflow = document.body.style.overflow;
+    const trigger = createTrigger.current;
     document.body.style.overflow = "hidden";
     sheet.current?.focus();
     function key(e:KeyboardEvent) {
@@ -50,7 +51,7 @@ export function ReframeHeader() {
       else if(!e.shiftKey && document.activeElement === controls[controls.length-1]) {e.preventDefault();controls[0].focus();}
     }
     window.addEventListener("keydown",key);
-    return () => {document.body.style.overflow = oldOverflow;window.removeEventListener("keydown",key);createTrigger.current?.focus();};
+    return () => {document.body.style.overflow = oldOverflow;window.removeEventListener("keydown",key);trigger?.focus();};
   },[create]);
   return <>
     <header className="rf-header">
