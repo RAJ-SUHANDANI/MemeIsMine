@@ -39,7 +39,7 @@ export default function FeedbackPage(){
    <div className="rf-notes-main">
     <form onSubmit={submit} className="rf-notes-form"><div className="rf-notes-form-header"><PenLine size={26}/><span>WRITE A NOTE / 001</span></div>
      <label htmlFor="rf-note-name">YOUR NAME</label><input id="rf-note-name" value={name} onChange={e=>setName(e.target.value)} required maxLength={60} placeholder="How should this note be labelled?"/>
-     <label htmlFor="rf-note-text">WHAT'S ON YOUR MIND?</label><textarea id="rf-note-text" value={note} onChange={e=>setNote(e.target.value)} required rows={6} maxLength={500} placeholder="What worked? What could be better?"/>
+     <label htmlFor="rf-note-text">WHAT IS ON YOUR MIND?</label><textarea id="rf-note-text" value={note} onChange={e=>setNote(e.target.value)} required rows={6} maxLength={500} placeholder="What worked? What could be better?"/>
      <div className="rf-notes-form-foot"><span>{note.length} / 500 CHARACTERS</span><button type="submit">Save privately <ArrowUpRight size={18}/></button></div>
     </form>
     {notice&&<p className="rf-notes-notice" role="status">{notice}</p>}
