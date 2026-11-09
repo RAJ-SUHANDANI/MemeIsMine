@@ -1,63 +1,81 @@
 # Meme Is Mine
 
-An independent meme-creation studio with an editorial visual identity, animated templates, a browser-side editor and a local draft studio. Designed and developed by **Raj Suhandani**.
+An independent meme-discovery and browser creation studio. The `redesign` branch introduces an editorial, motion-led discovery experience, mobile app navigation, deep-linked template previews, and a more capable personal Studio. Built by Raj Suhandani.
 
-## Getting started
+**Branch safety:** This work is committed to `redesign` only. The existing image and video editors and their data formats remain unchanged.
+
+## Develop
+
+Use Node.js 22 or newer.
 
 ```bash
-npm install
+npm ci
 npm run dev
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-Open http://localhost:3000.
+The production smoke suite expects a running server on port 3001:
 
-## Pages
-- `/` — landing page with floating meme-card motion and a creator spotlight
-- `/explore` — search, filter, sort and bookmark template formats
-- `/templates` — randomized template discovery with popular, trending, recent and surprise filters
-- `/video-templates` — animated template collection with popular, trending, recent and name filters
-- `/video-editor/:id` — drag captions, add image overlays, choose output dimensions and export WebM
-- `/create/:id` — editor for a selected template
-- `/create/upload` — start with an image from your own device
-- `/studio` — drafts and bookmarks saved in the current browser
-- `/how-it-works` — how to create and export a meme
-- `/about` — product story and information about Raj Suhandani
-- `/faq` — interactive frequently asked questions
-- `/privacy` — plain-language data and storage details
-- `/contact` — portfolio, GitHub, LinkedIn and email links
-- `/api/memes` — the original Meme Is Mine template feed, with a bundled fallback
-- `/api/indian-memes` — paginated Indian still image template API
-- `/api/video-templates` — paginated animated GIF and video template API
-- `/api/video-source` — safe same-origin media proxy for GIF and supported video formats
-- `/api/image` — image proxy restricted to approved template image hosts
-
-## Template API examples
-
-```text
-GET /api/indian-memes?page=1&limit=24&sort=popular
-GET /api/indian-memes?q=arjun&sort=trending
-GET /api/video-templates?page=1&limit=24&sort=recent
-GET /api/video-templates?slug=chinese-guy-explaining
+```bash
+npm run start -- -p 3001
+# In another terminal:
+npm run qa:smoke
 ```
 
-The image endpoint returns a `memes` array; `/api/video-templates` returns a paginated `templates` array containing direct GIF and video files (including MP4). Both support pagination and search. Media is streamed through `/api/video-source?url=...`, which validates approved hosts, upload paths, and supported file extensions. Video templates stay as videos and are not converted into still images. The editor exports WebM locally in the browser.
+## Design and routes
 
-To refresh source indexes manually, run `npm run sync:indian-videos` followed by `npm run sync:indian-images`, or use the GitHub Actions workflow. The workflow also refreshes the catalogs weekly. The sync indexes template metadata and original media URLs; it does not mirror media files into this repository.
+- `/`: interactive caption example, editorial narrative, still and moving format galleries, creator story and a skippable Motion/CSS-3D first-visit introduction.
+- `/explore` and `/templates`: browse the image catalogue with four selectable layouts (Grid, Flow, Stack and List), searchable, paginated results, and shareable preview URLs.
+- `/video-templates`: tilted object-style video catalogue with on-demand preview, alternate layouts and existing media routes.
+- Template previews: spring-driven shared-layout transitions, likes for signed-in accounts, double-tap, pinch/zoom for images, save, and copyable deep links.
+- `/studio`: protected personal workspace with searchable drafts, rename/delete/undo, saved formats, custom collections, authenticated likes, and on-device JSON backup/restore.
+- `/account`: shortcuts into the workspace, security and account actions.
+- `/login`, `/signup`, `/account/password`, `/account/recover`: authentication and password management.
+- `/about`, `/how-it-works`, `/faq`, `/privacy`, `/contact`, `/add-review`: supporting pages using the same design system. Feedback notes remain on the current device.
+- `/create/:id`, `/video-editor/:id`: original editors intentionally preserved. These routes use the original editor header as well.
 
-The sync process indexes template metadata and media URLs rather than copying media files into the repository. Check applicable content and usage terms before redistributing media or using it commercially.
+The mobile website has safe-area-aware bottom navigation, an accessible creation sheet and compact preview surfaces. NativeWind and gluestack are not part of this Next.js web implementation; this is a web/PWA-style experience, not a separate Expo/React Native application.
 
-## Stack
-Next.js App Router, React, TypeScript, Motion, Lucide icons, Tailwind CSS v4 and custom responsive CSS.
+## Data and account setup
 
-## Data and privacy notes
-- The public meme endpoint retrieves templates from a no key feed where available, then falls back to bundled template metadata.
-- The Indian template sync job indexes metadata and original media URLs from the still image archive and the video category, checks robots rules, throttles requests, and retries rate limits. It does not download or rehost source media files. The video collection accepts direct `.gif`, `.mp4`, `.webm`, `.mov`, `.m4v`, and `.ogv` media URLs; video archive entries are excluded from the still-image catalog.
-- Meme images are provided by their respective source URLs. Template cards do not display external source/archive links.
-- The image editor exports PNGs in the browser using Canvas.
-- The video editor renders canvas frames and exports WebM with the browser MediaRecorder API. Browser support for WebM recording is required.
-- Drafts and bookmarks use browser localStorage. They are not uploaded to a hosted database and do not sync across devices.
-- Local image uploads are limited to 2.5 MB so data-URL drafts can remain in browser storage.
-- No hosted user database, email-verification service or external authentication provider is required.
+Create a Supabase project with email/password auth, email confirmation, production SMTP and the appropriate redirect URLs. Set these environment values (see `.env.example`):
 
-## Deployment
-Import the repository into Vercel and use the standard Next.js build settings. Build command: `npm run build`.
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Apply the SQL migrations in order:
+
+1. `supabase/migrations/202611100002_template_likes.sql`
+2. `supabase/migrations/202611100003_account_likes.sql`
+
+The second migration exposes the *current account's* liked template keys, not anyone else's private reactions. See `MEMBERSHIP-SETUP.md` for details.
+
+Drafts, bookmarks, collections, local feedback, and uploads are stored in browser storage; **signing in does not synchronize them across devices**. The Studio backup is an explicitly downloaded JSON file and may contain user-uploaded image data. Reactors/aggregate likes are stored through Supabase.
+
+## API catalogue
+
+- `GET /api/memes?page=1&limit=24&sort=popular`
+- `GET /api/memes?id=<template-id>`
+- `GET /api/video-templates?page=1&limit=24&sort=new`
+- `GET /api/video-templates?slug=<slug>`
+- `GET /api/home-templates`
+- `GET /api/account/likes` (authenticated; requires second SQL migration)
+- Existing image/video media proxies and export functions remain in place.
+
+Catalog metadata refreshes through the existing GitHub Actions workflow. Remote source availability and browser video support can vary. Template media remains owned by its original providers: check rights and applicable terms.
+
+## Design contract
+
+The visual system uses warm paper `#f3efe6`, near-black `#161715`, archive vermilion `#db4b2c`, expressive typography, image-first cards and purpose-driven Motion interactions. Avoid generic gradients, fabricated metrics, ornamental perpetual motion and artificial progress indicators. Respect reduced-motion preferences, focus navigation, clear empty states and browser-storage failures.
+
+The named Motion references are documented in `REDESIGN.md`. Premium Motion+ example source was **not** copied into this project.
+
+## Validation
+
+GitHub Actions on `redesign` runs lint, TypeScript, production build and route/API smoke tests. CI success does not replace manual visual or device testing. Inspect a preview deployment at desktop, 390px and 320px widths, perform keyboard and reduced-motion checks, and test the actual account flow with configured Supabase before release.
+
+**Do not merge `redesign` into `main` without separate, explicit approval.**
