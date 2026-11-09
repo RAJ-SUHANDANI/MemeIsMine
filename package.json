@@ -2,6 +2,7 @@
   "name": "meme-is-mine",
   "version": "1.0.0",
   "private": true,
+  "engines": { "node": ">=22" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -17,6 +18,8 @@
     "@ffmpeg/util": "^0.12.2",
     "@fontsource-variable/dm-sans": "^5.3.0",
     "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
     "lucide-react": "^0.468.0",
     "motion": "^12.23.24",
     "next": "^15.5.4",
@@ -31,6 +34,7 @@
     "@types/react-dom": "^19.1.7",
     "eslint": "^9.35.0",
     "eslint-config-next": "^15.5.4",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
   },

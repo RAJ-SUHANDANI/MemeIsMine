@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import { useState, type FormEvent } from "react";
 import { ArrowLeft, ArrowUpRight, Star } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -131,17 +132,7 @@ export default function AddReviewPage() {
           </form>
         </div>
       </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">Meme Is Mine · Add a review</div>
-          <div className="footer-links">
-            <Link href="/">Home</Link>
-            <Link href="/templates">Templates</Link>
-            <Link href="/studio">Studio</Link>
-          </div>
-          <span className="footer-copy">Made for the group chat © 2026</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

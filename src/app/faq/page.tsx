@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import { useState } from "react";
 import { ChevronDown, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -11,11 +12,11 @@ const questions = [
   },
   {
     q: "Is Meme Is Mine free to use?",
-    a: "Yes. The current experience is free to use. Browse templates, create a meme, and export a PNG without creating an account.",
+    a: "Browsing and previews are free. Sign in with a free account to use both editors and Studio.",
   },
   {
     q: "Do I need to sign up or verify my email?",
-    a: "No. There is no account or email verification step in this version. The Studio uses local browser storage, so drafts are only available in the same browser profile and device.",
+    a: "Sign in to use the image or video editor. You can browse and preview templates without an account. Drafts stay in the browser where you saved them.",
   },
   {
     q: "Can I upload my own image?",
@@ -115,17 +116,7 @@ export default function FAQPage() {
           </div>
         </div>
       </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">Meme Is Mine · FAQ</div>
-          <div className="footer-links">
-            <Link href="/about">About the creator</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/contact">Contact</Link>
-          </div>
-          <span className="footer-copy">Created by Raj Suhandani</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

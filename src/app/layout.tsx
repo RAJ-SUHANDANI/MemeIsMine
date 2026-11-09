@@ -3,6 +3,9 @@ import "@fontsource-variable/space-grotesk";
 import type { Metadata } from "next";
 import "./globals.css";
 import "./studio-design.css";
+import "./format-library.css";
+import "./site-membership.css";
+import "./gallery-experience.css";
 import { MotionProvider } from "@/components/motion-provider";
 export const metadata: Metadata = {
   title: {
@@ -16,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Meme Is Mine",
     description:
-      "Make image and video memes in your browser. Your captions, your punchline. No account needed.",
+      "Make image and video memes in your browser. Preview templates for free, then sign in to make them yours.",
     images: [{ url: "/editor-preview.jpg", width: 1395, height: 790 }],
   },
   applicationName: "Meme Is Mine",

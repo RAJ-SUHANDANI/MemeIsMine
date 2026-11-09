@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowRight,
@@ -55,7 +56,7 @@ export default function HowItWorksPage() {
             to <span>sent.</span>
           </h1>
           <p>
-            No account wall, no complicated timeline, no creative software
+            Preview any template, then sign in when you’re ready to edit. No creative software
             course required.
           </p>
         </div>
@@ -202,17 +203,7 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">Meme Is Mine · How it works</div>
-          <div className="footer-links">
-            <Link href="/">Home</Link>
-            <Link href="/templates">Templates</Link>
-            <Link href="/about">About</Link>
-          </div>
-          <span className="footer-copy">Made by Raj Suhandani</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

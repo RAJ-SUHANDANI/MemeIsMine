@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -218,19 +218,7 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">
-            Meme Is Mine · An independent project
-          </div>
-          <div className="footer-links">
-            <Link href="/">Home</Link>
-            <Link href="/explore">Explore</Link>
-            <Link href="/contact">Contact</Link>
-          </div>
-          <span className="footer-copy">Created by Raj Suhandani</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

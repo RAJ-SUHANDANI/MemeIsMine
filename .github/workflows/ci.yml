@@ -15,10 +15,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dependencies
         run: npm ci
       - name: Validate catalog crawler syntax
-        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs
+        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs
       - name: Build application
         run: npm run build

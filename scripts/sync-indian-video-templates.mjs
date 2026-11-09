@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 const SITE = "https://indianmemetemplates.com";
@@ -167,6 +167,8 @@ async function main() {
   const trendingIds = new Set(extractPosts(trendHtml).map((post) => post.id));
   const homeHtml = await fetchHtml(SITE + "/");
   const homeRanks = new Map(extractPosts(homeHtml).map((post, index) => [post.id, Math.max(1, 1000 - index)]));
+  const previous = new Map(JSON.parse(await readFile(OUTPUT, "utf8")).map(item => [item.id, item]));
+  const today = new Date().toISOString().slice(0, 10);
   const results = [];
   let completed = 0;
   const postList = [...posts.values()];
@@ -203,7 +205,8 @@ async function main() {
         width: 0, height: 0, box_count: 2, category: "Video Memes",
         description: "Add your own captions and export a video in the browser.",
         source: "indianmemetemplates", originalUrl: post.originalUrl,
-        mediaType: mediaChoice.type, publishedAt: published, trending: trendingIds.has(post.id),
+        mediaType: mediaChoice.type, publishedAt: published, addedAt: previous.has(post.id) ? previous.get(post.id).addedAt : today,
+        trending: trendingIds.has(post.id),
         popularity: homeRanks.get(post.id) ?? (trendingIds.has(post.id) ? 100 : 0), originalOrder: index,
       });
     } catch (error) {
@@ -215,7 +218,10 @@ async function main() {
   }
   await Promise.all(Array.from({ length: Math.min(4, postList.length) }, () => processPosts()));
   await mkdir(dirname(OUTPUT), { recursive: true });
-  await writeFile(OUTPUT, JSON.stringify(results, null, 2) + "\n", "utf8");
-  console.log("Saved " + results.length + " animated/video templates to " + OUTPUT + " (including direct MP4/WebM/MOV and GIF files). Media files were not copied.");
+  // The archive can expose only its most recent pages. Keep previously indexed IDs for saved links.
+  const merged = new Map(previous);
+  for (const item of results.sort((a, b) => a.originalOrder - b.originalOrder)) merged.set(item.id, item);
+  await writeFile(OUTPUT, JSON.stringify([...merged.values()], null, 2) + "\n", "utf8");
+  console.log("Saved " + merged.size + " animated/video templates to " + OUTPUT + " (including direct MP4/WebM/MOV and GIF files). Media files were not copied.");
 }
 main().catch((error) => { console.error("Video template sync failed:", error instanceof Error ? error.message : error); process.exitCode = 1; });

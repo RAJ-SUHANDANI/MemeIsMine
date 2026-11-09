@@ -24,7 +24,24 @@ async function handle(request: Request) {
     } catch { /* Keep the safe archive referrer. */ }
   }
   try { target = new URL(raw); } catch { return NextResponse.json({ error: "Invalid media URL." }, { status: 400 }); }
-  if (target.protocol !== "https:" || !ALLOWED_HOSTS.has(target.hostname) || !MEDIA_PATH.test(target.pathname) || !MEDIA_FILE.test(target.pathname)) {
+  if (target.protocol === "https:" && !target.port && target.hostname === "api.memegen.link" &&
+    /^\/images\/[a-z0-9-]+\.gif$/.test(target.pathname) && target.search === "?style=animated") {
+    try {
+      const response = await fetch(target, { redirect: "error", signal: AbortSignal.timeout(12000) });
+      if (!response.ok || !response.headers.get("content-type")?.startsWith("image/gif")) {
+        await response.body?.cancel();
+        return NextResponse.json({ error: "Animated template unavailable." }, { status: 502 });
+      }
+      const head = request.method === "HEAD";
+      if (head) await response.body?.cancel();
+      return new NextResponse(head ? null : response.body, { headers: {
+        "Content-Type": "image/gif", "Cache-Control": "public, max-age=3600, s-maxage=86400", "X-Content-Type-Options": "nosniff",
+      } });
+    } catch {
+      return NextResponse.json({ error: "Animated template unavailable." }, { status: 502 });
+    }
+  }
+  if (target.protocol !== "https:" || target.port || !ALLOWED_HOSTS.has(target.hostname) || !MEDIA_PATH.test(target.pathname) || !MEDIA_FILE.test(target.pathname)) {
     return NextResponse.json({ error: "Only GIF and video files from the template archive are supported." }, { status: 400 });
   }
   try {

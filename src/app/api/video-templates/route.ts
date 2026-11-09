@@ -1,26 +1,10 @@
 import { NextResponse } from "next/server";
-import videoCatalog from "@/data/indian-video-templates.json";
+import { videoCatalog, videosById, publicVideo, type VideoTemplate } from "@/lib/video-catalog";
+import { isNewTemplate, newestDate } from "@/lib/catalog-freshness";
 
 export const revalidate = 3600;
 const SITE = "https://indianmemetemplates.com";
 type MediaKind = "gif" | "video";
-type VideoTemplate = {
-  id: string;
-  name: string;
-  url: string;
-  posterUrl: string;
-  width: number;
-  height: number;
-  box_count: number;
-  category: string;
-  description: string;
-  source: "indianmemetemplates";
-  originalUrl: string;
-  mediaType: MediaKind;
-  publishedAt: string | null;
-  trending: boolean;
-  popularity: number;
-};
 function decodeEntities(value: string): string {
   return value.replace(/&nbsp;|&#160;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)));
 }
@@ -92,11 +76,6 @@ function extractMedia(html: string, base: string): { url: string; kind: MediaKin
   }
   return found.find((item) => item.kind === "video") ?? found.find((item) => item.kind === "gif") ?? null;
 }
-function publicTemplate(item: VideoTemplate) {
-  const { source: _source, originalUrl, ...publicItem } = item;
-  void _source;
-  return { ...publicItem, sourcePage: originalUrl };
-}
 function parseRobots(text: string): { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] {
   const groups: { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean }[] = [];
   let group: { agents: string[]; rules: { type: string; path: string }[]; rulesStarted: boolean } | null = null;
@@ -139,33 +118,22 @@ export async function GET(request: Request) {
   const sort = params.get("sort") ?? "popular";
   const page = Math.min(500, Math.max(1, Math.floor(Number(params.get("page") ?? 1) || 1)));
   const limit = Math.min(100, Math.max(1, Math.floor(Number(params.get("limit") ?? 24) || 24)));
-  const validCatalog = (videoCatalog as VideoTemplate[]).filter((item) => {
-    const path = (() => { try { return new URL(item.url).pathname.toLowerCase(); } catch { return ""; } })();
-    return item.mediaType === "gif" ? path.endsWith(".gif") : item.mediaType === "video" && /\.(mp4|webm|mov|m4v|ogv)$/.test(path);
-  });
-  // Older catalog records may not carry ranking fields. Use their preserved
-  // catalog order as a stable fallback so Popular differs from Name A to Z.
-  const catalog = validCatalog.map((item, index) => ({
-    ...item,
-    popularity: item.popularity > 0 ? item.popularity : validCatalog.length - index,
-  }));
-
   if (slug) {
-    const item = catalog.find((template) => template.id === slug);
+    const item = videosById.get(slug);
     const refreshSource = params.get("refresh") === "1";
-    if (item && !refreshSource) return NextResponse.json({ success: true, template: publicTemplate(item) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
+    if (item && (!refreshSource || item.source === "memegen")) return NextResponse.json({ success: true, template: publicVideo(item) }, { headers: { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" } });
     if (!/^[a-zA-Z0-9%._~!$&'()*+,;=:@-]+$/.test(slug) || slug.includes("..")) return NextResponse.json({ success: false, error: "Invalid template slug." }, { status: 400 });
     try {
       const originalUrl = item?.originalUrl ?? SITE + "/" + slug + "/";
       const response = await fetchSource(originalUrl);
       if (!response.ok) {
-        if (item) return NextResponse.json({ success: true, template: publicTemplate(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
+        if (item) return NextResponse.json({ success: true, template: publicVideo(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
         return NextResponse.json({ success: false, error: "Template page is unavailable.", status: response.status }, { status: 502 });
       }
       const html = await response.text();
       const media = extractMedia(html, originalUrl);
       if (!media) {
-        if (item) return NextResponse.json({ success: true, template: publicTemplate(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
+        if (item) return NextResponse.json({ success: true, template: publicVideo(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
         return NextResponse.json({ success: false, error: "This page does not expose a direct GIF/video file. Static images are not listed in this collection." }, { status: 404 });
       }
       const posterUrl = extractPoster(html, originalUrl) ?? (media.kind === "gif" ? media.url : item?.posterUrl ?? "");
@@ -179,20 +147,20 @@ export async function GET(request: Request) {
         }),
         url: media.url, posterUrl, originalUrl, mediaType: media.kind,
       };
-      return NextResponse.json({ success: true, template: publicTemplate(template) }, { headers: { "Cache-Control": refreshSource ? "no-store" : "public, s-maxage=21600, stale-while-revalidate=86400" } });
+      return NextResponse.json({ success: true, template: publicVideo(template) }, { headers: { "Cache-Control": refreshSource ? "no-store" : "public, s-maxage=21600, stale-while-revalidate=86400" } });
     } catch (error) {
-      if (item) return NextResponse.json({ success: true, template: publicTemplate(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
+      if (item) return NextResponse.json({ success: true, template: publicVideo(item), refreshUnavailable: true }, { headers: { "Cache-Control": "no-store" } });
       return NextResponse.json({ success: false, error: error instanceof Error ? error.message : "Could not load this template." }, { status: 502 });
     }
   }
 
-  let items = catalog.filter((item) => !query || item.name.toLowerCase().includes(query));
+  let items = videoCatalog.filter(item => (!query || item.name.toLowerCase().includes(query)) && (sort !== "new" || isNewTemplate(item)));
   if (sort === "trending") {
     items = [...items].sort((a, b) => Number(b.trending) - Number(a.trending) || b.popularity - a.popularity || a.name.localeCompare(b.name));
-  } else if (sort === "recent") {
+  } else if (sort === "new" || sort === "recent") {
     items = [...items].sort((a, b) => {
-      const aDate = a.publishedAt ? Date.parse(a.publishedAt) : 0;
-      const bDate = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+      const aDate = newestDate(a);
+      const bDate = newestDate(b);
       if (aDate !== bDate) return bDate - aDate;
       const aOrder = Number((a as VideoTemplate & { originalOrder?: number }).originalOrder);
       const bOrder = Number((b as VideoTemplate & { originalOrder?: number }).originalOrder);
@@ -229,7 +197,7 @@ export async function GET(request: Request) {
     success: true, collection: "video-templates",
     query: query || null, sort, page, limit, count: results.length, totalItems, totalPages,
     hasPreviousPage: page > 1, hasNextPage: page < totalPages,
-    templates: results.map(publicTemplate),
+    templates: results.map(publicVideo),
     syncedAt: null,
   }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
 }

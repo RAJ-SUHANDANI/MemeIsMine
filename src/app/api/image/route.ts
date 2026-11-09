@@ -5,9 +5,11 @@ export async function GET(request: Request) {
   if (!raw) return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   let target: URL;
   try { target = new URL(raw); } catch { return NextResponse.json({ error: "Invalid image URL" }, { status: 400 }); }
-  if (target.protocol !== "https:" || !ALLOWED_HOSTS.has(target.hostname)) return NextResponse.json({ error: "Only approved meme image hosts are supported" }, { status: 400 });
+  const memegen = target.hostname === "api.memegen.link" &&
+    /^\/images\/[a-z0-9-]+\.jpg$/.test(target.pathname) && !target.search;
+  if (target.protocol !== "https:" || target.port || (!memegen && !ALLOWED_HOSTS.has(target.hostname))) return NextResponse.json({ error: "Only approved meme image hosts are supported" }, { status: 400 });
   try {
-    const upstream = await fetch(target.toString(), { next: { revalidate: 86400 } });
+    const upstream = await fetch(target.toString(), { next: { revalidate: 86400 }, redirect: memegen ? "error" : "follow" });
     if (!upstream.ok) return NextResponse.json({ error: "Image could not be retrieved" }, { status: upstream.status });
     const contentType = upstream.headers.get("content-type") ?? "image/jpeg";
     if (!contentType.startsWith("image/")) return NextResponse.json({ error: "URL did not return an image" }, { status: 415 });

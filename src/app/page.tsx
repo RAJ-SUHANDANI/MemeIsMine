@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import Image from "next/image";
 import {
   ArrowRight,
@@ -12,17 +13,21 @@ import {
   Bookmark,
   Type,
   SlidersHorizontal,
-  Play,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { SiteHeader, MemeCard, BrandLogo } from "@/components/site";
-import { starterMemes } from "@/data/memes";
-type VideoTemplate = {
-  id: string;
-  name: string;
-  posterUrl: string;
-  mediaType: "gif" | "video";
-};
+import { useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
+import { SiteHeader, MemeCard } from "@/components/site";
+import { starterMemes, type MemeTemplate } from "@/data/memes";
+import { GalleryShowcase } from "@/components/gallery-showcase";
+import {
+  VideoTemplatePoster,
+  type PreviewVideoTemplate,
+} from "@/components/video-template-poster";
 type Review = { id: string; name: string; review: string };
 const examples = [
   { top: "ME: JUST ONE MORE TAB", bottom: "ALSO ME: 47 TABS LATER" },
@@ -32,7 +37,7 @@ const examples = [
 const questions = [
   [
     "Is it really free?",
-    "Yes. Browse templates, edit images and videos, and download your work without creating an account.",
+    "Yes. Browse and preview any template. Create a free account to edit, download, and use Studio.",
   ],
   [
     "What can I download?",
@@ -44,13 +49,14 @@ const questions = [
   ],
   [
     "Where do my drafts go?",
-    "Into your Studio on this device. Drafts and bookmarks are saved in this browser, without an account. They do not sync across devices and clearing site data removes them.",
+    "Into your Studio on this device. Drafts and bookmarks are saved in this browser. They do not sync across devices and clearing site data removes them.",
   ],
 ];
-function CaptionDemo() {
+function CaptionDemo({ meme }: { meme: MemeTemplate }) {
   const [top, setTop] = useState(examples[0].top);
   const [bottom, setBottom] = useState(examples[0].bottom);
   const [example, setExample] = useState(0);
+  const [replay, setReplay] = useState(0);
   return (
     <div className="caption-demo">
       <div className="demo-topline">
@@ -61,14 +67,26 @@ function CaptionDemo() {
       </div>
       <div className="demo-artifact">
         <Image
-          src="/templates/distracted-boyfriend.jpg"
-          alt="Distracted Boyfriend meme template"
-          width="1200"
-          height="800"
+          src={meme.url}
+          alt={meme.name + " meme template"}
+          width={meme.width}
+          height={meme.height}
           fetchPriority="high"
         />
-        <div className="demo-caption demo-caption-top">{top}</div>
-        <div className="demo-caption demo-caption-bottom">{bottom}</div>
+        <div
+          key={"top-" + replay}
+          className="demo-caption demo-caption-top"
+          data-caption-swap={replay > 0 || undefined}
+        >
+          {top}
+        </div>
+        <div
+          key={"bottom-" + replay}
+          className="demo-caption demo-caption-bottom"
+          data-caption-swap={replay > 0 || undefined}
+        >
+          {bottom}
+        </div>
         <span className="demo-selection" aria-hidden="true">
           <i />
           <i />
@@ -102,6 +120,7 @@ function CaptionDemo() {
           onClick={() => {
             const next = (example + 1) % examples.length;
             setExample(next);
+            setReplay((value) => value + 1);
             setTop(examples[next].top);
             setBottom(examples[next].bottom);
           }}
@@ -110,7 +129,9 @@ function CaptionDemo() {
         </button>
         <Link
           href={
-            "/create/112126428?top=" +
+            "/create/" +
+            encodeURIComponent(meme.id) +
+            "?top=" +
             encodeURIComponent(top) +
             "&bottom=" +
             encodeURIComponent(bottom)
@@ -122,26 +143,145 @@ function CaptionDemo() {
     </div>
   );
 }
+function EditorProof({ meme }: { meme: MemeTemplate }) {
+  const ref = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "center center"],
+  });
+  const clip = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["inset(3% 8% 3% 8% round 16px)", "inset(0% 0% 0% 0% round 12px)"],
+  );
+
+  return (
+    <figure ref={ref} className="container home-editor-proof">
+      <div className="editor-proof-heading">
+        <span>Inside the editor</span>
+        <span>
+          Format <ArrowRight size={14} /> Caption <ArrowRight size={14} />{" "}
+          Export
+        </span>
+      </div>
+      <div className="editor-proof-track" aria-hidden="true">
+        <motion.span style={{ scaleX: reduce ? 1 : scrollYProgress }} />
+      </div>
+      <motion.div
+        className="editor-proof-window"
+        style={reduce ? undefined : { clipPath: clip }}
+      >
+        <Link
+          href={"/create/" + encodeURIComponent(meme.id)}
+          aria-label={"Open " + meme.name + " in the image editor"}
+        >
+          <div className="editor-proof-demo">
+            <div className="editor-proof-tools" aria-hidden="true">
+              <span>
+                <Type size={18} /> Text
+              </span>
+              <span>
+                <Layers size={18} /> Layers
+              </span>
+              <span>
+                <SlidersHorizontal size={18} /> Effects
+              </span>
+            </div>
+            <Image
+              src={meme.url}
+              alt={meme.name + " on the editor canvas"}
+              width={meme.width}
+              height={meme.height}
+              loading="lazy"
+            />
+            <span className="editor-proof-export">
+              <Download size={17} /> Export preview
+            </span>
+          </div>
+        </Link>
+      </motion.div>
+      <figcaption>
+        Your captions, layers and export settings in one place.
+      </figcaption>
+    </figure>
+  );
+}
+
 export default function HomePage() {
-  const [videos, setVideos] = useState<VideoTemplate[]>([]);
+  const homeRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const home = homeRef.current;
+    if (!home || !("IntersectionObserver" in window)) return;
+    home.dataset.motionReady = "true";
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          (entry.target as HTMLElement).dataset.entered = "true";
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "0px 0px -6% 0px", threshold: 0.08 },
+    );
+    home
+      .querySelectorAll("[data-scroll-reveal]")
+      .forEach((element) => observer.observe(element));
+    return () => {
+      observer.disconnect();
+      delete home.dataset.motionReady;
+    };
+  }, []);
+  const [images, setImages] = useState(starterMemes.slice(0, 6));
+  const [videos, setVideos] = useState<PreviewVideoTemplate[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [videoError, setVideoError] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/video-templates?limit=3&sort=popular", {
-      signal: controller.signal,
-    })
-      .then(async (r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then((data) => {
-        if (!data.success || !Array.isArray(data.templates)) throw new Error();
-        setVideos(data.templates);
-      })
-      .catch((e) => {
-        if (e.name !== "AbortError") setVideoError(true);
-      });
+    async function refreshTemplates() {
+      let previous = "";
+      try {
+        previous = sessionStorage.getItem("mim-home-templates") ?? "";
+      } catch {
+        /* Storage is optional. */
+      }
+      try {
+        const response = await fetch(
+          "/api/home-templates?previous=" + encodeURIComponent(previous),
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          },
+        );
+        const data = await response.json();
+        if (!response.ok || !data.images?.length || !Array.isArray(data.videos))
+          throw new Error("Could not load home templates");
+        if (controller.signal.aborted) return;
+        setImages(data.images);
+        setVideos(data.videos);
+        setVideoError(false);
+        try {
+          sessionStorage.setItem(
+            "mim-home-templates",
+            [
+              ...data.images.map((item: MemeTemplate) => "image:" + item.id),
+              ...data.videos.map(
+                (item: PreviewVideoTemplate) => "video:" + item.id,
+              ),
+            ].join(","),
+          );
+        } catch {
+          /* Storage is optional. */
+        }
+      } catch {
+        if (!controller.signal.aborted) setVideoError(true);
+      }
+    }
+    void refreshTemplates();
+    function restore(event: PageTransitionEvent) {
+      if (event.persisted) void refreshTemplates();
+    }
+    window.addEventListener("pageshow", restore);
     try {
       const stored = JSON.parse(
         localStorage.getItem("mim-user-reviews") ?? "[]",
@@ -158,10 +298,18 @@ export default function HomePage() {
     } catch {
       /* Local feedback is optional. */
     }
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      window.removeEventListener("pageshow", restore);
+    };
   }, []);
   return (
-    <main id="main-content" tabIndex={-1} className="home-redesign">
+    <main
+      ref={homeRef}
+      id="main-content"
+      tabIndex={-1}
+      className="home-redesign"
+    >
       <SiteHeader />
       <section className="home-hero">
         <div className="container home-hero-grid">
@@ -186,10 +334,13 @@ export default function HomePage() {
               </Link>
             </div>
             <p className="home-promise">
-              <Check size={15} /> Free to create <span /> No account needed
+              <Check size={15} /> Free to browse <span /> Free editing with an
+              account
             </p>
           </div>
-          <CaptionDemo />
+          <div className="home-demo-entrance">
+            <CaptionDemo meme={images[0]} />
+          </div>
         </div>
         <div className="container hero-bottom">
           <span>Your humour. Your words. Your meme.</span>
@@ -200,7 +351,7 @@ export default function HomePage() {
       </section>
       <section className="home-formats home-section" id="formats">
         <div className="container">
-          <div className="home-section-head">
+          <div className="home-section-head" data-scroll-reveal>
             <h2>
               A format for
               <br />
@@ -216,30 +367,14 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          <div className="template-grid home-curated">
-            {[
-              starterMemes[0],
-              starterMemes[1],
-              starterMemes[4],
-              starterMemes[6],
-            ].map((m, i) => (
-              <MemeCard
-                key={m.id}
-                meme={{
-                  ...m,
-                  url:
-                    "/templates/" +
-                    {
-                      "181913649": "drake.jpg",
-                      "87743020": "two-buttons.jpg",
-                      "188390779": "woman-cat.jpg",
-                      "129242436": "change-my-mind.jpg",
-                    }[m.id],
-                }}
-                index={i}
-              />
-            ))}
-          </div>
+          <GalleryShowcase
+            label="Image template showcase"
+            items={images.slice(2).map((meme, index) => ({
+              id: meme.id,
+              name: meme.name,
+              card: <MemeCard meme={meme} index={index} />,
+            }))}
+          />
           <div className="home-collection-links">
             <Link href="/explore?source=mine&category=Reaction">
               Reaction images <ArrowUpRight size={16} />
@@ -247,8 +382,8 @@ export default function HomePage() {
             <Link href="/explore?source=mine&category=Work">
               Work & study <ArrowUpRight size={16} />
             </Link>
-            <Link href="/explore?source=indian">
-              Indian meme archive <ArrowUpRight size={16} />
+            <Link href="/explore?category=Animals">
+              Animals <ArrowUpRight size={16} />
             </Link>
             <Link href="/explore?source=mine&category=Absurd">
               Pure nonsense <ArrowUpRight size={16} />
@@ -258,7 +393,7 @@ export default function HomePage() {
       </section>
       <section className="home-tools home-section" id="how-it-works">
         <div className="container home-tools-grid">
-          <div className="home-tools-copy">
+          <div className="home-tools-copy" data-scroll-reveal>
             <h2>
               The punchline is yours.
               <br />
@@ -268,12 +403,15 @@ export default function HomePage() {
               A template is just the starting point. Move your words, layer on
               the chaos, and get it looking exactly how you pictured it.
             </p>
-            <Link href="/create/112126428" className="button button-paper">
+            <Link
+              href={"/create/" + encodeURIComponent(images[1].id)}
+              className="button button-paper"
+            >
               Meet your editor <ArrowUpRight size={18} />
             </Link>
           </div>
           <div className="home-tool-ledger">
-            <article>
+            <article data-scroll-reveal>
               <Type size={22} />
               <div>
                 <h3>Put the words where they belong.</h3>
@@ -283,7 +421,7 @@ export default function HomePage() {
                 </p>
               </div>
             </article>
-            <article>
+            <article data-scroll-reveal>
               <Layers size={22} />
               <div>
                 <h3>A little more you. A lot more layers.</h3>
@@ -293,7 +431,7 @@ export default function HomePage() {
                 </p>
               </div>
             </article>
-            <article>
+            <article data-scroll-reveal>
               <SlidersHorizontal size={22} />
               <div>
                 <h3>Make it fit the moment.</h3>
@@ -303,7 +441,7 @@ export default function HomePage() {
                 </p>
               </div>
             </article>
-            <article>
+            <article data-scroll-reveal>
               <Download size={22} />
               <div>
                 <h3>Download it. The chat is waiting.</h3>
@@ -315,28 +453,11 @@ export default function HomePage() {
             </article>
           </div>
         </div>
-        <figure className="container home-editor-proof">
-          <Link
-            href="/create/112126428"
-            aria-label="Open the image editor shown in this preview"
-          >
-            <Image
-              src="/editor-preview.jpg"
-              alt="The actual Meme Is Mine editor with text layers, canvas, font controls and PNG export"
-              width="1395"
-              height="790"
-              loading="lazy"
-            />
-          </Link>
-          <figcaption>
-            The actual editor. Your captions, layers and export settings in one
-            place.
-          </figcaption>
-        </figure>
+        <EditorProof meme={images[1]} />
       </section>
       <section className="home-video home-section">
         <div className="container">
-          <div className="home-section-head">
+          <div className="home-section-head" data-scroll-reveal>
             <h2>
               Some jokes need
               <br />
@@ -352,41 +473,32 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          <div className="home-video-grid-v2">
+          <div data-scroll-reveal>
             {videos.length ? (
-              videos.map((v) => (
-                <Link
-                  className="home-motion-card"
-                  key={v.id}
-                  href={"/video-editor/" + encodeURIComponent(v.id)}
-                >
-                  <div className="home-motion-image">
-                    {v.posterUrl ? (
-                      <Image
-                        src={v.posterUrl}
-                        alt={v.name}
-                        width="640"
-                        height="400"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.hidden = true;
-                        }}
-                      />
-                    ) : null}
-                    <Film size={36} className="motion-fallback" />
-                    <span className="home-play">
-                      <Play size={20} fill="currentColor" />
-                    </span>
-                    <span className="home-media-kind">
-                      {v.mediaType === "gif" ? "GIF" : "Video"}
-                    </span>
-                  </div>
-                  <div>
-                    <h3>{v.name}</h3>
-                    <ArrowUpRight size={20} />
-                  </div>
-                </Link>
-              ))
+              <GalleryShowcase
+                label="Video template showcase"
+                items={videos.map((v) => ({
+                  id: v.id,
+                  name: v.name,
+                  card: (
+                    <article className="home-motion-card" key={v.id}>
+                      <div className="home-motion-image">
+                        <VideoTemplatePoster template={v} />
+                        <span className="home-media-kind">
+                          {v.mediaType === "gif" ? "GIF" : "Video"}
+                        </span>
+                      </div>
+                      <Link
+                        className="home-motion-title"
+                        href={"/video-editor/" + encodeURIComponent(v.id)}
+                      >
+                        <h3>{v.name}</h3>
+                        <ArrowUpRight size={20} />
+                      </Link>
+                    </article>
+                  ),
+                }))}
+              />
             ) : (
               <div className="home-video-empty">
                 <Film size={30} />
@@ -409,7 +521,7 @@ export default function HomePage() {
       </section>
       <section className="home-studio home-section">
         <div className="container home-studio-grid">
-          <div className="studio-artifact">
+          <div className="studio-artifact" data-scroll-reveal>
             <Bookmark size={28} />
             <p>
               For the idea
@@ -428,7 +540,7 @@ export default function HomePage() {
               Open your studio <ArrowUpRight size={19} />
             </Link>
           </div>
-          <div className="home-studio-copy">
+          <div className="home-studio-copy" data-scroll-reveal>
             <h2>
               Good ideas deserve
               <br />
@@ -440,8 +552,8 @@ export default function HomePage() {
               inspiration hits.
             </p>
             <p className="home-local-note">
-              Saved on this browser and device. No account, no cross-device
-              sync. Clearing site data clears your drafts.
+              Saved on this browser and device. No cross-device sync. Clearing
+              site data clears your drafts.
             </p>
             <Link href="/studio" className="text-link">
               Find your saved ideas <ArrowRight size={17} />
@@ -498,7 +610,7 @@ export default function HomePage() {
           </a>
         </div>
       </section>
-      <section className="home-close">
+      <section className="home-close" data-scroll-reveal>
         <div className="container">
           <h2>
             The next one
@@ -527,34 +639,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-      <footer className="site-footer home-footer">
-        <div className="container">
-          <div className="home-footer-top">
-            <div>
-              <BrandLogo />
-              <p>Good memes. Better conversations.</p>
-            </div>
-            <nav aria-label="Footer navigation">
-              <div>
-                <Link href="/explore">Image templates</Link>
-                <Link href="/video-templates">Video templates</Link>
-                <Link href="/create/upload">Upload an image</Link>
-                <Link href="/studio">Your studio</Link>
-              </div>
-              <div>
-                <Link href="/how-it-works">How it works</Link>
-                <Link href="/about">About Raj</Link>
-                <Link href="/contact">Contact</Link>
-                <Link href="/privacy">Privacy</Link>
-              </div>
-            </nav>
-          </div>
-          <div className="home-footer-bottom">
-            <span>Made for the group chat.</span>
-            <span>© {new Date().getFullYear()} Meme Is Mine</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

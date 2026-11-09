@@ -1,16 +1,13 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+
 import Link from "next/link";
-import {
-  Search,
-  SlidersHorizontal,
-  ArrowUpRight,
-  ArrowLeft,
-  ArrowRight,
-} from "lucide-react";
-import { motion } from "motion/react";
-import { SiteHeader, MemeCard } from "@/components/site";
+import { SiteFooter, LibraryNav } from "@/components/site-chrome";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ImagePlus, Search, Shuffle, X } from "lucide-react";
+import { MemeCard, SiteHeader } from "@/components/site";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
+import { isNewTemplate, newestDate } from "@/lib/catalog-freshness";
+
 const categories = [
   "All",
   "Classics",
@@ -19,150 +16,206 @@ const categories = [
   "Animals",
   "Absurd",
   "Work",
+] as const;
+const sorts = [
+  { value: "popular", label: "Popular" },
+  { value: "trending", label: "Trending picks" },
+  { value: "new", label: "New memes" },
+  { value: "name", label: "Name A to Z" },
 ];
-type LibraryMode = "mine" | "indian";
+const pageSize = 24;
+
 export default function ExplorePage() {
   const [memes, setMemes] = useState<MemeTemplate[]>(starterMemes);
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [category, setCategory] = useState("All");
+  const [category, setCategory] = useState<(typeof categories)[number]>("All");
   const [sort, setSort] = useState("popular");
-  const [showCount, setShowCount] = useState(24);
+  const [showCount, setShowCount] = useState(pageSize);
   const [loading, setLoading] = useState(true);
-  const [library, setLibrary] = useState<LibraryMode>("mine");
-  const [archivePage, setArchivePage] = useState(1);
-  const [totalPages, setTotalPages] = useState(170);
-  const [upstreamPageCount, setUpstreamPageCount] = useState(0);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [usingFallback, setUsingFallback] = useState(false);
+  const [shuffledIds, setShuffledIds] = useState<string[]>([]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const requestedCategory = categories.find(
-      (item) =>
-        item.toLowerCase() === (params.get("category") ?? "").toLowerCase(),
+      (item) => item.toLowerCase() === params.get("category")?.toLowerCase(),
     );
     if (requestedCategory) setCategory(requestedCategory);
-    const requestedQuery = params.get("q");
-    if (requestedQuery) setQuery(requestedQuery);
-    if (params.get("source") === "mine" || params.get("source") === "indian")
-      setLibrary(params.get("source") as LibraryMode);
+    if (params.get("sort") === "new") setSort("new");
+    setQuery(params.get("q") ?? "");
   }, []);
+
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 450);
-    return () => window.clearTimeout(timer);
-  }, [query]);
-  useEffect(() => {
-    let alive = true;
     const controller = new AbortController();
-    setLoading(true);
-    setErrorMessage("");
-    const url =
-      library === "indian"
-        ? "/api/indian-memes?page=" +
-          archivePage +
-          "&limit=24&sort=" +
-          encodeURIComponent(sort) +
-          (debouncedQuery ? "&q=" + encodeURIComponent(debouncedQuery) : "")
-        : "/api/memes?limit=100" +
-          (debouncedQuery ? "&q=" + encodeURIComponent(debouncedQuery) : "");
-    fetch(url, { signal: controller.signal })
-      .then(async (response) => {
+    async function loadCatalog() {
+      const collected: MemeTemplate[] = [];
+      let page = 1;
+      while (!controller.signal.aborted) {
+        const response = await fetch("/api/memes?limit=500&page=" + page, {
+          signal: controller.signal,
+        });
         const data = await response.json();
-        if (!response.ok || !data.success)
-          throw new Error(data.error ?? "Could not load templates.");
-        if (!alive) return;
-        if (Array.isArray(data.memes)) setMemes(data.memes);
-        setTotalPages(Number(data.totalPages) || 1);
-        setUpstreamPageCount(Number(data.pageCount ?? data.count) || 0);
-      })
-      .catch((error: unknown) => {
-        if (
-          !alive ||
-          (error instanceof DOMException && error.name === "AbortError")
-        )
-          return;
-        setErrorMessage(
-          error instanceof Error ? error.message : "Could not load templates.",
-        );
-        if (library === "mine") setMemes(starterMemes);
-        else setMemes([]);
+        if (!response.ok || !data.success || !Array.isArray(data.memes))
+          throw new Error("Template catalog unavailable");
+        collected.push(...data.memes);
+        if (collected.length >= data.total || !data.memes.length) break;
+        page++;
+      }
+      if (!controller.signal.aborted) {
+        setMemes(collected);
+        setUsingFallback(false);
+      }
+    }
+    loadCatalog()
+      .catch(() => {
+        if (!controller.signal.aborted) setUsingFallback(true);
       })
       .finally(() => {
-        if (alive) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
-    return () => {
-      alive = false;
-      controller.abort();
-    };
-  }, [library, archivePage, debouncedQuery, sort]);
+    return () => controller.abort();
+  }, []);
+
   const visible = useMemo(() => {
-    let result = memes.filter((meme) => {
-      const matchesQuery =
-        library === "indian" ||
-        meme.name.toLowerCase().includes(query.toLowerCase().trim());
-      const matchesCategory =
-        library === "indian" ||
-        category === "All" ||
-        (meme.category ?? "Relatable").toLowerCase() === category.toLowerCase();
-      return matchesQuery && matchesCategory;
-    });
+    const search = query.trim().toLowerCase();
+    const result = memes.filter(
+      (meme) =>
+        (category === "All" || meme.category === category) &&
+        (sort !== "new" || isNewTemplate(meme)) &&
+        meme.name.toLowerCase().includes(search),
+    );
+
+    if (sort === "shuffle") {
+      const ranks = new Map(shuffledIds.map((id, index) => [id, index]));
+      return result.sort(
+        (a, b) => (ranks.get(a.id) ?? Infinity) - (ranks.get(b.id) ?? Infinity),
+      );
+    }
     if (sort === "name")
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "recent" || sort === "newest")
-      result = [...result].sort((a, b) => {
-        const dates = (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
-        if (dates !== 0) return dates;
-        const aId = Number(a.id),
-          bId = Number(b.id);
-        if (Number.isFinite(aId) && Number.isFinite(bId)) return bId - aId;
-        return b.id.localeCompare(a.id, undefined, { numeric: true });
-      });
-    if (sort === "trending")
-      result = [...result].sort(
+      return result.sort((a, b) => a.name.localeCompare(b.name));
+    if (sort === "new")
+      return result.sort((a, b) => newestDate(b) - newestDate(a));
+    if (sort === "trending") {
+      return result.sort(
         (a, b) =>
           Number(Boolean(b.trending)) - Number(Boolean(a.trending)) ||
           (b.popularity ?? 0) - (a.popularity ?? 0),
       );
-    if (sort === "popular")
-      result = [...result].sort(
-        (a, b) => (b.popularity ?? 0) - (a.popularity ?? 0),
-      );
-    return result;
-  }, [memes, query, category, sort, library]);
-  function changeQuery(value: string) {
-    setQuery(value);
-    setArchivePage(1);
-    setShowCount(24);
+    }
+    return result.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+  }, [memes, query, category, sort, shuffledIds]);
+
+  function shuffle() {
+    const ids = memes.map((meme) => meme.id);
+    for (let index = ids.length - 1; index > 0; index--) {
+      const other = Math.floor(Math.random() * (index + 1));
+      [ids[index], ids[other]] = [ids[other], ids[index]];
+    }
+    setShuffledIds(ids);
+    setSort("shuffle");
+    setShowCount(pageSize);
   }
+
+  function clearFilters() {
+    setQuery("");
+    setCategory("All");
+    setSort("popular");
+    setShowCount(pageSize);
+  }
+
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="image-library">
       <SiteHeader />
-      <section className="page-hero">
-        <div className="container">
-          <span className="eyebrow">The format directory</span>
+      <section className="container image-library-intro">
+        <div>
           <h1>
-            Find your <span>format.</span>
+            The meme <em>index.</em>
           </h1>
           <p>
-            For the group chat, the group project, and whatever happened last
-            night.
+            Find the face that says it for you. Open a preview, then make it
+            yours.
           </p>
         </div>
+        <Link href="/create/upload" className="button button-paper">
+          <ImagePlus size={18} /> Use your own image
+        </Link>
       </section>
-      <section className="container">
-        <div className="explore-controls">
-          <label className="search-wrap">
-            <Search size={17} />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => changeQuery(event.target.value)}
-              placeholder="Search templates, reactions, situations…"
-              aria-label="Search meme templates"
-            />
-          </label>
-          {library === "mine" && (
+
+      <div className="container library-shell">
+        <LibraryNav
+          kind="image"
+          newOnly={sort === "new"}
+          onNewChange={(active) => {
+            setSort(active ? "new" : "popular");
+            setShowCount(pageSize);
+          }}
+        />
+        <section
+          className="image-library-directory"
+          aria-label="Image template directory"
+        >
+          <div className="image-library-toolbar">
+            <div className="image-library-controls">
+              <div className="library-search">
+                <Search size={20} aria-hidden="true" />
+                <input
+                  id="image-template-search"
+                  type="search"
+                  value={query}
+                  placeholder="Try Drake, Doge, or Two Buttons"
+                  aria-label="Search meme templates"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setShowCount(pageSize);
+                  }}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    className="template-icon-button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                      setQuery("");
+                      setShowCount(pageSize);
+                      document.getElementById("image-template-search")?.focus();
+                    }}
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+              <label className="library-sort">
+                <span>Sort</span>
+                <select
+                  value={sort}
+                  aria-label="Sort templates"
+                  onChange={(event) => {
+                    setSort(event.target.value);
+                    setShowCount(pageSize);
+                  }}
+                >
+                  {sorts.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                  {sort === "shuffle" && (
+                    <option value="shuffle">Shuffled</option>
+                  )}
+                </select>
+                <ChevronDown size={16} aria-hidden="true" />
+              </label>
+              <button
+                className="button button-dark library-shuffle"
+                type="button"
+                onClick={shuffle}
+                disabled={loading}
+              >
+                <Shuffle size={17} /> Shuffle
+              </button>
+            </div>
             <div
-              className="filter-row"
+              className="library-categories"
               role="group"
               aria-label="Filter meme categories"
             >
@@ -170,141 +223,57 @@ export default function ExplorePage() {
                 <button
                   type="button"
                   key={item}
+                  aria-pressed={category === item}
                   onClick={() => {
                     setCategory(item);
-                    setShowCount(24);
+                    setShowCount(pageSize);
                   }}
-                  aria-pressed={category === item}
-                  className={
-                    category === item ? "filter-pill active" : "filter-pill"
-                  }
                 >
-                  {item}
+                  {item === "All"
+                    ? "All formats"
+                    : item === "Reaction"
+                      ? "Reactions"
+                      : item}
                 </button>
               ))}
             </div>
+          </div>
+          <div className="image-library-summary" role="status">
+            <span>
+              {loading
+                ? "Loading the catalog…"
+                : `${visible.length} ${visible.length === 1 ? "format" : "formats"}`}
+            </span>
+            {usingFallback && <span>Showing the starter collection</span>}
+          </div>
+
+          {!loading && visible.length === 0 && (
+            <div className="empty-state">
+              <h2>No formats found.</h2>
+              <p>Try a shorter search or choose a different category.</p>
+              <button className="button button-dark" onClick={clearFilters}>
+                Clear filters
+              </button>
+            </div>
           )}
-          <select
-            className="sort-select"
-            value={sort}
-            onChange={(event) => setSort(event.target.value)}
-            aria-label="Sort templates"
-          >
-            <option value="popular">Popular</option>
-            <option value="trending">Trending</option>
-            <option value="recent">Recent</option>
-            <option value="name">Name A to Z</option>
-          </select>
-        </div>
-        <div className="explore-summary">
-          <span>
-            {loading
-              ? "Finding the formats…"
-              : library === "indian"
-                ? (upstreamPageCount || visible.length) +
-                  " templates on page " +
-                  archivePage +
-                  " of " +
-                  totalPages
-                : visible.length + " formats found"}
-          </span>
-          <span>Template collection</span>
-        </div>
-        {errorMessage && (
-          <div className="archive-message">
-            <p>{errorMessage}</p>
-            {library === "indian" && (
-              <p>
-                The template collection may be temporarily unavailable. Try
-                again shortly.
-              </p>
-            )}
-          </div>
-        )}
-        {!loading && !errorMessage && visible.length === 0 && (
-          <div className="empty-state">
-            <SlidersHorizontal size={25} />
-            <h2>No formats found.</h2>
-            <p>Try another search or clear the category filter.</p>
-            <button
-              className="button button-dark button-small"
-              onClick={() => {
-                setQuery("");
-                setCategory("All");
-                setArchivePage(1);
-              }}
-            >
-              Clear filters
-            </button>
-          </div>
-        )}
-        {visible.length > 0 && (
-          <motion.div layout className="template-grid explore-grid">
+          <div className="image-library-grid pinboard">
             {visible.slice(0, showCount).map((meme, index) => (
               <MemeCard key={meme.id} meme={meme} index={index} />
             ))}
-          </motion.div>
-        )}
-        {library === "indian" && (
-          <div className="archive-pagination">
-            <button
-              className="button button-paper button-small"
-              disabled={loading || archivePage <= 1}
-              onClick={() => setArchivePage((page) => Math.max(1, page - 1))}
-            >
-              <ArrowLeft size={14} /> Previous
-            </button>
-            <span>
-              Page <strong>{archivePage}</strong> of {totalPages}
-            </span>
-            <button
-              className="button button-dark button-small"
-              disabled={loading || archivePage >= totalPages}
-              onClick={() =>
-                setArchivePage((page) => Math.min(totalPages, page + 1))
-              }
-            >
-              Next page <ArrowRight size={14} />
-            </button>
           </div>
-        )}
-        {library === "mine" && visible.length > showCount && (
-          <button
-            className="button button-paper load-more"
-            onClick={() => setShowCount((count) => count + 24)}
-          >
-            Load more formats <ArrowUpRight size={15} />
-          </button>
-        )}
-      </section>
-      <section
-        className="container"
-        style={{ paddingBottom: 75, paddingTop: 50 }}
-      >
-        <div className="cta-panel">
-          <div>
-            <span className="eyebrow">Got your own image?</span>
-            <h2>
-              Bring your camera roll
-              <br />
-              into the conversation.
-            </h2>
-          </div>
-          <Link href="/create/upload" className="button button-dark">
-            Upload your image <ArrowUpRight size={16} />
-          </Link>
-        </div>
-      </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">Meme Is Mine · Explore</div>
-          <div className="footer-links">
-            <Link href="/">Home</Link>
-            <Link href="/studio">Your studio</Link>
-          </div>
-          <span className="footer-copy">Free to create. Ready to share.</span>
-        </div>
-      </footer>
+          {visible.length > showCount && (
+            <div className="library-more">
+              <button
+                className="button button-paper"
+                onClick={() => setShowCount(showCount + pageSize)}
+              >
+                Load more formats <ChevronDown size={17} />
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
+      <SiteFooter />
     </main>
   );
 }

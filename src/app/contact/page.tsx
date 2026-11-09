@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import {
   ArrowUpRight,
   Github,
@@ -132,17 +132,7 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">Meme Is Mine · Contact</div>
-          <div className="footer-links">
-            <Link href="/about">About Raj</Link>
-            <Link href="/faq">FAQ</Link>
-            <Link href="/privacy">Privacy</Link>
-          </div>
-          <span className="footer-copy">Created by Raj Suhandani</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

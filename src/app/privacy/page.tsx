@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SiteFooter } from "@/components/site-chrome";
 import {
   LockKeyhole,
   HardDrive,
@@ -20,8 +21,7 @@ export default function PrivacyPage() {
             <span>Your device.</span>
           </h1>
           <p>
-            Meme Is Mine is designed to work without an account or a hosted user
-            database.
+            Browse and preview templates freely. An account unlocks Studio, both editors, and template likes.
           </p>
         </div>
       </section>
@@ -37,13 +37,11 @@ export default function PrivacyPage() {
               <br />
               <em>DEFAULT.</em>
             </h2>
-            <p>Last updated October 24, 2026</p>
+            <p>Last updated November 10, 2026</p>
           </aside>
           <article className="privacy-copy">
             <p className="privacy-lede">
-              The current Meme Is Mine experience does not ask you to create an
-              account, does not request your email, and does not save your
-              drafts to a hosted database.
+              Your account remembers the templates you like. Drafts, bookmarks and uploads stay in your browser.
             </p>
             <section>
               <h3>
@@ -82,10 +80,7 @@ export default function PrivacyPage() {
               <p>
                 The template route may fetch a public template list from an
                 external service and caches the response where the hosting
-                platform supports it. The image proxy only allows configured
-                image hostnames. We do not use an email verification service,
-                hosted authentication service, or a managed user database in
-                this version.
+                platform supports it. The image proxy only allows configured image hostnames. Supabase handles account credentials and saves your likes. The gallery shares aggregate counts. Individual reactions stay private.
               </p>
             </section>
             <section>
@@ -106,17 +101,7 @@ export default function PrivacyPage() {
           </article>
         </div>
       </section>
-      <footer className="site-footer">
-        <div className="container footer-inner">
-          <div className="footer-copy">Meme Is Mine · Privacy</div>
-          <div className="footer-links">
-            <Link href="/about">About</Link>
-            <Link href="/faq">FAQ</Link>
-            <Link href="/contact">Contact</Link>
-          </div>
-          <span className="footer-copy">Created by Raj Suhandani</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
