@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowDownToLine, ArrowRight, ArrowUpRight, Bookmark, Check, Clapperboard, Download, FileImage, Folder, HardDriveDownload, HardDriveUpload, LayoutDashboard, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload, X } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, ArrowUpRight, Bookmark, Check, Clapperboard, FileImage, Folder, HardDriveDownload, HardDriveUpload, LayoutDashboard, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
 import { SiteHeader } from "./site";
