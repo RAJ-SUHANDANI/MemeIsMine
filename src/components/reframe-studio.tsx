@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowDownToLine, ArrowRight, ArrowUpRight, Bookmark, Check, Clapperboard, FileImage, Folder, HardDriveDownload, HardDriveUpload, LayoutDashboard, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload, X } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, ArrowUpRight, Bookmark, Check, Clapperboard, FileImage, Folder, HardDriveDownload, HardDriveUpload, Heart, LayoutDashboard, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
 import { SiteHeader } from "./site";
@@ -12,13 +12,15 @@ type Draft={id:string;templateId:string;name:string;url?:string;updatedAt?:strin
 type Collection={id:string;name:string;keys:string[]};
 type StoredVideo={id:string;name:string;posterUrl?:string};
 type Undo={key:"mim-drafts"|"mim-video-drafts";draft:Draft};
-type Tab="overview"|"drafts"|"saved"|"collections"|"backup";
+type Tab="overview"|"drafts"|"saved"|"liked"|"collections"|"backup";
+type LikedItem={key:string;id:string;kind:"image"|"video";name:string;image:string;editorHref:string};
 const draftKeys=["mim-drafts","mim-video-drafts"] as const;
 const backupKeys=["mim-drafts","mim-video-drafts","mim-bookmarks","mim-bookmark-templates","mim-studio-collections"] as const;
 const sections:{id:Tab;name:string;Icon:typeof LayoutDashboard}[]=[
  {id:"overview",name:"Overview",Icon:LayoutDashboard},
  {id:"drafts",name:"Drafts",Icon:FileImage},
  {id:"saved",name:"Saved formats",Icon:Bookmark},
+ {id:"liked",name:"Liked",Icon:Heart},
  {id:"collections",name:"Collections",Icon:Folder},
  {id:"backup",name:"Backup & restore",Icon:HardDriveDownload}
 ];
@@ -50,6 +52,9 @@ export function ReframeStudio(){
  const [metadata,setMetadata]=useState<MemeTemplate[]>([]);
  const [videos,setVideos]=useState<StoredVideo[]>([]);
  const [collections,setCollections]=useState<Collection[]>([]);
+ const [likedItems,setLikedItems]=useState<LikedItem[]>([]);
+ const [likesError,setLikesError]=useState("");
+ const [likesLoading,setLikesLoading]=useState(true);
  const [query,setQuery]=useState("");
  const [sort,setSort]=useState("recent");
  const [newCollection,setNewCollection]=useState("");
@@ -77,8 +82,9 @@ export function ReframeStudio(){
  useEffect(()=>{
   refresh();
   const requested=new URL(window.location.href).searchParams.get("tab");
-  if(requested==="overview"||requested==="drafts"||requested==="saved"||requested==="collections"||requested==="backup")setTab(requested);
+  if(requested==="overview"||requested==="drafts"||requested==="saved"||requested==="liked"||requested==="collections"||requested==="backup")setTab(requested);
   const controller=new AbortController();
+  fetch("/api/account/likes",{signal:controller.signal,cache:"no-store"}).then(async r=>{const data=await r.json();if(!r.ok)throw new Error(data.error??"Liked formats unavailable.");return data;}).then(data=>{if(!controller.signal.aborted)setLikedItems(Array.isArray(data.items)?data.items:[]);}).catch(error=>{if(!controller.signal.aborted)setLikesError(error instanceof Error?error.message:"Liked formats unavailable.");}).finally(()=>{if(!controller.signal.aborted)setLikesLoading(false);});
   fetch("/api/video-templates?limit=100",{signal:controller.signal}).then(r=>r.json()).then(data=>{
    if(!controller.signal.aborted&&Array.isArray(data.templates))setVideos(data.templates.filter((v:unknown):v is StoredVideo=>isRecord(v)&&typeof v.id==="string"&&typeof v.name==="string"));
   }).catch(()=>undefined);
@@ -210,7 +216,8 @@ export function ReframeStudio(){
      <div className="rf-studio-heading"><div><span className="rf-kicker">THE CURRENT STATE OF PLAY</span><h2>Your work, <em>at a glance.</em></h2></div><Link href="/explore">Make something new <ArrowUpRight size={17}/></Link></div>
      <div className="rf-studio-stats"><button type="button" onClick={()=>setTab("drafts")}><span>01 / IN PROGRESS</span><strong>{allDrafts.length.toString().padStart(2,"0")}</strong><span>Drafts <ArrowUpRight size={17}/></span></button>
       <button type="button" onClick={()=>setTab("saved")}><span>02 / THE GOOD STUFF</span><strong>{savedIds.length.toString().padStart(2,"0")}</strong><span>Saved formats <ArrowUpRight size={17}/></span></button>
-      <button type="button" onClick={()=>setTab("collections")}><span>03 / NICELY ORGANIZED</span><strong>{collections.length.toString().padStart(2,"0")}</strong><span>Collections <ArrowUpRight size={17}/></span></button></div>
+      <button type="button" onClick={()=>setTab("liked")}><span>03 / YOUR FAVOURITES</span><strong>{likesLoading?"··":likedItems.length.toString().padStart(2,"0")}</strong><span>Liked formats <ArrowUpRight size={17}/></span></button>
+      <button type="button" onClick={()=>setTab("collections")}><span>04 / NICELY ORGANIZED</span><strong>{collections.length.toString().padStart(2,"0")}</strong><span>Collections <ArrowUpRight size={17}/></span></button></div>
      <div className="rf-studio-heading rf-studio-subhead"><div><span className="rf-kicker">PICK UP WHERE YOU LEFT OFF</span><h2>Keep <em>going.</em></h2></div><button type="button" onClick={()=>setTab("drafts")}>View all drafts <ArrowRight size={17}/></button></div>
      {allDrafts.length?<div className="rf-studio-grid">{filteredDrafts.slice(0,3).map(draftCard)}</div>:<div className="rf-studio-empty"><FileImage size={37}/><h3>Your first idea starts here.</h3><p>Save a meme in the editor and it will be waiting in this browser.</p><Link href="/explore">Find a format <ArrowUpRight size={17}/></Link></div>}
     </>}
@@ -223,6 +230,17 @@ export function ReframeStudio(){
      <div className="rf-studio-heading"><div><span className="rf-kicker">YOUR PERSONAL PICKS</span><h2>Keep the <em>good ones.</em></h2></div><span>{countLabel(saved.length,"format")}</span></div>
      <p className="rf-studio-context">All saved formats live in this browser. Assign them to personal collections below.</p>
      {saved.length?<div className="rf-studio-grid">{saved.map(savedCard)}</div>:<div className="rf-studio-empty"><Bookmark size={36}/><h3>Nothing saved yet.</h3><p>Bookmark a format in the gallery and it will appear right here.</p><Link href="/templates">Explore the archive <ArrowUpRight size={17}/></Link></div>}
+    </>}
+    {tab==="liked"&&<>
+     <div className="rf-studio-heading"><div><span className="rf-kicker">THE FORMATS YOU LOVE</span><h2>The ones that <em>clicked.</em></h2></div><span>{likedItems.length} LIKED</span></div>
+     <p className="rf-studio-context">Likes belong to your account. Unlike browser-only drafts, these follow you when you sign in.</p>
+     {likesError?<div className="rf-studio-empty"><Heart size={36}/><h3>Likes are unavailable.</h3><p>{likesError}</p><p>Make sure the account likes database migration has been applied.</p></div>:
+      likesLoading?<div className="rf-studio-empty"><Heart size={36}/><h3>Finding your favourites.</h3></div>:
+      likedItems.length?<div className="rf-studio-grid">{likedItems.map(item=><article key={item.key} className="rf-studio-card">
+        <div className="rf-studio-card-art">{safeImage(item.image)?<Image src={safeImage(item.image)} width={450} height={320} alt={item.name} unoptimized/>:<Heart size={37}/>}<span>{item.kind==="video"?"MOVING FORMAT":"STILL FORMAT"}</span></div>
+        <div className="rf-studio-card-details"><h3>{item.name}</h3><div className="rf-studio-card-actions"><Link href={item.editorHref}>Use this format <ArrowUpRight size={16}/></Link></div></div>
+       </article>)}</div>:
+      <div className="rf-studio-empty"><Heart size={36}/><h3>Nothing liked yet.</h3><p>Open a template preview and leave a like. It will join your collection here.</p><Link href="/explore">Explore the gallery <ArrowUpRight size={17}/></Link></div>}
     </>}
     {tab==="collections"&&<>
      <div className="rf-studio-heading"><div><span className="rf-kicker">THINK OF THESE AS YOUR PERSONAL MOOD BOARDS</span><h2>Make your <em>own shelves.</em></h2></div></div>
