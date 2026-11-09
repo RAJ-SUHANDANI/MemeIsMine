@@ -125,7 +125,7 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
        <button type="button" disabled={page>=pages} onClick={()=>setPage(p=>Math.min(pages,p+1))}>Next <ArrowRight size={18}/></button>
      </div>}
    </section>
-   <section className="rf-library-endcap"><div className="container"><span className="rf-kicker">THERE'S ALWAYS ANOTHER WAY TO SAY IT</span><h2>Found the feeling?<br/><em>Make it yours.</em></h2><Link href="/create/upload">Start with your own image <ArrowUpRight size={19}/></Link></div></section>
+   <section className="rf-library-endcap"><div className="container"><span className="rf-kicker">THERE IS ALWAYS ANOTHER WAY TO SAY IT</span><h2>Found the feeling?<br/><em>Make it yours.</em></h2><Link href="/create/upload">Start with your own image <ArrowUpRight size={19}/></Link></div></section>
    <SiteFooter/>
  </main>;
 }
