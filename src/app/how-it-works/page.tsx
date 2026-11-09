@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
     },
   ];
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
       <SiteHeader />
       <section className="page-hero">
         <div className="container">
@@ -171,7 +171,7 @@ export default function HowItWorksPage() {
               <h3>Export on your device.</h3>
               <p>
                 The editor creates images and videos in your browser instead of
-                asking for an account.
+                requiring complex desktop software.
               </p>
             </article>
           </div>
