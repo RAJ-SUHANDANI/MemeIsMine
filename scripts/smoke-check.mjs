@@ -20,7 +20,7 @@ for (const route of routes) {
   assert.match(await r.text(), /Meme Is Mine/, route);
   console.log("PASS route " + route);
 }
-for (const route of ["/studio", "/create/upload", "/create/112126428", "/video-editor/arjun-kapoor-angry"]) {
+for (const route of ["/account", "/studio", "/create/upload", "/create/112126428", "/video-editor/arjun-kapoor-angry"]) {
   const response = await fetch(base + route, { redirect: "manual" });
   assert.equal(response.status, 307, route);
   const destination = new URL(response.headers.get("location"), base);
@@ -46,6 +46,9 @@ for (const route of [
     assert.ok(data.memes.every((m) => m.name.toLowerCase().includes("drake")));
   console.log("PASS API " + route);
 }
+const likesResponse = await fetch(base + "/api/account/likes");
+assert.equal(likesResponse.status, 401);
+console.log("PASS account likes require sign in");
 for (const route of [
   "/api/image",
   "/api/image?url=http://127.0.0.1/",
