@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clapperboard, ImagePlus, Search, Shuffle, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ImagePlus, Search, Shuffle, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "./site";
@@ -82,7 +82,7 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
  const title=kind==="video"?"Moments in motion.":mode==="templates"?"Every image has a story.":"Find your next punchline.";
  const description=kind==="video"?"A living collection of reaction clips and GIFs. Find the perfect moment, then make it your own.":
   mode==="templates"?"Classic formats, obscure discoveries and the faces that say it all. Choose an arrangement and explore.":
-  "A place for the internet's most expressive faces. Browse the archive like a gallery, not a spreadsheet.";
+  "A place for the internet&apos;s most expressive faces. Browse the archive like a gallery, not a spreadsheet.";
  function chooseSort(value:string){setSort(value);setPage(1);}
  function surprise(){if(kind==="video"){setSort("surprise");setSeed(n=>n+104729);setPage(1);}else{setSort("name");setPage(Math.max(1,Math.floor(Math.random()*pages)+1));}}
  function reset(){setQuery("");setSearch("");setCategory("All");setSort("popular");setPage(1);}
