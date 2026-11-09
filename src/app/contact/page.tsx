@@ -43,7 +43,7 @@ export default function ContactPage() {
     },
   ];
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
       <SiteHeader />
       <section className="page-hero">
         <div className="container">
