@@ -17,7 +17,7 @@
 .rf-studio-heading h2{font:750 clamp(46px,5vw,84px)/.96 var(--display);letter-spacing:-.055em;margin:19px 0 0}
 .rf-studio-heading>a,.rf-studio-heading>button{display:flex;align-items:center;gap:12px;color:var(--rf-ink);border:0;border-bottom:1px solid var(--rf-ink);background:transparent;padding:10px 0;font:700 13px var(--body);text-decoration:none;white-space:nowrap;cursor:pointer}
 .rf-studio-heading>span{font:700 11px monospace;color:var(--rf-muted);letter-spacing:.09em}
-.rf-studio-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rf-rule);margin-bottom:clamp(70px,9vw,125px)}
+.rf-studio-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--rf-rule);margin-bottom:clamp(70px,9vw,125px)}
 .rf-studio-stats button{background:var(--rf-card);border:0;border-right:1px solid var(--rf-rule);padding:clamp(20px,3vw,38px);text-align:left;display:flex;flex-direction:column;gap:20px;cursor:pointer;color:var(--rf-ink);transition:background .2s}
 .rf-studio-stats button:last-child{border-right:0}.rf-studio-stats button:hover{background:#e8dfd0}
 .rf-studio-stats button>span:first-child{font:700 11px monospace;letter-spacing:.09em;color:var(--rf-muted)}
@@ -84,7 +84,7 @@
 .rf-studio-notice>button:last-child{border:0}
 @media(max-width:1100px){.rf-studio-grid,.rf-collection-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rf-studio-hero-decoration{font-size:120px}}
 @media(max-width:800px){.rf-studio-hero-inner{grid-template-columns:1fr}.rf-studio-hero-decoration{display:none}.rf-studio-tabs{margin-right:-15px;padding-right:15px}
- .rf-studio-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.rf-studio-stats button{padding:17px}.rf-studio-stats button strong{font-size:69px}
+ .rf-studio-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.rf-studio-stats button{padding:17px}.rf-studio-stats button strong{font-size:69px}
  .rf-studio-heading{display:block}.rf-studio-heading>a,.rf-studio-heading>button{margin-top:20px;width:max-content}
  .rf-studio-end>.container{display:grid}.rf-studio-end>.container>div:last-child{display:flex;flex-wrap:wrap}
  .rf-studio-notice{bottom:calc(95px + env(safe-area-inset-bottom));right:12px}
