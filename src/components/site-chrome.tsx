@@ -6,7 +6,7 @@ import {
   LayoutGrid,
   Sparkles,
 } from "lucide-react";
-import { BrandLogo } from "./site";
+
 
 const footerGroups = [
   {
@@ -37,32 +37,25 @@ const footerGroups = [
 ];
 
 export function SiteFooter() {
-  return (
-    <footer className="site-footer shared-footer">
-      <div className="container shared-footer-grid">
-        <div className="shared-footer-brand">
-          <BrandLogo />
-          <p>Find the format. Make it yours.</p>
-        </div>
-        {footerGroups.map((group) => (
-          <nav key={group.name} aria-label={group.name + " footer links"}>
-            <h2>{group.name}</h2>
-            {group.links.map(([label, href]) => (
-              <Link key={href} href={href}>
-                {label}
-              </Link>
-            ))}
-          </nav>
-        ))}
+  return <footer className="rf-footer">
+    <div className="container rf-footer-top">
+      <div className="rf-footer-intro"><span className="rf-kicker">THE INTERNET IS YOURS TO REMIX</span>
+        <h2>Make the<br/><em>next one.</em></h2>
+        <Link className="rf-footer-cta" href="/explore">Find your format <ArrowUpRight size={21}/></Link>
       </div>
-      <div className="container shared-footer-bottom">
-        <span>Meme Is Mine</span>
-        <Link href="/explore">
-          Find a template <ArrowUpRight size={14} />
-        </Link>
+      <div className="rf-footer-columns">
+        {footerGroups.map(group=><nav key={group.name} aria-label={group.name+" footer links"}>
+          <h3>{group.name}</h3>
+          {group.links.map(([label,href])=><Link key={href} href={href}>{label}</Link>)}
+        </nav>)}
+        <nav aria-label="Feedback"><h3>Notes</h3><Link href="/add-review">Leave a note</Link></nav>
       </div>
-    </footer>
-  );
+    </div>
+    <div className="container rf-footer-wordmark" aria-hidden="true">MEME IS MINE<span>✳</span></div>
+    <div className="container rf-footer-bottom"><span>INDEPENDENTLY BUILT FOR THE INTERNET.</span>
+      <span>DESIGN & DEVELOPMENT / RAJ SUHANDANI</span><Link href="/">BACK TO TOP ↑</Link>
+    </div>
+  </footer>;
 }
 
 export function LibraryNav({
