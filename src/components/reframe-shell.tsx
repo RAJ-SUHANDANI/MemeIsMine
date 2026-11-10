@@ -8,14 +8,13 @@ import Image from "next/image";
 function BrandLogo(){return <Link href="/" aria-label="Meme Is Mine home" className="rf-brand"><Image src="/meme-is-mine-logo.svg" alt="Meme Is Mine" width={174} height={44}/></Link>;}
 
 const desktopLinks = [
-  {href:"/explore",name:"Discover"},
-  {href:"/templates",name:"Still images"},
-  {href:"/video-templates",name:"Moving images"},
+  {href:"/explore",name:"Image templates"},
+  {href:"/video-templates",name:"Video templates"},
   {href:"/studio",name:"Studio"},
 ];
 const mobileLinks = [
   {href:"/",name:"Home",Icon:House},
-  {href:"/explore",name:"Explore",Icon:Compass},
+  {href:"/explore",name:"Images",Icon:Compass},
   {href:"",name:"Create",Icon:Plus},
   {href:"/video-templates",name:"Videos",Icon:Clapperboard},
   {href:"/studio",name:"Studio",Icon:LayoutDashboard},
@@ -84,7 +83,7 @@ export function ReframeHeader() {
           <div className="rf-sheet-handle" aria-hidden="true"/>
           <header><div><span className="rf-kicker">START SOMETHING</span><h2>The joke is yours.</h2></div><button type="button" aria-label="Close" onClick={()=>setCreate(false)}><X size={20}/></button></header>
           <Link href="/create/upload"><ImagePlus size={22}/><span><strong>Use your image</strong><small>Start from your device</small></span><ArrowUpRight size={19}/></Link>
-          <Link href="/templates"><Search size={22}/><span><strong>Find an image meme</strong><small>Browse still image formats</small></span><ArrowUpRight size={19}/></Link>
+          <Link href="/templates"><Search size={22}/><span><strong>Find an image meme</strong><small>Browse image templates</small></span><ArrowUpRight size={19}/></Link>
           <Link href="/video-templates"><Clapperboard size={22}/><span><strong>Make a moving meme</strong><small>Find a video or GIF</small></span><ArrowUpRight size={19}/></Link>
         </motion.div>
       </>}
