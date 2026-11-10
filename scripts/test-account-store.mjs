@@ -49,6 +49,10 @@ function load(file) {
 try {
  const accounts = load("mim-accounts.ts");
  const db = load("local-db.ts");
+ assert.equal(accounts.allowRequest("signup", "test-address-1", 2, 60_000), true);
+ assert.equal(accounts.allowRequest("signup", "test-address-1", 2, 60_000), true);
+ assert.equal(accounts.allowRequest("signup", "test-address-1", 2, 60_000), false,"rate limiter must enforce its quota");
+ assert.equal(accounts.allowRequest("recovery", "test-address-1", 2, 60_000), true,"actions have separate buckets");
  const email = "new-member@example.test";
  const oldPassword = "my-first-very-long-password!2026";
  const newPassword = "a-whole-new-long-password!2026";
