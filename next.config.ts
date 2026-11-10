@@ -18,7 +18,7 @@ const csp=[
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "upgrade-insecure-requests",
+  ...(development?[]:["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders=[
