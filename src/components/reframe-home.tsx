@@ -73,7 +73,24 @@ export function ReframeHome({ initialImages, initialVideos }: {
    </div>
    <div className="rf-home-scroll-marker"><span>SCROLL TO EXPLORE</span><ArrowDownRight size={16}/></div>
   </section>
-  <div className="rf-ticker" aria-hidden="true"><div>YOUR MEMES <b>✳</b> YOUR RULES <b>✳</b> SAME INTERNET DIFFERENT PUNCHLINE <b>✳</b> YOUR MEMES <b>✳</b> YOUR RULES <b>✳</b></div></div>
+  <div className="rf-ticker" aria-hidden="true">
+    <div className="rf-ticker-track">
+      {[0, 1].map(copy => (
+        <div className="rf-ticker-sequence" key={copy}>
+          <span>YOUR MEMES</span>
+          <span className="rf-ticker-mark">✳</span>
+          <span>YOUR RULES</span>
+          <span className="rf-ticker-mark">✳</span>
+          <span>SAME INTERNET DIFFERENT PUNCHLINE</span>
+          <span className="rf-ticker-mark">✳</span>
+          <span>YOUR MEMES</span>
+          <span className="rf-ticker-mark">✳</span>
+          <span>YOUR RULES</span>
+          <span className="rf-ticker-mark">✳</span>
+        </div>
+      ))}
+    </div>
+  </div>
   <section className="rf-home-section rf-home-images">
    <div className="container">
     <Reveal className="rf-section-heading">
