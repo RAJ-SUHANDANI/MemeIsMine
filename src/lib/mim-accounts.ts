@@ -144,36 +144,47 @@ function appwriteCode(error:unknown){
  return typeof error==="object"&&error!==null&&"code" in error?Number((error as {code:unknown}).code):0;
 }
 export async function likeState(key:string,userId?:string){
- const {documents,databaseId,collectionId}=likesClient();
- const result=await documents.listDocuments({
-  databaseId,collectionId,queries:[Query.equal("templateKey",key),Query.limit(1)],
+ const {tables,databaseId,tableId}=likesClient();
+ const result=await tables.listRows({
+  databaseId,tableId,queries:[Query.equal("templateKey",key),Query.limit(1)],
  });
  let liked=false;
  if(userId){
-  try{await documents.getDocument({databaseId,collectionId,documentId:likeId(key,userId)});liked=true;}
+  try{await tables.getRow({databaseId,tableId,rowId:likeId(key,userId)});liked=true;}
   catch(error){if(appwriteCode(error)!==404)throw error;}
  }
  return {key,count:result.total,revision:Date.now(),liked,signedIn:Boolean(userId)};
 }
 export async function toggleLike(key:string,userId:string,liked:boolean){
- const {documents,databaseId,collectionId}=likesClient();
- const documentId=likeId(key,userId);
+ const {tables,databaseId,tableId}=likesClient();
+ const rowId=likeId(key,userId);
  if(liked){
   try{
-   await documents.createDocument({databaseId,collectionId,documentId,data:{
+   await tables.createRow({databaseId,tableId,rowId,data:{
     templateKey:key,userId,createdAt:Date.now(),
    }});
   }catch(error){if(appwriteCode(error)!==409)throw error;}
  }else{
-  try{await documents.deleteDocument({databaseId,collectionId,documentId});}
+  try{await tables.deleteRow({databaseId,tableId,rowId});}
   catch(error){if(appwriteCode(error)!==404)throw error;}
  }
  return likeState(key,userId);
 }
 export async function likedKeys(userId:string):Promise<string[]>{
- const {documents,databaseId,collectionId}=likesClient();
- const found=await documents.listDocuments({
-  databaseId,collectionId,queries:[Query.equal("userId",userId),Query.limit(1000)],
- });
- return found.documents.map(doc=>doc.templateKey).filter((v):v is string=>typeof v==="string");
+ const {tables,databaseId,tableId}=likesClient();
+ const keys:string[]=[];
+ let cursor:string|undefined;
+ // Appwrite caps listRows responses at 100, so page rather than using
+ // an invalid 1000-item query.
+ while(keys.length<1000){
+  const queries=[Query.equal("userId",userId),Query.limit(100)];
+  if(cursor)queries.push(Query.cursorAfter(cursor));
+  const found=await tables.listRows({databaseId,tableId,queries});
+  for(const row of found.rows){
+   if(typeof row.templateKey==="string")keys.push(row.templateKey);
+  }
+  if(found.rows.length<100)break;
+  cursor=found.rows[found.rows.length-1].$id;
+ }
+ return keys;
 }
