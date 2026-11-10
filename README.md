@@ -18,7 +18,7 @@ The public homepage, `/explore` (Image Templates) and `/video-templates` (Video 
 
 **No VPS, custom SMTP, self-managed SQLite, or paid database required.** Accounts, email-password login, six-digit email verification and password recovery are handled through Appwrite Cloud Free. The platform also stores private likes, while drafts, bookmarks, collections and uploads remain on the current browser.
 
-Create a free Appwrite Cloud project and follow `MEMBERSHIP-SETUP.md`. The required environment variables are:
+The Appwrite Free project, private indexed TablesDB likes table, and isolated Next.js preview Site are **already created**. `MEMBERSHIP-SETUP.md` records the verified project and the one remaining server API key permission. The required environment variables are:
 
 ```env
 APPWRITE_ENDPOINT=https://<REGION>.cloud.appwrite.io/v1
@@ -29,7 +29,7 @@ APPWRITE_LIKES_COLLECTION_ID=template_likes
 NEXT_PUBLIC_SITE_URL=<your-public-https-url>
 ```
 
-After setting the environment variables, run `npm run setup:appwrite` **once** to create the private likes database. Run it again safely if interrupted; existing resources are preserved.
+The private `mim/template_likes` TablesDB is already provisioned. `npm run setup:appwrite` remains available as an idempotent schema setup script for new environments.
 
 **Security:** `APPWRITE_API_KEY` is server-only and must never appear in a public source file, chat message or `NEXT_PUBLIC_*` variable. Sessions are verified server-side with Appwrite and use HttpOnly cookies. Protected Studio and editor routes reject signed-out visitors.
 
@@ -50,7 +50,7 @@ npm run start -- -p 3001
 npm run qa:smoke
 ```
 
-CI verifies public pages, sitemap, gallery UI, security headers and signed-out route protection without live secrets. Full registration, six-digit email delivery, password reset and cross-device likes must be tested after connecting a real Appwrite project. Do not claim the service is live until these tests pass.
+CI verifies public pages, sitemap, gallery UI, security headers and signed-out route protection. A live Appwrite project exists, but this plugin connection cannot issue a permanent API key. Add the server key privately in the Site environment before end-to-end registration, OTP delivery, password reset, or cross-device likes can be tested. Do not claim the service is live until these tests pass.
 
 ## Search visibility
 
