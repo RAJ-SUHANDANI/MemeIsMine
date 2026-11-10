@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { Account, ID, Query } from "node-appwrite";
+import { ID, Query } from "node-appwrite";
 import { cookies } from "next/headers";
 import { authConfig } from "./auth-config";
 import { adminClient, createSessionCookie, dropSessionCookie, likesClient, sessionClient, userClient } from "./appwrite";
