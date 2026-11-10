@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Bookmark, Grid2X2, Layers3, LayoutList, PanelsTopLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ReframeMotionRail, type RailMode } from "./reframe-motion-rail";
@@ -60,7 +60,6 @@ export function ReframeGallery({ items, kind, variant = "showcase", path, home =
   path: string;
   home?: boolean;
 }) {
-  const reduced = useReducedMotion();
   const [layout, setLayout] = useState<GalleryLayout>(kind === "video" ? "stack" : "coverflow");
   const [preview, setPreview] = useState<ReframeItem | null>(null);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
