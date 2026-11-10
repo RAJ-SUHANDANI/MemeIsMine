@@ -220,9 +220,14 @@ export async function pendingVerification():Promise<{email:string;purpose:"signu
   }catch{return null;}
 }
 
-export async function changePassword(password:string):Promise<boolean> {
+export async function changePassword(password:string,currentPassword?:string):Promise<boolean> {
   const current=await readSession();
   if(!current || password.length<12 || password.length>128) return false;
+  if(current.scope==="user"){
+    const row=database().prepare("SELECT password_hash FROM users WHERE id=?")
+      .get(current.id) as {password_hash:string}|undefined;
+    if(!row || !currentPassword || !matchesPassword(currentPassword,row.password_hash))return false;
+  }
   const digest=passwordHash(password);
   transaction(()=>{
     database().prepare("UPDATE users SET password_hash=? WHERE id=?").run(digest,current.id);
