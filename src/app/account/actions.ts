@@ -1,12 +1,18 @@
 "use server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { authConfig, emailConfig } from "@/lib/auth-config";
 import {
-  changePassword, finishVerification, normalizedEmail, pendingVerification,
+  allowRequest, changePassword, finishVerification, normalizedEmail, pendingVerification,
   register, removeSession, savePending, sendChallenge, signIn
 } from "@/lib/mim-accounts";
 import { returnPath } from "@/lib/return-path";
 
+async function requestIdentity(){
+ const h=await headers();
+ // The reverse proxy must overwrite X-Real-IP, never forward a client-supplied value.
+ return (h.get("x-real-ip")??"unidentified-client").slice(0,80);
+}
 function failure(route:string,next:string,status:string):never {
  redirect(route+"?"+new URLSearchParams({next,status}));
 }
@@ -18,6 +24,8 @@ export async function authenticate(form:FormData){
  const password=String(form.get("password")??"");
  if(!email || password.length>128 || password.length<(signup?12:1))failure(route,next,"invalid");
  if(!authConfig() || (signup&&!emailConfig()))failure(route,next,"unavailable");
+ if(signup && !allowRequest("signup",await requestIdentity(),20,60*60*1000))
+  failure(route,next,"rate-limited");
  try{
   if(signup){
    const result=await register(email!,password);
@@ -57,6 +65,9 @@ export async function resendEmailCode(form:FormData){
  if(!pending)redirect("/login?status=expired");
  let status="sent";
  try{
+  if(!allowRequest("resend",await requestIdentity(),20,60*60*1000)){
+    redirect("/account/verify?"+new URLSearchParams({next,status:"rate-limited"}));
+  }
   const result=await sendChallenge(pending!.email,pending!.purpose);
   status=result==="cooldown"?"wait":result==="limited"?"too-many-codes":result==="unavailable"?"unavailable":"sent";
  }catch{status="unavailable";}
@@ -66,6 +77,8 @@ export async function resendEmailCode(form:FormData){
 export async function requestPasswordReset(form:FormData){
  const email=normalizedEmail(String(form.get("email")??""));
  if(!authConfig()||!emailConfig())redirect("/account/recover?status=unavailable");
+ if(!allowRequest("recovery",await requestIdentity(),20,60*60*1000))
+  redirect("/account/recover?status=rate-limited");
  if(email){
   try{await sendChallenge(email,"recovery");await savePending(email,"recovery");}
   catch(error){console.error("Reset dispatch failed:",error instanceof Error?error.message:"unknown");}
