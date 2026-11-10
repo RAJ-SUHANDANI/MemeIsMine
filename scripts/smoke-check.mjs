@@ -3,7 +3,6 @@ const base = process.argv[2] ?? "http://localhost:3001";
 const routes = [
   "/",
   "/explore",
-  "/templates",
   "/video-templates",
   "/about",
   "/how-it-works",
@@ -28,6 +27,10 @@ assert.equal(centerSegments, 2, "homepage must contain one still and one moving 
 assert.ok(totalRailCards >= 120, "homepage must render at least 20 templates per rail across loop copies");
 console.log("PASS two continuously populated homepage galleries");
 
+const duplicate = await fetch(base + "/templates", { redirect: "manual" });
+assert.ok([307, 308].includes(duplicate.status), "old image archive should redirect");
+assert.equal(new URL(duplicate.headers.get("location"),base).pathname,"/explore");
+console.log("PASS legacy image archive redirects to single image templates page");
 for (const route of ["/account", "/studio", "/create/upload", "/create/112126428", "/video-editor/arjun-kapoor-angry"]) {
   const response = await fetch(base + route, { redirect: "manual" });
   assert.equal(response.status, 307, route);
