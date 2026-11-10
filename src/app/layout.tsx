@@ -12,6 +12,7 @@ import "./reframe-studio.css";
 import "./reframe-support.css";
 import "./reframe-footer.css";
 import "./reframe-refinement.css";
+import "./reframe-controls.css";
 import { MotionProvider } from "@/components/motion-provider";
 export const metadata: Metadata = {
   title: {
