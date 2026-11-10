@@ -1,28 +1,46 @@
-# Account setup — Redesign
+# Meme Is Mine — Free Appwrite Cloud setup
 
-Meme Is Mine uses its own Node.js + SQLite account database and SMTP verification. Supabase is no longer used for account/session or like workflows.
+This guide replaces the old SQLite/SMTP self-hosting workflow. Appwrite Cloud manages the accounts and email delivery, and a private DocumentsDB collection stores template likes.
 
-1. Use **Node.js 24.15+**.
-2. Set `MIM_DATABASE_PATH` to an **absolute, persistent, writable location** on a server you control (for example `/data/accounts.sqlite`). SQLite creates the tables automatically on first use.
-3. Set `MIM_AUTH_SECRET` to at least 32 unpredictable characters, e.g. `openssl rand -hex 32`. Keep it server-only. Rotating the secret invalidates outstanding OTP codes and rate-limit identifiers.
-4. Set `MIM_SMTP_HOST`, `MIM_SMTP_PORT`, `MIM_SMTP_USER`, `MIM_SMTP_PASSWORD` and `MIM_SMTP_FROM`. Use an SMTP provider or your own configured mail server with authenticated TLS. Configure SPF/DKIM/DMARC for deliverability.
-5. Put an HTTPS reverse proxy before the Node application and enforce TLS. Secure session cookies are enabled in production.
-6. Back up the persistent SQLite volume and periodically verify recovery on a test server.
+## One-time setup
 
-## Security behavior
+1. Create an Appwrite Cloud Free project at https://cloud.appwrite.io. Choose a region.
+2. Enable **Email/Password** sign-in in your project's Auth settings. Enable **Email Verification OTP** / verification by code.
+3. In your project's Settings, copy the API endpoint (for example `https://fra.cloud.appwrite.io/v1`) and project ID. Add your actual website's domain as a Web platform where applicable.
+4. Create one **server API key** with only the scopes needed for server actions and the private likes database: `sessions.write`, `users.read`, `users.write`, `documentsdb.read` and `documentsdb.write`. Appwrite may label these permissions slightly differently in the Console; follow the current Auth and DocumentsDB API reference.
+5. Set environment variables on your Next.js hosting provider, then redeploy:
+   ```env
+   APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
+   APPWRITE_PROJECT_ID=<PROJECT_ID>
+   APPWRITE_API_KEY=<PRIVATE_SERVER_KEY>
+   APPWRITE_DATABASE_ID=mim
+   APPWRITE_LIKES_COLLECTION_ID=template_likes
+   NEXT_PUBLIC_SITE_URL=https://your-site.example
+   ```
+   The endpoint above is **an example**; use your chosen project's region. Never expose the API key via `NEXT_PUBLIC_*`.
+6. Run `npm run setup:appwrite` in an environment with the same private variables. This creates a private, server-access-only DocumentsDB database named `mim` and collection named `template_likes`. This operation is idempotent.
+7. Open the hosted website and test a **real registration**, verify the six-digit email code, sign out/in, recover a password, and test Studio likes with two separate accounts. Do not activate production signups until these checks succeed.
 
-Passwords are salted scrypt hashes; plaintext passwords are never persisted. OTPs are six digits, sent by SMTP, HMAC-hashed at rest, expire in ten minutes, allow five failed attempts, and have a one-minute resend cooldown plus hourly send caps. Sessions are random 256-bit bearer tokens stored as hashes, HTTP-only and SameSite=Lax in the browser. Password reset uses a ten-minute recovery-only session and revokes all other sessions. Updating a password in a normal signed-in session requires the old password. Signup, resend, recovery, and password-change requests also use persistent per-client rate buckets. Likes belong to the signed-in user; published counts are aggregate only.
+## Account behavior
 
-## Important hosting limitation
+- Email and passwords are managed by Appwrite rather than stored by this application.
+- On sign-up, an unverified account session is created and Appwrite sends a six-digit code valid for 15 minutes.
+- The Studio and both editor routes require a **verified** account. Unverified users see the code-verification flow.
+- Password recovery sends a six-digit code and requests a new password in the same secure form; recovery does not silently log users in.
+- Account and recovery session details are kept in HttpOnly cookies; pending verification state is HMAC-signed and expires.
+- Template likes are stored in a private Appwrite DocumentsDB collection. Only authenticated server actions use its API key. Public APIs return aggregate counts, never lists of another person's reactions.
+- The local browser still owns drafts, bookmarks and collections. These do **not** automatically sync across browsers.
 
-Do **not** deploy this setup as an ephemeral Vercel/serverless SQLite file: that would cause account loss and inconsistent sessions. Use one persistent Node instance and a durable SQLite volume, or deliberately redesign the backend for a durable external SQL database using direct SQL connections. A dedicated deployment example is included.
+## Costs and limits
 
-## Migration
+Appwrite Cloud Free publishes **75,000 monthly active users**, **5 GB monthly bandwidth**, one database, and resource limits. Free projects can pause after inactivity. Its standard built-in mail sender is available without configuring a personal Gmail account or SMTP credentials, but generic provider branding and undisclosed anti-abuse or delivery limits can apply. The Free plan is not an unlimited email sender or an unlimited-traffic guarantee.
 
-The older `supabase/migrations` files are retained as historical documentation only. Nothing in the redesigned account flow uses them. Previously stored accounts and likes are **not** migrated automatically. Existing users must sign up again or an explicit migration must be performed before switching traffic.
+## Security and operational notes
 
-The `/account/verify` screen accepts a six-digit code and the `/account/recover` screen initiates recovery. All login/signup actions fail closed when configuration is missing.
+Appwrite API keys bypass some client-side API rate limits. **Before a high-traffic launch**, put bot protection or rate limiting on public signup, login, OTP and recovery actions at the hosting/CDN layer, and monitor abuse. Keep secrets in hosting environment settings. Review Appwrite's Auth security policy (minimum password length, disposable email rules, email verification and session restrictions). Check privacy and regulatory requirements for storing user data with Appwrite.
 
-## Reverse proxy requirement
+The previous local Node SQLite database and custom SMTP sender are intentionally removed. No database file, persistent Docker volume or self-managed mail server is needed.
 
-The app reads `X-Real-IP` only for abuse controls. Your reverse proxy must **overwrite** this header with the verified connection address and discard client-supplied values; never pass an arbitrary user-supplied `X-Real-IP`. Configure HTTPS, request body limits, and network firewall rules. Avoid exposing the Node server directly to the public internet. In a multi-instance deployment, use a shared SQL database instead of separate local SQLite files.
+## Important
+
+There is no Appwrite project or server API key connected to this repository by default. Until you configure one, account actions fail closed and the signup screen explains why; it must never pretend to send verification emails.
