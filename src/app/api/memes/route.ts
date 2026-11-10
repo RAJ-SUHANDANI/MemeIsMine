@@ -40,6 +40,21 @@ export async function GET(request: Request) {
     );
   else if (["new", "newest", "recent"].includes(sort))
     filtered.sort((a, b) => newestDate(b) - newestDate(a) || rank(a, b));
+  else if (sort === "surprise") {
+    let state = (Number(searchParams.get("seed") ?? 17) || 17) >>> 0;
+    if (state === 0) state = 0x6d2b79f5;
+    const random = () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let value = state;
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+    for (let index = filtered.length - 1; index > 0; index--) {
+      const target = Math.floor(random() * (index + 1));
+      [filtered[index], filtered[target]] = [filtered[target], filtered[index]];
+    }
+  }
   else filtered.sort(rank);
   const memes = filtered.slice((page - 1) * limit, page * limit);
   return NextResponse.json(
