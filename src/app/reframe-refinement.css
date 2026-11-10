@@ -17,6 +17,13 @@
 }
 .rf-site, .rf-header, .rf-footer, .rf-support-page, .membership-page {
   --body: var(--sans);
+  --paper: var(--rf-stock);
+  --paper-light: var(--rf-card);
+  --ink: var(--rf-ink);
+  --muted: var(--rf-muted);
+  --red: var(--rf-accent);
+  --red-dark: #923126;
+  --line: rgba(27, 33, 29, .17);
 }
 .rf-site, .rf-header, .rf-footer {
   font-family: var(--body, "DM Sans Variable", sans-serif);
