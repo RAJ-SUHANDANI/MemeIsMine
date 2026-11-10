@@ -151,7 +151,7 @@ export function ReframeHome({ initialImages, initialVideos }: {
   </div></section>
   <section className="rf-home-maker"><div className="container rf-maker-grid">
    <div className="rf-maker-photo"><Image src="/raj-suhandani-portrait.webp" width={700} height={850} alt="Portrait of the Meme Is Mine creator"/></div>
-   <Reveal><span className="rf-kicker">06 / ONE PERSON, TOO MANY TABS</span><h2>Made by a<br/><em>fellow internet person.</em></h2><p>Meme Is Mine is an independent project built for the little moments that need a better punchline. Less friction, more personality, and the freedom to make something your friends will actually send around.</p><Link href="/about">The story behind the site <ArrowUpRight size={18}/></Link></Reveal>
+   <Reveal><span className="rf-kicker">06 / THE INTERNET, YOUR WAY</span><h2>Built for<br/><em>your best punchlines.</em></h2><p>The ideas are yours. The archive, the tools, and the room to experiment are here when inspiration strikes. No clutter between a good reaction and a better punchline.</p><Link href="/explore">Explore image templates <ArrowUpRight size={18}/></Link></Reveal>
   </div></section>
   <section className="rf-home-last"><div className="container"><span className="rf-kicker">THE NEXT ONE IS YOURS</span><h2>Enough scrolling.<br/><em>Make the meme.</em></h2><Link href="/explore">Get started <ArrowUpRight size={23}/></Link></div></section>
   <SiteFooter/>
