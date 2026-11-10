@@ -13,9 +13,9 @@ Build a peculiar, memorable internet object instead of a generic SaaS dashboard.
 
 | Route or component | Reference | Implementation |
 | --- | --- | --- |
-| `/explore` | [Gallery: Showcase](https://motion.dev/examples/react-gallery-showcase) | Flow and Stack auto-moving horizontal rails with swipe/drag/keyboard support; Grid and List remain optional in the archives, alongside search, pagination and remembered layout |
+| `/explore` | [Gallery: Showcase](https://motion.dev/examples/react-gallery-showcase) | Single exclusive Flow gallery throughout Home and public archives, supporting automatic looping, horizontal scrolling, drag, swipe and keyboard navigation |
 | `/templates` | [Gallery: Showcase](https://motion.dev/examples/react-gallery-showcase) | Dedicated image archive with same layout language |
-| `/video-templates` | [Gallery: Objects](https://motion.dev/examples/react-gallery-objects) | A tilted moving-image collection; Flow/Stack move right-to-left, loop seamlessly and support swipe/drag, with on-demand playback |
+| `/video-templates` | [Gallery: Objects](https://motion.dev/examples/react-gallery-objects) | A tilted moving-image collection; Flow moves right-to-left, loops seamlessly and supports swipe/drag; visible clips and selected previews autoplay silently with no playback chrome |
 | Any template | [Shared Layout Modal](https://motion.dev/examples/react-modal-shared-layout) | Expand the selected image/poster into a dialog and return it to the card |
 | Image preview | [Double tap](https://motion.dev/examples/react-tap-double), [Pinch zoom](https://motion.dev/examples/react-pinch-zoom) | Like gesture, zoom, pan, reset, accessible buttons |
 | Preview share | [Copy Button](https://motion.dev/examples/react-copy-button) | Deep link to template with animated check confirmation |
@@ -38,11 +38,11 @@ References inform original implementation. Premium Motion+ example source is not
 ## Landing gallery and movement rules
 
 - The homepage server-selects 24 distinct images and 24 videos with valid posters for first paint. Do not regress to the older 6/4 client fetch or show fewer than twenty items in either homepage rail.
-- Home galleries only offer Flow and Stack (image defaults to Flow, video defaults to Stack). Both run continuously right-to-left; there are no previous/next arrow controls.
-- Archive galleries can offer Grid and List for dense practical browsing, while Flow and Stack retain horizontal browsing and autoplay.
+- Both home galleries and both archive galleries use Flow exclusively. They run continuously right-to-left; there are no layout switcher or previous/next arrow controls.
+- The archive pages no longer offer Grid, List or Stack. Search, sorting, paging and Flow gestures are still available.
 - The rail uses three visual segments with only the middle segment in keyboard/screen-reader navigation. Recenter scroll position imperceptibly at the segment boundary; never announce auto movement.
 - Mouse dragging, touch scrolling, horizontal trackpads, arrow-key navigation, automatic pause during direct interaction, visibility throttling, manual pause/play, and reduced-motion defaults are required.
-- Large numbers of cards must not trigger video autoplay or fetch all video files; only poster media appears in the rails. Video files load on-demand in the preview.
+- Visible video cards load and autoplay muted clips in a loop, but off-screen videos must not be downloaded. Expanded previews also autoplay and loop, with no native controls; both existing editors preserve their own playback UX.
 - The current palette deliberately uses warm paper #f1ebdf, mineral ink #1b211d, muted slate #585b53 and a deeper clay vermilion #b93e2e. Accent-on-paper and white-on-accent meet body text contrast.
 
 ## Components and design layers
@@ -60,3 +60,7 @@ References inform original implementation. Premium Motion+ example source is not
 ## Testing and release acceptance
 
 GitHub Actions: lint, typecheck, build and production route/API smoke. Then visual/browsing QA with a deployment preview: desktop 1440px, mobile 390px and 320px; verify no overflow, gallery modes and selected-page state, modal focus and return, touch zoom/likes, keyboard use, reduced motion, local storage quota and malformed data, imports/exports, signing in and email confirmation, and all image/video editor entry paths. Full device/browser QA is not asserted by CI. Do not merge `main` or claim deployment complete without a separate review.
+
+## Intro and account release gate
+
+The branded introduction gates the landing page until its progress animation and exit animation both finish, rather than cutting off on a timeout. It remains skippable and honours reduced motion. The local auth backend runs in Node with a durable SQLite database and SMTP OTP delivery; protected Studio/image/video editor routes are validated against an actual verified session in CI. Keep the editor implementation files unchanged.
