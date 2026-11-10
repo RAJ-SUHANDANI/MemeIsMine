@@ -123,7 +123,7 @@ try{
  jar.set("mim_verify",bad);
  assert.equal(await accounts.pendingVerification(),null,"tampered OTP state must be rejected");
  jar.set("mim_verify",pending);
- assert.equal(await accounts.finishVerification("111111"),null,"invalid code must fail");
+ await assert.rejects(accounts.finishVerification("111111"),"invalid code must fail");
  assert.equal(await accounts.finishVerification(tokenCode),"signup");
  const user=await accounts.currentUser();
  assert.equal(user?.email,email,"correct OTP verifies the account");
