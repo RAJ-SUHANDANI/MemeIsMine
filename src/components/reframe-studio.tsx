@@ -233,7 +233,7 @@ export function ReframeStudio(){
     {tab==="liked"&&<>
      <div className="rf-studio-heading"><div><span className="rf-kicker">THE FORMATS YOU LOVE</span><h2>The ones that <em>clicked.</em></h2></div><span>{likedItems.length} LIKED</span></div>
      <p className="rf-studio-context">Likes belong to your account. Unlike browser-only drafts, these follow you when you sign in.</p>
-     {likesError?<div className="rf-studio-empty"><Heart size={36}/><h3>Likes are unavailable.</h3><p>{likesError}</p><p>Make sure the account likes database migration has been applied.</p></div>:
+     {likesError?<div className="rf-studio-empty"><Heart size={36}/><h3>Likes are unavailable.</h3><p>{likesError}</p><p>Account likes need a configured local database.</p></div>:
       likesLoading?<div className="rf-studio-empty"><Heart size={36}/><h3>Finding your favourites.</h3></div>:
       likedItems.length?<div className="rf-studio-grid">{likedItems.map(item=><article key={item.key} className="rf-studio-card">
         <div className="rf-studio-card-art">{safeImage(item.image)?<Image src={safeImage(item.image)} width={450} height={320} alt={item.name} unoptimized/>:<Heart size={37}/>}<span>{item.kind==="video"?"MOVING FORMAT":"STILL FORMAT"}</span></div>
