@@ -22,6 +22,8 @@ jobs:
         run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs
       - name: Lint application
         run: npm run lint
+      - name: Verify first-party SQLite authentication
+        run: npm run test:auth
       - name: Typecheck application
         run: npm run typecheck
       - name: Build application
