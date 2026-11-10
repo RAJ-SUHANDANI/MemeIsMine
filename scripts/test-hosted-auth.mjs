@@ -67,23 +67,23 @@ const mockedAppwrite={
  sessionClient:async()=>{const secret=jar.get("mim_session");return secret?{account:userAccount(secret)}:null;},
  createSessionCookie:async(secret)=>{jar.set("mim_session",secret);},
  dropSessionCookie:async()=>{jar.delete("mim_session");},
- likesClient:()=>({databaseId:"mim",collectionId:"template_likes",documents:{
-  listDocuments:async({queries})=>{
+ likesClient:()=>({databaseId:"mim",tableId:"template_likes",tables:{
+  listRows:async({queries})=>{
    const filters=queries.filter(q=>q.type==="equal");
-   const selected=[...likes.values()].filter(doc=>filters.every(q=>doc[q.column]===q.value));
-   return {total:selected.length,documents:selected.slice(0,1000)};
+   const selected=[...likes.values()].filter(row=>filters.every(q=>row[q.column]===q.value));
+   return {total:selected.length,rows:selected.slice(0,100)};
   },
-  createDocument:async({documentId,data})=>{
-   if(likes.has(documentId))throw exception(409);
-   likes.set(documentId,{$id:documentId,...data});return likes.get(documentId);
+  createRow:async({rowId,data})=>{
+   if(likes.has(rowId))throw exception(409);
+   likes.set(rowId,{$id:rowId,...data});return likes.get(rowId);
   },
-  getDocument:async({documentId})=>{if(!likes.has(documentId))throw exception(404);return likes.get(documentId);},
-  deleteDocument:async({documentId})=>{if(!likes.has(documentId))throw exception(404);likes.delete(documentId);return {};},
+  getRow:async({rowId})=>{if(!likes.has(rowId))throw exception(404);return likes.get(rowId);},
+  deleteRow:async({rowId})=>{if(!likes.has(rowId))throw exception(404);likes.delete(rowId);return {};},
  }}),
 };
 const appwriteModule={
  ID:{unique:()=> "user-"+(++nextUser)},
- Query:{equal:(column,value)=>({type:"equal",column,value}),limit:value=>({type:"limit",value})},
+ Query:{equal:(column,value)=>({type:"equal",column,value}),limit:value=>({type:"limit",value}),cursorAfter:value=>({type:"cursorAfter",value})},
 };
 const cache=new Map();
 function load(name){
