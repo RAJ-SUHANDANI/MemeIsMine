@@ -20,7 +20,7 @@ type Props = {
 
 export function ReframeMotionRail({ count, mode, variant, label, paused = false, renderCard }: Props) {
   const reduced = useReducedMotion();
-  const [playing, setPlaying] = useState(!reduced);
+  const [playing, setPlaying] = useState(true);
   const [inView, setInView] = useState(false);
   const [position, setPosition] = useState(0);
   const viewport = useRef<HTMLDivElement>(null);
