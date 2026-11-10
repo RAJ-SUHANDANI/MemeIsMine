@@ -78,8 +78,8 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
    }).finally(()=>{if(!controller.signal.aborted)setLoading(false);});
   return()=>controller.abort();
  },[kind,page,sort,category,search,seed,refresh]);
- const eyebrow=kind==="video"?"THE MOTION DEPARTMENT":mode==="templates"?"THE STILL IMAGE ARCHIVE":"THE INDEX OF EVERYTHING";
- const title=kind==="video"?"Moments in motion.":mode==="templates"?"Every image has a story.":"Find your next punchline.";
+ const eyebrow=kind==="video"?"THE MOTION DEPARTMENT":mode==="templates"?"THE IMAGE TEMPLATE ARCHIVE":"THE IMAGE TEMPLATE ARCHIVE";
+ const title=kind==="video"?"Moments in motion.":mode==="templates"?"Find your next punchline.":"Find your next punchline.";
  const description=kind==="video"?"A living collection of reaction clips and GIFs. Find the perfect moment, then make it your own.":
   mode==="templates"?"Classic formats, obscure discoveries and the faces that say it all. Choose an arrangement and explore.":
   "A place for the internet&apos;s most expressive faces. Browse the archive like a gallery, not a spreadsheet.";
