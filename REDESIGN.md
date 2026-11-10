@@ -28,10 +28,10 @@ References inform original implementation. Premium Motion+ example source is not
 ## Architectural boundaries
 
 - Preserve the original `/create/:id` and `/video-editor/:id` implementations and their storage keys.
-- Authentication uses Supabase and existing middleware. Studio is protected.
+- Authentication uses Appwrite Cloud Free sessions and six-digit email verification; Studio and both editor routes require a verified account.
 - Public media catalogues and remote media paths retain existing APIs and fallbacks.
 - Image/video editors get the legacy header: new mobile app navigation does not intrude into editor controls.
-- Personal drafts, bookmarks, collections and feedback stay in localStorage. Account likes are stored via Supabase; account likes list requires migration `202611100003_account_likes.sql`.
+- Personal drafts, bookmarks, collections and feedback stay in localStorage. Account likes are stored privately in Appwrite DocumentsDB (one-time `npm run setup:appwrite`).
 - Responsive desktop/mid/mobile layouts are separate intentional compositions rather than scaling one canvas.
 - Provide reduced-motion behavior, keyboard controls, focus return, touch targets, real empty/retry states and clear browser storage errors.
 
@@ -63,4 +63,4 @@ GitHub Actions: lint, typecheck, build and production route/API smoke. Then visu
 
 ## Intro and account release gate
 
-The branded introduction gates the landing page until its progress animation and exit animation both finish, rather than cutting off on a timeout. It remains skippable and honours reduced motion. The local auth backend runs in Node with a durable SQLite database and SMTP OTP delivery; protected Studio/image/video editor routes are validated against an actual verified session in CI. Keep the editor implementation files unchanged.
+The branded introduction gates the landing page until its progress animation and exit animation both finish, rather than cutting off on a timeout. It remains skippable and honours reduced motion. The hosted auth backend uses Appwrite Cloud for password sessions, email verification and recovery; no local SQLite file or custom SMTP is needed. CI verifies the signed-out protected route guards; a real Appwrite project is needed for end-to-end verified account tests. Keep the editor implementation files unchanged.
