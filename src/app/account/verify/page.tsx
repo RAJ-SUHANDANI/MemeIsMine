@@ -10,7 +10,7 @@ import { resendEmailCode, verifyEmailCode } from "../actions";
 export const dynamic="force-dynamic";
 export const metadata={title:"Verify your email"};
 const messages:Record<string,string>={
- "invalid-code":"That code didn't match, expired, or was used too many times. Request a new one if needed.",
+ "invalid-code":"That code did not match, expired, or was used too many times. Request a new one if needed.",
  "too-many-codes":"Too many requests. Please try again in an hour.",
  wait:"A code was recently sent. Check your inbox or wait a minute to request another.",
  unavailable:"Email delivery is temporarily unavailable. Please try again.",
@@ -39,7 +39,7 @@ export default async function Verify({searchParams}:{
       <input id="mim-otp" name="code" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" placeholder="0 0 0 0 0 0" maxLength={6} required/>
       <button type="submit">Verify email <ArrowUpRight size={19}/></button>
     </form>
-    <form action={resendEmailCode} className="mim-verify-resend"><input type="hidden" name="next" value={next}/><p>Didn't get it?</p><button type="submit">Send another code <KeyRound size={16}/></button></form>
+    <form action={resendEmailCode} className="mim-verify-resend"><input type="hidden" name="next" value={next}/><p>Did not get it?</p><button type="submit">Send another code <KeyRound size={16}/></button></form>
     <Link className="mim-verify-back" href="/login"><ArrowLeft size={17}/> Back to sign in</Link>
    </div>
   </section>
