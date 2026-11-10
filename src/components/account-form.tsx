@@ -17,6 +17,7 @@ const messages:Record<string,string>={
  "login-error":"Email or password is incorrect, or the email hasn't been verified.",
  "account-exists":"An account already exists for that email. Sign in to continue.",
  "too-many-codes":"Too many codes were requested. Try again later.",
+ "rate-limited":"Too many account requests from this connection. Please try again later.",
  "check-email":"Check your inbox for the six-digit confirmation code.",
  "confirmation-error":"That verification code has expired.",
  expired:"Your verification session expired. Please start again.",
