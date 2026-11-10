@@ -44,7 +44,7 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
  useEffect(()=>{
   const params=new URLSearchParams(window.location.search);
   const initial=params.get("sort");
-  if(initial && ["popular","trending","new","name"].includes(initial))setSort(initial);
+  if(initial && ["popular","trending","new","name","surprise"].includes(initial))setSort(initial);
   const q=params.get("q");if(q){setQuery(q);setSearch(q);}
   const c=params.get("category");if(c&&categoryNames.includes(c))setCategory(c);
  },[]);
@@ -80,9 +80,9 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
  const title=kind==="video"?"Moments in motion.":mode==="templates"?"Find your next punchline.":"Find your next punchline.";
  const description=kind==="video"?"A living collection of reaction clips and GIFs. Find the perfect moment, then make it your own.":
   mode==="templates"?"Classic formats, obscure discoveries and the faces that say it all. Choose an arrangement and explore.":
-  "A place for the internet&apos;s most expressive faces. Browse the archive like a gallery, not a spreadsheet.";
+  "A place for the internet’s most expressive faces. Browse the archive like a gallery, not a spreadsheet.";
  function chooseSort(value:string){setSort(value);setPage(1);}
- function surprise(){if(kind==="video"){setSort("surprise");setSeed(n=>n+104729);setPage(1);}else{setSort("name");setPage(Math.max(1,Math.floor(Math.random()*pages)+1));}}
+ function surprise(){setSort("surprise");setSeed(n=>n+104729);setPage(1);}
  function reset(){setQuery("");setSearch("");setCategory("All");setSort("popular");setPage(1);}
  const headingKey=kind+"-"+mode;
  return <main id="main-content" tabIndex={-1} className={"rf-site rf-library-page rf-library-"+kind}>
