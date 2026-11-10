@@ -8,7 +8,7 @@ import { returnPath } from "@/lib/return-path";
 import { resendEmailCode, verifyEmailCode } from "../actions";
 
 export const dynamic="force-dynamic";
-export const metadata={title:"Verify your email"};
+export const metadata={title:"Verify your email",robots:{index:false,follow:false}};
 const messages:Record<string,string>={
  "invalid-code":"That code did not match, expired, or was used too many times. Request a new one if needed.",
  "too-many-codes":"Too many requests. Please try again in an hour.",
