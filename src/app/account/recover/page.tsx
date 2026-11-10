@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site";
 import { SiteFooter } from "@/components/site-chrome";
 import { authConfig, emailConfig } from "@/lib/auth-config";
 import { requestPasswordReset } from "../actions";
-export const metadata={title:"Reset your password"};
+export const metadata={title:"Reset your password",robots:{index:false,follow:false}};
 export default async function Recover({searchParams}:{searchParams:Promise<{status?:string}>}){
  const {status}=await searchParams;
  const enabled=Boolean(authConfig()&&emailConfig());
