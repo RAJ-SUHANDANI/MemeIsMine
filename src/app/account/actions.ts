@@ -63,11 +63,10 @@ export async function resendEmailCode(form:FormData){
  const pending=await pendingVerification();
  const next=returnPath(form.get("next"));
  if(!pending)redirect("/login?status=expired");
+ if(!allowRequest("resend",await requestIdentity(),20,60*60*1000))
+  redirect("/account/verify?"+new URLSearchParams({next,status:"rate-limited"}));
  let status="sent";
  try{
-  if(!allowRequest("resend",await requestIdentity(),20,60*60*1000)){
-    redirect("/account/verify?"+new URLSearchParams({next,status:"rate-limited"}));
-  }
   const result=await sendChallenge(pending!.email,pending!.purpose);
   status=result==="cooldown"?"wait":result==="limited"?"too-many-codes":result==="unavailable"?"unavailable":"sent";
  }catch{status="unavailable";}
