@@ -692,3 +692,17 @@
   .rf-gallery-toolbar{min-height:55px;gap:11px}
   .rf-gallery-toolbar-note{display:inline;font-size:9px;letter-spacing:.055em}
 }
+
+/* Visually sample moving memes in Flow without loading all video files.
+   No media controls: tapping a card opens the autoplaying full preview. */
+.rf-motion-thumbnail{position:absolute;inset:0;overflow:hidden;background:#19201b;isolation:isolate}
+.rf-motion-thumbnail-poster,.rf-motion-thumbnail-live{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}
+.rf-motion-thumbnail-poster{z-index:1}
+.rf-motion-thumbnail-live{z-index:2;object-fit:cover}
+video.rf-motion-thumbnail-live:not(.is-ready){opacity:0}
+video.rf-motion-thumbnail-live.is-ready{opacity:1;transition:opacity .25s ease}
+.rf-preview-art video{width:100%;height:100%;max-height:min(73vh,680px);object-fit:contain;background:#101613}
+@media(prefers-reduced-motion:reduce){
+ .rf-motion-thumbnail-live{display:none!important}
+ video.rf-motion-thumbnail-live{transition:none}
+}
