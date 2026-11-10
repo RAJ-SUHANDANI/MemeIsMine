@@ -71,7 +71,7 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
               <div className="rf-media-fallback"><img src={item.image} alt=""/><p role="status">This clip is unavailable right now. Try another format.</p></div> :
               item.mediaType==="gif" ?
                 <img src={videoSrc} className="rf-gif" alt={item.name} onError={()=>setMediaError(true)}/> :
-                <video src={videoSrc} poster={item.image||undefined} controls playsInline preload="metadata" aria-label={item.name} onError={()=>setMediaError(true)}/>}
+                <video src={videoSrc} poster={item.image||undefined} autoPlay muted loop playsInline preload="auto" aria-label={item.name} onLoadedData={event=>{void event.currentTarget.play().catch(()=>{});}} onError={()=>setMediaError(true)}/>}
         </motion.div>
         <div className="rf-preview-copy">
           <div><span className="rf-kicker">YOUR NEXT FORMAT</span><h2 id={titleId}>{item.name}</h2><p>{item.kind==="video"?"A moving moment, waiting for your caption.":"A familiar image. Your entirely new punchline."}</p></div>
@@ -92,7 +92,7 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
           {copyError && <p className="rf-error" role="alert">Clipboard permission unavailable. Please try again.</p>}
           {guestHint && <p className="rf-error" role="status">Sign in to like this template.</p>}
           {likes.failed && <p className="rf-error" role="status">Likes are temporarily unavailable.</p>}
-          <p className="rf-gesture-note">{item.kind==="image"?"Pinch to zoom. Double-tap to like.":"Video starts when you press play."}</p>
+          <p className="rf-gesture-note">{item.kind==="image"?"Pinch to zoom. Double-tap to like.":"The video loops automatically, without sound."}</p>
           <div className="rf-preview-links"><Link href={item.editorHref} className="rf-primary-action">Use this template <ArrowUpRight size={19}/></Link>
             
           </div>
