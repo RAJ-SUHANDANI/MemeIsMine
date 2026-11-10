@@ -1,81 +1,71 @@
-# Meme Is Mine
+# Meme Is Mine — Redesign branch
 
-An independent meme-discovery and browser creation studio. The `redesign` branch introduces an editorial, motion-led discovery experience, mobile app navigation, deep-linked template previews, and a more capable personal Studio. Built by Raj Suhandani.
+An original, interactive meme studio with image and video discovery, expressive Motion galleries, mobile navigation, template preview and editing, and a personal Studio.
 
-**Branch safety:** This work is committed to `redesign` only. The existing image and video editors and their data formats remain unchanged.
+## Run locally
 
-## Develop
-
-Use Node.js 22 or newer.
+**Requires Node.js 24.15 or newer.**
 
 ```bash
 npm ci
+cp .env.example .env.local
+# Set the environment variables below, then:
 npm run dev
+```
+
+Routes: `/`, `/explore` (**Image Templates**), `/video-templates` (**Video Templates**), `/studio`, `/account`, `/signup`, `/login`, `/account/verify`, `/account/recover`, and the support pages. The old `/templates` route redirects to `/explore`. Image/video editor internals are intentionally unchanged.
+
+### Discovery
+
+Search and filter controls use a rounded design with a keyboard-accessible animated sort menu. Flow and Stack browse horizontally and can autoplay, pause, and respond to touch/drag/keyboard gestures. The homepage renders 24 still and 24 moving formats from the catalogue immediately, with no List/Grid toggle on the landing page. Previews have like, save, share-link, and zoom interactions.
+
+## First-party accounts: SQLite + Node + SMTP
+
+The backend does **not** use Supabase or a remotely hosted database API. It uses the built-in `node:sqlite` module directly on your Node 24 application server. User records, salted scrypt password hashes, email verification codes (stored as keyed HMAC hashes), scoped sessions, throttling, and private likes live in the SQLite database.
+
+Configure these server-side variables:
+
+```env
+MIM_DATABASE_PATH=/data/accounts.sqlite
+MIM_AUTH_SECRET=<at-least-32-random-characters>
+MIM_SMTP_HOST=<smtp-host>
+MIM_SMTP_PORT=465
+MIM_SMTP_USER=<smtp-username>
+MIM_SMTP_PASSWORD=<smtp-secret>
+MIM_SMTP_FROM=<verified-sender-address>
+```
+
+**Deployment requirement:** the SQLite file must live on a persistent, backed-up writable volume attached to **one always-on Node.js instance**. Vercel/serverless function filesystems are ephemeral; this database is **not suitable for a conventional Vercel deployment**. Deploy the Node server on a VPS or container host with a persistent volume and HTTPS reverse proxy instead. Use SMTP credentials only on the server, never in `NEXT_PUBLIC_*` variables.
+
+Sign-up creates a pending account with a scrypt password hash, delivers a six-digit OTP by authenticated SMTP, and activates the account on successful verification. OTPs expire after 10 minutes and have five attempts and a resend cooldown. Login uses an HTTP-only SameSite cookie containing a random session token whose SHA-256 digest alone is stored in the database. Forgot-password uses a separate email OTP and a temporary recovery-scoped session; password replacement revokes old sessions. Reaction updates and reads use local SQL transactions.
+
+If database or SMTP configuration is missing, the relevant form is disabled with an accurate notice: the project does not pretend to send emails. Configure and test real SMTP before inviting users.
+
+**Existing accounts:** legacy account identities, passwords, sessions and likes do not automatically migrate from the previous authentication provider. Users with previous accounts must register again unless an explicit export/import migration is performed. Existing browser drafts and bookmarks remain stored locally.
+
+**Do not commit** `.env.local`, `.env.production`, the SQLite database, WAL files, or database backups.
+
+## Deploy on your own Node host
+
+A Dockerfile and compose configuration are provided. Copy the environment file to `.env.production` with real server values and use:
+
+```bash
+docker compose up -d --build
+```
+
+The container binds to localhost port 3000. Put an HTTPS reverse proxy in front, configure SMTP and its sender domain, monitor disk space, and back up the named SQLite volume consistently (prefer SQLite's online backup API, not copying WAL files independently).
+
+## Verify
+
+```bash
 npm run lint
 npm run typecheck
 npm run build
-```
-
-The production smoke suite expects a running server on port 3001:
-
-```bash
 npm run start -- -p 3001
 # In another terminal:
 npm run qa:smoke
 ```
 
-## Design and routes
+The repository's CI runs lint, TypeScript, build, and production route/API checks. Browser and end-to-end signup/SMTP delivery tests on the target host remain required before a production launch.
 
-- `/`: interactive caption example, editorial narrative, two continuously looping 24-template Flow/Stack galleries, creator story and a skippable Motion/CSS-3D first-visit introduction.
-- `/explore` and `/templates`: browse the image catalogue with four selectable layouts (Grid, Flow, Stack and List), searchable, paginated results; Flow and Stack support native horizontal scroll, drag, keyboard access and gently paced autoplay, and shareable preview URLs.
-- `/video-templates`: tilted object-style video catalogue with on-demand preview, alternate layouts and existing media routes.
-- Template previews: spring-driven shared-layout transitions, likes for signed-in accounts, double-tap, pinch/zoom for images, save, and copyable deep links.
-- `/studio`: protected personal workspace with searchable drafts, rename/delete/undo, saved formats, custom collections, authenticated likes, and on-device JSON backup/restore.
-- `/account`: shortcuts into the workspace, security and account actions.
-- `/login`, `/signup`, `/account/password`, `/account/recover`: authentication and password management.
-- `/about`, `/how-it-works`, `/faq`, `/privacy`, `/contact`, `/add-review`: supporting pages using the same design system. Feedback notes remain on the current device.
-- `/create/:id`, `/video-editor/:id`: original editors intentionally preserved. These routes use the original editor header as well.
-
-The homepage deliberately offers only Flow and Stack; Grid and List are archive-only alternatives. Autoplay slows on hover, stops while directly interacting or off-screen, and can be paused. The mobile website has safe-area-aware bottom navigation, an accessible creation sheet and compact preview surfaces. NativeWind and gluestack are not part of this Next.js web implementation; this is a web/PWA-style experience, not a separate Expo/React Native application.
-
-## Data and account setup
-
-Create a Supabase project with email/password auth, email confirmation, production SMTP and the appropriate redirect URLs. Set these environment values (see `.env.example`):
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-```
-
-Apply the SQL migrations in order:
-
-1. `supabase/migrations/202611100002_template_likes.sql`
-2. `supabase/migrations/202611100003_account_likes.sql`
-
-The second migration exposes the *current account's* liked template keys, not anyone else's private reactions. See `MEMBERSHIP-SETUP.md` for details.
-
-Drafts, bookmarks, collections, local feedback, and uploads are stored in browser storage; **signing in does not synchronize them across devices**. The Studio backup is an explicitly downloaded JSON file and may contain user-uploaded image data. Reactors/aggregate likes are stored through Supabase.
-
-## API catalogue
-
-- `GET /api/memes?page=1&limit=24&sort=popular`
-- `GET /api/memes?id=<template-id>`
-- `GET /api/video-templates?page=1&limit=24&sort=new`
-- `GET /api/video-templates?slug=<slug>`
-- `GET /api/home-templates`
-- `GET /api/account/likes` (authenticated; requires second SQL migration)
-- Existing image/video media proxies and export functions remain in place.
-
-Catalog metadata refreshes through the existing GitHub Actions workflow. Remote source availability and browser video support can vary. Template media remains owned by its original providers: check rights and applicable terms.
-
-## Design contract
-
-The visual system uses warm paper `#f3efe6`, near-black `#161715`, archive vermilion `#db4b2c`, expressive typography, image-first cards and purpose-driven Motion interactions. Avoid generic gradients, fabricated metrics, ornamental perpetual motion and artificial progress indicators. Respect reduced-motion preferences, focus navigation, clear empty states and browser-storage failures.
-
-The named Motion references are documented in `REDESIGN.md`. Premium Motion+ example source was **not** copied into this project.
-
-## Validation
-
-GitHub Actions on `redesign` runs lint, TypeScript, production build and route/API smoke tests. CI success does not replace manual visual or device testing. Inspect a preview deployment at desktop, 390px and 320px widths, perform keyboard and reduced-motion checks, and test the actual account flow with configured Supabase before release.
-
-**Do not merge `redesign` into `main` without separate, explicit approval.**
+Notes: image/video template media can originate from remote hosts; rights and third-party license terms still apply even when the UI doesn't show promotional links. No platform/source-code/portfolio links appear in the public redesigned flows.
