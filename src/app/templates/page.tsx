@@ -1,2 +1,2 @@
-import { ReframeLibrary } from "@/components/reframe-library";
-export default function TemplatesPage(){return <ReframeLibrary kind="image" mode="templates"/>;}
+import { redirect } from "next/navigation";
+export default function TemplatesPage(){redirect("/explore");}
