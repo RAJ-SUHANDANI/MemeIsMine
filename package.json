@@ -23,9 +23,9 @@
     "@fontsource-variable/space-grotesk": "^5.3.0",
     "lucide-react": "^0.468.0",
     "motion": "^12.23.24",
-    "next": "^15.5.4",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
+    "next": "15.5.29",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
     "nodemailer": "^10.4.0"
   },
   "devDependencies": {
