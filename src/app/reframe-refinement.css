@@ -706,3 +706,11 @@ video.rf-motion-thumbnail-live.is-ready{opacity:1;transition:opacity .25s ease}
  .rf-motion-thumbnail-live{display:none!important}
  video.rf-motion-thumbnail-live{transition:none}
 }
+
+/* Playback errors are recoverable; keep the poster and a reachable retry
+   action instead of a permanently dead preview. */
+.rf-media-fallback{min-height:280px;align-content:center}
+.rf-media-fallback>img{max-height:min(44dvh,340px);width:auto;max-width:100%;opacity:.68;object-fit:contain}
+.rf-media-retry{padding:11px 18px;border:1px solid currentColor;border-radius:50px;background:transparent;color:inherit;font:600 12px var(--body);cursor:pointer;transition:background .2s,color .2s}
+.rf-media-retry:hover{background:#f5f0e6;color:#19201b}
+.rf-media-retry:focus-visible{outline:3px solid var(--rf-accent);outline-offset:3px}
