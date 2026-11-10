@@ -31,7 +31,7 @@ export default async function Verify({searchParams}:{
     <div className="mim-verify-icon"><MailCheck size={34}/></div>
     <span className="rf-kicker">ACCOUNT SECURITY / EMAIL CHECK</span>
     <h1>{pending.purpose==="signup"?<>Check your <em>inbox.</em></>:<>Make it <em>yours again.</em></>}</h1>
-    <p>Enter the six-digit verification code sent to <strong>{pending.email}</strong>. Codes expire after 10 minutes.</p>
+    <p>{pending.purpose==="recovery"? "If this email belongs to an account, a six-digit recovery code was sent to ": "Enter the six-digit verification code sent to "}<strong>{pending.email}</strong>. Codes expire after 10 minutes.</p>
     {query.status&&messages[query.status]&&<p className="mim-auth-notice" role="status">{messages[query.status]}</p>}
     <form action={verifyEmailCode} className="mim-verify-form">
       <input type="hidden" name="next" value={next}/>
