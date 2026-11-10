@@ -1,60 +1,86 @@
 "use server";
 import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth";
+import { authConfig, emailConfig } from "@/lib/auth-config";
+import {
+  changePassword, finishVerification, normalizedEmail, pendingVerification,
+  register, removeSession, savePending, sendChallenge, signIn
+} from "@/lib/mim-accounts";
 import { returnPath } from "@/lib/return-path";
 
-export async function authenticate(form: FormData) {
-  const signingUp = form.get("mode") === "signup";
-  const route = signingUp ? "/signup" : "/login";
-  const next = returnPath(form.get("next"));
-  const fail = (status: string): never =>
-    redirect(route + "?" + new URLSearchParams({ next, status }));
-  const client = await authClient();
-  if (!client) return fail("unavailable");
-  const email = String(form.get("email") ?? "").trim();
-  const password = String(form.get("password") ?? "");
-  if (
-    !email ||
-    email.length > 254 ||
-    password.length > 128 ||
-    password.length < (signingUp ? 8 : 1)
-  ) {
-    return fail("invalid");
+function failure(route:string,next:string,status:string):never {
+ redirect(route+"?"+new URLSearchParams({next,status}));
+}
+export async function authenticate(form:FormData){
+ const signup=form.get("mode")==="signup";
+ const route=signup?"/signup":"/login";
+ const next=returnPath(form.get("next"));
+ const email=normalizedEmail(String(form.get("email")??""));
+ const password=String(form.get("password")??"");
+ if(!email || password.length>128 || password.length<(signup?12:1))failure(route,next,"invalid");
+ if(!authConfig() || (signup&&!emailConfig()))failure(route,next,"unavailable");
+ try{
+  if(signup){
+   const result=await register(email!,password);
+   if(result==="unavailable")failure(route,next,"unavailable");
+   if(result==="limited")failure(route,next,"too-many-codes");
+   await savePending(email!,"signup");
+   redirect("/account/verify?"+new URLSearchParams({next, ...(result==="cooldown"?{status:"wait"}:{})}));
   }
-  if (signingUp) {
-    const { data, error } = await client.auth.signUp({ email, password });
-    if (error) return fail("signup-error");
-    if (!data.session) return fail("check-email");
-  } else {
-    const { error } = await client.auth.signInWithPassword({ email, password });
-    if (error) return fail("login-error");
-  }
-  redirect(next);
+  const ok=await signIn(email!,password);
+  if(!ok)failure(route,next,"login-error");
+ }catch(error){
+  if(error && typeof error==="object" && "digest" in error)throw error;
+  console.error("Authentication backend error:",error instanceof Error?error.message:"unknown");
+  failure(route,next,"unavailable");
+ }
+ redirect(next);
 }
 
-export async function requestPasswordReset(form: FormData) {
-  const client = await authClient();
-  const email = String(form.get("email") ?? "").trim();
-  if (client && email && email.length <= 254)
-    await client.auth.resetPasswordForEmail(email);
-  redirect("/account/recover?sent=1");
+export async function verifyEmailCode(form:FormData){
+ const pending=await pendingVerification();
+ const next=returnPath(form.get("next"));
+ if(!pending)redirect("/login?status=expired");
+ const code=String(form.get("code")??"").replace(/\s/g,"");
+ if(!/^\d{6}$/.test(code))redirect("/account/verify?"+new URLSearchParams({next,status:"invalid-code"}));
+ let verified=false;
+ try{verified=await finishVerification(pending!.email,code,pending!.purpose);}
+ catch(error){console.error("Verification failed:",error instanceof Error?error.message:"unknown");}
+ if(!verified)redirect("/account/verify?"+new URLSearchParams({next,status:"invalid-code"}));
+ redirect(pending!.purpose==="recovery"?"/account/password":next);
 }
 
-export async function updatePassword(form: FormData) {
-  const client = await authClient();
-  if (!client) redirect("/login");
-  const password = String(form.get("password") ?? "");
-  if (password.length < 8 || password.length > 128)
-    redirect("/account/password?error=1");
-  const { data } = await client.auth.getUser();
-  if (!data.user) redirect("/login");
-  const { error } = await client.auth.updateUser({ password });
-  if (error) redirect("/account/password?error=1");
-  redirect("/account");
+export async function resendEmailCode(form:FormData){
+ const pending=await pendingVerification();
+ const next=returnPath(form.get("next"));
+ if(!pending)redirect("/login?status=expired");
+ let status="sent";
+ try{
+  const result=await sendChallenge(pending!.email,pending!.purpose);
+  status=result==="cooldown"?"wait":result==="limited"?"too-many-codes":result==="unavailable"?"unavailable":"sent";
+ }catch{status="unavailable";}
+ redirect("/account/verify?"+new URLSearchParams({next,status}));
 }
 
-export async function signOut() {
-  const client = await authClient();
-  if (client) await client.auth.signOut({ scope: "local" });
-  redirect("/login");
+export async function requestPasswordReset(form:FormData){
+ const email=normalizedEmail(String(form.get("email")??""));
+ if(!authConfig()||!emailConfig())redirect("/account/recover?status=unavailable");
+ if(email){
+  try{await sendChallenge(email,"recovery");await savePending(email,"recovery");}
+  catch(error){console.error("Reset dispatch failed:",error instanceof Error?error.message:"unknown");}
+ }
+ // The same screen is shown whether or not an account exists.
+ redirect("/account/verify?purpose=recovery");
+}
+export async function updatePassword(form:FormData){
+ const password=String(form.get("password")??"");
+ if(password.length<12||password.length>128)redirect("/account/password?error=1");
+ let success=false;
+ try{success=await changePassword(password);}
+ catch(error){console.error("Password change failed:",error instanceof Error?error.message:"unknown");}
+ if(!success)redirect("/account/password?error=1");
+ redirect("/account");
+}
+export async function signOut(){
+ try{await removeSession();}catch(error){console.error("Could not revoke session:",error instanceof Error?error.message:"unknown");}
+ redirect("/login");
 }
