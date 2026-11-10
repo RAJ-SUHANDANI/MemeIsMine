@@ -6,13 +6,11 @@ import { useEffect, useState } from "react";
 import { SiteHeader } from "./site";
 import { SiteFooter } from "./site-chrome";
 import { ReframeGallery } from "./reframe-gallery";
+import { MotionSortSelect } from "./reframe-sort-select";
 import type { ReframeItem } from "./reframe-preview";
 import { starterMemes } from "@/data/memes";
 
 const categoryNames=["All","Classics","Reaction","Relatable","Animals","Absurd","Work"];
-const sortOptions=[
- {key:"popular",label:"Most popular"},{key:"trending",label:"Trending"},{key:"new",label:"New arrivals"},{key:"name",label:"A to Z"},
-];
 const pageSize=24;
 type ApiImage={id:string;name:string;url:string;category:string;source?:string;originalUrl?:string;likeId?:string};
 type ApiVideo={id:string;name:string;url:string;posterUrl:string;category?:string;sourcePage?:string;mediaType:"gif"|"video";likeId?:string};
@@ -106,9 +104,7 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
      <div className="rf-library-controls">
        <div className="rf-search-field"><Search size={21}/><input type="search" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}} placeholder={kind==="video"?"Search a moment, scene or reaction":"Search Drake, Doge, reaction..."} aria-label="Search templates"/>
        {query&&<button type="button" aria-label="Clear search" onClick={()=>setQuery("")}><X size={17}/></button>}</div>
-       <div className="rf-sort-select"><label htmlFor="rf-sort">SORT BY</label><select id="rf-sort" value={sort} onChange={e=>chooseSort(e.target.value)}>
-         {sortOptions.map(option=><option key={option.key} value={option.key}>{option.label}</option>)}
-         {sort==="surprise"&&<option value="surprise">Surprise</option>}</select></div>
+       <MotionSortSelect value={sort} onChange={chooseSort}/>
        <button className="rf-surprise" type="button" onClick={surprise} disabled={loading}><Shuffle size={18}/> Surprise me</button>
      </div>
      {kind==="image"&&<div className="rf-category-strip" role="group" aria-label="Image categories">
