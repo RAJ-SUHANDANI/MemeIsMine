@@ -21,19 +21,14 @@ jobs:
       - name: Audit production dependencies for high/critical vulnerabilities
         run: npm audit --omit=dev --audit-level=high
       - name: Validate catalog crawler syntax
-        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs
+        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs && node --check scripts/setup-appwrite.mjs
       - name: Lint application
         run: npm run lint
-      - name: Verify first-party SQLite authentication
-        run: npm run test:auth
       - name: Typecheck application
         run: npm run typecheck
       - name: Build application
         run: npm run build
       - name: Test production routes and APIs
-        env:
-          MIM_DATABASE_PATH: /tmp/mim-ci-accounts.sqlite
-          MIM_AUTH_SECRET: ci-test-very-long-unpredictable-placeholder-only-not-for-production-2026
         run: |
           npm run start -- -p 3001 > /tmp/mim-server.log 2>&1 &
           server_pid=$!
