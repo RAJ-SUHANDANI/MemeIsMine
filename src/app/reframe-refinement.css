@@ -489,3 +489,128 @@
   }
   .rf-rail-card { transform: none !important; opacity: 1 !important; }
 }
+
+/* The Studio invitation uses actual meme objects, not an arbitrary word-cloud. */
+.rf-home-studio-graphic {
+  display: block;
+  font: inherit;
+  letter-spacing: normal;
+  line-height: normal;
+  text-shadow: none;
+  transform: none;
+  min-width: 0;
+}
+.rf-home-studio-graphic > div { position: static; }
+.rf-studio-sample {
+  background: #f8f2e5;
+  border: 1px solid #1b211d;
+  box-shadow: 12px 13px 0 #1b211d;
+  color: #1b211d;
+  padding: clamp(13px, 1.6vw, 23px);
+  transform: rotate(1.7deg);
+  transition: transform .45s cubic-bezier(.2,.75,.2,1);
+}
+.rf-studio-sample:hover { transform: rotate(0deg); }
+.rf-studio-sample-top, .rf-studio-sample-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font: 800 10px/1.4 var(--body);
+  letter-spacing: .09em;
+}
+.rf-studio-sample-top {
+  border-bottom: 1px solid #c9bdae;
+  padding-bottom: 17px;
+}
+.rf-studio-sample-foot {
+  border-top: 1px solid #c9bdae;
+  padding-top: 17px;
+}
+.rf-studio-sample-foot span:last-child {
+  color: var(--rf-accent);
+  font-size: 21px;
+}
+.rf-studio-sample-stage {
+  position: relative;
+  height: clamp(365px, 37vw, 540px);
+  margin-block: 16px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, #1b211d0c 1px, transparent 1px),
+    linear-gradient(#1b211d0c 1px, transparent 1px),
+    #e8e2d6;
+  background-size: 27px 27px;
+}
+.rf-studio-sample-card {
+  position: absolute;
+  width: min(48%, 260px);
+  height: auto;
+  margin: 0;
+  background: #fffdf7;
+  border: 7px solid #fffdf7;
+  box-shadow: 0 12px 33px #1c211c44;
+}
+.rf-studio-sample-card img {
+  width: 100%;
+  aspect-ratio: 4 / 4.2;
+  object-fit: contain;
+  background: #292b28;
+  display: block;
+}
+.rf-studio-sample-card figcaption {
+  padding: 13px 4px 6px;
+  font: 800 9px/1.3 var(--body);
+  letter-spacing: .1em;
+}
+.rf-studio-sample-back {
+  top: 13%;
+  left: 13%;
+  transform: rotate(-11deg);
+}
+.rf-studio-sample-front {
+  top: 18%;
+  right: 12%;
+  transform: rotate(9deg);
+}
+.rf-studio-sample-stamp {
+  position: absolute;
+  left: 39%;
+  bottom: 5%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  width: clamp(105px, 11vw, 150px);
+  height: clamp(105px, 11vw, 150px);
+  border-radius: 50%;
+  border: 3px solid #fff6ec;
+  outline: 2px solid #1b211d;
+  background: #b93e2e;
+  color: #fff8f0;
+  font: 800 clamp(21px, 2.4vw, 34px)/.94 var(--display);
+  letter-spacing: -.04em;
+  transform: rotate(-13deg);
+  box-shadow: 3px 5px 0 #1b211d40;
+}
+@media (max-width: 800px) {
+  .rf-studio-sample { max-width: 650px; margin-top: 10px; }
+  .rf-studio-sample-stage { height: clamp(330px, 65vw, 460px); }
+  .rf-studio-sample-stamp { width: 128px; height: 128px; font-size: 27px; }
+}
+@media (max-width: 520px) {
+  .rf-studio-sample { box-shadow: 8px 9px 0 #1b211d; transform: none; }
+  .rf-studio-sample-stage { height: clamp(295px, 92vw, 390px); }
+  .rf-studio-sample-card { border-width: 5px; }
+  .rf-studio-sample-card figcaption { font-size: 8px; padding: 8px 3px 4px; }
+  .rf-studio-sample-back { left: 9%; }
+  .rf-studio-sample-front { right: 8%; }
+  .rf-studio-sample-stamp { width: 100px; height: 100px; font-size: 22px; left: 40%; bottom: 5%; }
+  .rf-studio-sample-top, .rf-studio-sample-foot { font-size: 9px; }
+  .rf-gallery-home .rf-motion-rail {
+    margin-left: -17px;
+    margin-right: -17px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rf-studio-sample { transition: none; transform: none; }
+}
