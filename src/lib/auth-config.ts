@@ -5,6 +5,8 @@
 export function authConfig() {
   const path = process.env.MIM_DATABASE_PATH;
   const secret = process.env.MIM_AUTH_SECRET;
+  // Serverless filesystems are ephemeral; never enable account storage there.
+  if (process.env.VERCEL) return null;
   return path?.startsWith("/") && secret && secret.length >= 32
     ? { path, secret }
     : null;
