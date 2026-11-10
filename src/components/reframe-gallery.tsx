@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, Bookmark } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ReframeMotionRail } from "./reframe-motion-rail";
+import { ReframeMotionThumbnail } from "./reframe-motion-thumbnail";
 import { ReframePreview, type ReframeItem } from "./reframe-preview";
 
 function storageIds(): string[] {
@@ -26,9 +27,11 @@ function GalleryCard({ item, index, onOpen, onSave, saved, shared = true }: {
         <motion.div className="rf-gallery-art"
           layoutId={shared ? "rf-art-" + item.kind + "-" + item.id : undefined}
           transition={{ type: "spring", stiffness: 330, damping: 35 }}>
-          {item.image
-            ? <img src={item.image} alt="" loading={shared && index < 3 ? "eager" : "lazy"} decoding="async" />
-            : <span className="rf-poster-placeholder">MIM / {item.kind === "video" ? "MOTION" : "STILL"}</span>}
+          {item.kind === "video"
+            ? <ReframeMotionThumbnail item={item} loading={shared && index < 3 ? "eager" : "lazy"}/>
+            : item.image
+              ? <img src={item.image} alt="" loading={shared && index < 3 ? "eager" : "lazy"} decoding="async" />
+              : <span className="rf-poster-placeholder">MIM / STILL</span>}
         </motion.div>
         <span className="rf-gallery-overprint"><span>{item.kind === "video" ? "MOVING IMAGE" : "STILL FRAME"}</span><ArrowUpRight size={17}/></span>
       </button>
