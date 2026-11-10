@@ -14,7 +14,8 @@
     "sync:indian-images": "node scripts/sync-indian-meme-templates.mjs",
     "typecheck": "tsc --noEmit",
     "qa:smoke": "node scripts/smoke-check.mjs",
-    "setup:appwrite": "node scripts/setup-appwrite.mjs"
+    "setup:appwrite": "node scripts/setup-appwrite.mjs",
+    "test:auth": "node scripts/test-hosted-auth.mjs"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
