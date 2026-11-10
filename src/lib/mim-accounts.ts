@@ -67,6 +67,28 @@ function clearFailures(email: string) {
   database().prepare("DELETE FROM login_attempts WHERE key=?").run(attemptKey(email));
 }
 
+/**
+ * An atomic, persistent throttle. Keys are HMAC digests rather than raw IPs.
+ * A trusted reverse proxy must overwrite X-Real-IP before passing requests.
+ */
+export function allowRequest(action:string,identifier:string,max:number,windowMs:number):boolean {
+  if(!authConfig())return false;
+  const key=hmac("rate:"+action+":"+identifier.slice(0,80));
+  return transaction(()=>{
+    const now=Date.now();
+    const row=database().prepare("SELECT attempts,expires_at FROM rate_buckets WHERE bucket=?")
+      .get(key) as {attempts:number;expires_at:number}|undefined;
+    if(!row||row.expires_at<=now) {
+      database().prepare("INSERT INTO rate_buckets(bucket,attempts,expires_at) VALUES(?,?,?) ON CONFLICT(bucket) DO UPDATE SET attempts=1,expires_at=excluded.expires_at")
+        .run(key,1,now+windowMs);
+      return true;
+    }
+    if(row.attempts>=max)return false;
+    database().prepare("UPDATE rate_buckets SET attempts=attempts+1 WHERE bucket=?").run(key);
+    return true;
+  });
+}
+
 export async function createSession(userId: string, scope: "user" | "recovery" = "user") {
   const token = randomBytes(32).toString("base64url");
   const now = Date.now();
