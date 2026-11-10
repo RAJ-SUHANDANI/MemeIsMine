@@ -26,8 +26,8 @@ npm run qa:smoke
 
 ## Design and routes
 
-- `/`: interactive caption example, editorial narrative, still and moving format galleries, creator story and a skippable Motion/CSS-3D first-visit introduction.
-- `/explore` and `/templates`: browse the image catalogue with four selectable layouts (Grid, Flow, Stack and List), searchable, paginated results, and shareable preview URLs.
+- `/`: interactive caption example, editorial narrative, two continuously looping 24-template Flow/Stack galleries, creator story and a skippable Motion/CSS-3D first-visit introduction.
+- `/explore` and `/templates`: browse the image catalogue with four selectable layouts (Grid, Flow, Stack and List), searchable, paginated results; Flow and Stack support native horizontal scroll, drag, keyboard access and gently paced autoplay, and shareable preview URLs.
 - `/video-templates`: tilted object-style video catalogue with on-demand preview, alternate layouts and existing media routes.
 - Template previews: spring-driven shared-layout transitions, likes for signed-in accounts, double-tap, pinch/zoom for images, save, and copyable deep links.
 - `/studio`: protected personal workspace with searchable drafts, rename/delete/undo, saved formats, custom collections, authenticated likes, and on-device JSON backup/restore.
@@ -36,7 +36,7 @@ npm run qa:smoke
 - `/about`, `/how-it-works`, `/faq`, `/privacy`, `/contact`, `/add-review`: supporting pages using the same design system. Feedback notes remain on the current device.
 - `/create/:id`, `/video-editor/:id`: original editors intentionally preserved. These routes use the original editor header as well.
 
-The mobile website has safe-area-aware bottom navigation, an accessible creation sheet and compact preview surfaces. NativeWind and gluestack are not part of this Next.js web implementation; this is a web/PWA-style experience, not a separate Expo/React Native application.
+The homepage deliberately offers only Flow and Stack; Grid and List are archive-only alternatives. Autoplay slows on hover, stops while directly interacting or off-screen, and can be paused. The mobile website has safe-area-aware bottom navigation, an accessible creation sheet and compact preview surfaces. NativeWind and gluestack are not part of this Next.js web implementation; this is a web/PWA-style experience, not a separate Expo/React Native application.
 
 ## Data and account setup
 
