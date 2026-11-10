@@ -56,8 +56,12 @@ export function ReframeHome({ initialImages, initialVideos }: {
  const reduced=useReducedMotion();
  const images=initialImages;
  const videos=initialVideos;
+ const [introComplete,setIntroComplete]=useState(false);
  return <main id="main-content" tabIndex={-1} className="rf-site rf-home">
-  <ReframeIntro/><SiteHeader/>
+  <ReframeIntro onComplete={()=>setIntroComplete(true)}/>
+  <div className={introComplete?"rf-home-content":"rf-home-content rf-home-content-waiting"}
+       inert={!introComplete} aria-hidden={!introComplete}>
+  <SiteHeader/>
   <section className="rf-home-hero">
    <div className="container rf-home-hero-grid">
     <motion.div className="rf-home-hero-copy" initial={reduced?false:{opacity:0,y:35}} animate={{opacity:1,y:0}} transition={{duration:.8,ease:[.22,1,.36,1]}}>
@@ -95,10 +99,10 @@ export function ReframeHome({ initialImages, initialVideos }: {
    <div className="container">
     <Reveal className="rf-section-heading">
       <div><span className="rf-kicker">01 / THE STILL IMAGE DEPARTMENT</span><h2>Every face<br/>has <em>a story.</em></h2></div>
-      <p>For the thoughts that need a face. Twenty-four formats moving on their own — drag, swipe or change the arrangement.</p>
+      <p>For the thoughts that need a face. Twenty-four formats moving on their own — drag or swipe to browse.</p>
     </Reveal>
     <ReframeGallery home kind="image" variant="showcase" path="/explore" items={images.map(asImage)}/>
-    <div className="rf-section-end"><span>{images.length + " ACTUAL FORMATS · ENDLESSLY IN MOTION"}</span><Link href="/templates">See every image <ArrowUpRight size={18}/></Link></div>
+    <div className="rf-section-end"><span>{images.length + " ACTUAL FORMATS · ENDLESSLY IN MOTION"}</span><Link href="/explore">See every image <ArrowUpRight size={18}/></Link></div>
    </div>
   </section>
   <section className="rf-home-editor-section">
@@ -118,7 +122,7 @@ export function ReframeHome({ initialImages, initialVideos }: {
    <div className="container">
     <Reveal className="rf-section-heading">
       <div><span className="rf-kicker">03 / THE MOVING IMAGE DEPARTMENT</span><h2>Some moments<br/><em>need motion.</em></h2></div>
-      <p>A moving wall of reactions. Twenty-four moments in an endless stack — swipe through and find the one that lands.</p>
+      <p>A moving wall of reactions. Twenty-four clips flowing endlessly — swipe through and find the one that lands.</p>
     </Reveal>
     {videos.length?<ReframeGallery home items={videos.map(asVideo)} kind="video" variant="objects" path="/video-templates"/>:
       <div className="rf-motion-teaser"><Clapperboard size={58}/><h3>The moving archive.</h3><p>Watch the moment, then make it yours.</p><Link href="/video-templates">Browse video formats <ArrowUpRight size={18}/></Link></div>}
@@ -155,5 +159,6 @@ export function ReframeHome({ initialImages, initialVideos }: {
   </div></section>
   <section className="rf-home-last"><div className="container"><span className="rf-kicker">THE NEXT ONE IS YOURS</span><h2>Enough scrolling.<br/><em>Make the meme.</em></h2><Link href="/explore">Get started <ArrowUpRight size={23}/></Link></div></section>
   <SiteFooter/>
+  </div>
  </main>;
 }
