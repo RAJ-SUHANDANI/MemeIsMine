@@ -13,9 +13,9 @@ Build a peculiar, memorable internet object instead of a generic SaaS dashboard.
 
 | Route or component | Reference | Implementation |
 | --- | --- | --- |
-| `/explore` | [Gallery: Showcase](https://motion.dev/examples/react-gallery-showcase) | Grid, Flow, Stack and List, with filter/sort, pagination and remembered layout |
+| `/explore` | [Gallery: Showcase](https://motion.dev/examples/react-gallery-showcase) | Flow and Stack auto-moving horizontal rails with swipe/drag/keyboard support; Grid and List remain optional in the archives, alongside search, pagination and remembered layout |
 | `/templates` | [Gallery: Showcase](https://motion.dev/examples/react-gallery-showcase) | Dedicated image archive with same layout language |
-| `/video-templates` | [Gallery: Objects](https://motion.dev/examples/react-gallery-objects) | A tilted poster gallery with alternate spatial views and on-demand playback |
+| `/video-templates` | [Gallery: Objects](https://motion.dev/examples/react-gallery-objects) | A tilted moving-image collection; Flow/Stack move right-to-left, loop seamlessly and support swipe/drag, with on-demand playback |
 | Any template | [Shared Layout Modal](https://motion.dev/examples/react-modal-shared-layout) | Expand the selected image/poster into a dialog and return it to the card |
 | Image preview | [Double tap](https://motion.dev/examples/react-tap-double), [Pinch zoom](https://motion.dev/examples/react-pinch-zoom) | Like gesture, zoom, pan, reset, accessible buttons |
 | Preview share | [Copy Button](https://motion.dev/examples/react-copy-button) | Deep link to template with animated check confirmation |
@@ -35,16 +35,27 @@ References inform original implementation. Premium Motion+ example source is not
 - Responsive desktop/mid/mobile layouts are separate intentional compositions rather than scaling one canvas.
 - Provide reduced-motion behavior, keyboard controls, focus return, touch targets, real empty/retry states and clear browser storage errors.
 
+## Landing gallery and movement rules
+
+- The homepage server-selects 24 distinct images and 24 videos with valid posters for first paint. Do not regress to the older 6/4 client fetch or show fewer than twenty items in either homepage rail.
+- Home galleries only offer Flow and Stack (image defaults to Flow, video defaults to Stack). Both run continuously right-to-left; there are no previous/next arrow controls.
+- Archive galleries can offer Grid and List for dense practical browsing, while Flow and Stack retain horizontal browsing and autoplay.
+- The rail uses three visual segments with only the middle segment in keyboard/screen-reader navigation. Recenter scroll position imperceptibly at the segment boundary; never announce auto movement.
+- Mouse dragging, touch scrolling, horizontal trackpads, arrow-key navigation, automatic pause during direct interaction, visibility throttling, manual pause/play, and reduced-motion defaults are required.
+- Large numbers of cards must not trigger video autoplay or fetch all video files; only poster media appears in the rails. Video files load on-demand in the preview.
+- The current palette deliberately uses warm paper #f1ebdf, mineral ink #1b211d, muted slate #585b53 and a deeper clay vermilion #b93e2e. Accent-on-paper and white-on-accent meet body text contrast.
+
 ## Components and design layers
 
 - `reframe-shell.tsx`: global site navigation, mobile app tabs and creation sheet
 - `reframe-gallery.tsx`: layout modes, bookmarks and deep-linked preview selection
+- `reframe-motion-rail.tsx`: continuously moving, native-scroll horizontal carousel for Flow/Stack with low-motion and keyboard behavior
 - `reframe-preview.tsx`: source-aware media preview, reactions, zoom, copy and actions
 - `reframe-library.tsx`: image/video searchable paginated directories
 - `reframe-intro.tsx`: 3D first-visit branding intro (skippable, reduced-motion aware)
 - `reframe-home.tsx`: homepage narrative and live caption experiment
 - `reframe-studio.tsx`: personal workspace, local collections, backups, account likes
-- `reframe*.css`: scoped editorial styles, footer and responsive rules
+- `reframe*.css`: scoped editorial styles, footer, contrast-consistent typography, motion rails and responsive rules
 
 ## Testing and release acceptance
 
