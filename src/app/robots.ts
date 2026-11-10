@@ -7,10 +7,9 @@ export default function robots():MetadataRoute.Robots{
       allow:"/",
       disallow:[
         "/api/","/studio","/account","/auth/","/create/","/video-editor/",
-        "/add-review","/login","/signup",
+        "/add-review",
       ],
     }],
     sitemap:siteAbsolute("/sitemap.xml"),
-    host:siteAbsolute("/"),
   };
 }
