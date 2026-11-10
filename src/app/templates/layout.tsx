@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "The meme index" };
+export const metadata: Metadata = { title: "Image templates" };
 export default function PageLayout({
   children,
 }: {
