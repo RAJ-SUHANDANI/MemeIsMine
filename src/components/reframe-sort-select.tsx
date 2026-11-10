@@ -8,6 +8,7 @@ export const sortOptions=[
   {key:"trending",label:"Trending",detail:"Currently in conversation"},
   {key:"new",label:"New arrivals",detail:"Fresh from the archive"},
   {key:"name",label:"A to Z",detail:"An alphabetical index"},
+  {key:"surprise",label:"Surprise me",detail:"An unexpected collection"},
 ] as const;
 
 export function MotionSortSelect({value,onChange}:{value:string;onChange:(value:string)=>void}){
