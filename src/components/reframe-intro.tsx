@@ -57,7 +57,7 @@ export function ReframeIntro({onComplete}:{onComplete:()=>void}) {
   },[phase,reduced]);
 
   return <AnimatePresence onExitComplete={()=>{setPhase("done");callback.current();}}>
-    {phase!=="done" && !reduced &&
+    {phase==="playing" && !reduced &&
      <motion.div key="intro" className="rf-intro" role="dialog" aria-modal="true"
        aria-label="Meme Is Mine introduction" initial={{opacity:1}}
        exit={{opacity:0,clipPath:"inset(0 0 100% 0)"}}
