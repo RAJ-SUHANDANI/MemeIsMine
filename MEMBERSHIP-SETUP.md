@@ -11,7 +11,7 @@ Meme Is Mine uses its own Node.js + SQLite account database and SMTP verificatio
 
 ## Security behavior
 
-Passwords are salted scrypt hashes; plaintext passwords are never persisted. OTPs are six digits, sent by SMTP, HMAC-hashed at rest, expire in ten minutes, allow five failed attempts, and have a one-minute resend cooldown plus hourly send caps. Sessions are random 256-bit bearer tokens stored as hashes, HTTP-only and SameSite=Lax in the browser. Password reset uses a ten-minute recovery-only session and revokes all other sessions. Likes belong to the signed-in user; published counts are aggregate only.
+Passwords are salted scrypt hashes; plaintext passwords are never persisted. OTPs are six digits, sent by SMTP, HMAC-hashed at rest, expire in ten minutes, allow five failed attempts, and have a one-minute resend cooldown plus hourly send caps. Sessions are random 256-bit bearer tokens stored as hashes, HTTP-only and SameSite=Lax in the browser. Password reset uses a ten-minute recovery-only session and revokes all other sessions. Updating a password in a normal signed-in session requires the old password. Signup, resend, recovery, and password-change requests also use persistent per-client rate buckets. Likes belong to the signed-in user; published counts are aggregate only.
 
 ## Important hosting limitation
 
@@ -22,3 +22,7 @@ Do **not** deploy this setup as an ephemeral Vercel/serverless SQLite file: that
 The older `supabase/migrations` files are retained as historical documentation only. Nothing in the redesigned account flow uses them. Previously stored accounts and likes are **not** migrated automatically. Existing users must sign up again or an explicit migration must be performed before switching traffic.
 
 The `/account/verify` screen accepts a six-digit code and the `/account/recover` screen initiates recovery. All login/signup actions fail closed when configuration is missing.
+
+## Reverse proxy requirement
+
+The app reads `X-Real-IP` only for abuse controls. Your reverse proxy must **overwrite** this header with the verified connection address and discard client-supplied values; never pass an arbitrary user-supplied `X-Real-IP`. Configure HTTPS, request body limits, and network firewall rules. Avoid exposing the Node server directly to the public internet. In a multi-instance deployment, use a shared SQL database instead of separate local SQLite files.
