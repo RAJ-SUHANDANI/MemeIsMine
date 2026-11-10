@@ -18,6 +18,8 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm ci
+      - name: Audit production dependencies for high/critical vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
       - name: Validate catalog crawler syntax
         run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs
       - name: Lint application
