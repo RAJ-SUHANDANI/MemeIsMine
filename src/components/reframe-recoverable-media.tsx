@@ -55,7 +55,7 @@ export function ReframeRecoverableMedia({ item }: { item: ReframeItem }) {
   useEffect(() => {
     if (step !== 3) return;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    const timeout = window.setTimeout(() => { controller.abort(); setStep(6); }, 15000);
     const load = async () => {
       try {
         const response = await fetch(
