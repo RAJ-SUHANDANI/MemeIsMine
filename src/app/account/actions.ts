@@ -36,6 +36,8 @@ export async function authenticate(form:FormData){
    await savePending(email!,"signup");
    redirect("/account/verify?"+new URLSearchParams({next, ...(result==="cooldown"?{status:"wait"}:{})}));
   }
+  if(!allowRequest("login",await requestIdentity(),60,15*60*1000))
+    failure(route,next,"rate-limited");
   const ok=await signIn(email!,password);
   if(!ok)failure(route,next,"login-error");
  }catch(error){
@@ -50,6 +52,8 @@ export async function verifyEmailCode(form:FormData){
  const pending=await pendingVerification();
  const next=returnPath(form.get("next"));
  if(!pending)redirect("/login?status=expired");
+ if(!allowRequest("verify",await requestIdentity(),30,15*60*1000))
+  redirect("/account/verify?"+new URLSearchParams({next,status:"rate-limited"}));
  const code=String(form.get("code")??"").replace(/\s/g,"");
  if(!/^\d{6}$/.test(code))redirect("/account/verify?"+new URLSearchParams({next,status:"invalid-code"}));
  let verified=false;
