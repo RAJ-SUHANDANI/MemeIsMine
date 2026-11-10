@@ -83,6 +83,14 @@ if(process.env.CI && process.env.MIM_DATABASE_PATH?.startsWith("/tmp/mim-ci-")){
   const authenticated={headers:{Cookie:"mim_session="+token},redirect:"manual"};
   for(const route of ["/account","/studio","/create/upload","/create/112126428","/video-editor/arjun-kapoor-angry"]){
     const response=await fetch(base+route,{...authenticated,signal:AbortSignal.timeout(20000)});
+    if(response.status!==200){
+      const account=await fetch(base+"/api/account",{...authenticated});
+      const status=await account.json();
+      console.error("AUTH_DIAGNOSTIC",JSON.stringify({
+        route,httpStatus:response.status,redirect:response.headers.get("location"),
+        accountStatus:status,localFixture:true,
+      }));
+    }
     assert.equal(response.status,200,"verified session must open "+route);
     console.log("PASS signed-in route "+route);
   }
