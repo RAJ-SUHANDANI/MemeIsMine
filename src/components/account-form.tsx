@@ -5,7 +5,7 @@ import { ArrowUpRight, Check, LockKeyhole, Sparkles } from "lucide-react";
 import { SiteHeader } from "./site";
 import { SiteFooter } from "./site-chrome";
 import { accountSession } from "@/lib/auth";
-import { authConfig, emailConfig } from "@/lib/auth-config";
+import { authConfig } from "@/lib/auth-config";
 import { returnPath } from "@/lib/return-path";
 import { authenticate } from "@/app/account/actions";
 import { AuthPassword, AuthSubmit } from "./auth-fields";
@@ -21,6 +21,7 @@ const messages:Record<string,string>={
  "check-email":"Check your inbox for the six-digit confirmation code.",
  "confirmation-error":"That verification code has expired.",
  expired:"Your verification session expired. Please start again.",
+ "password-reset":"Your password has been reset. Sign in with your new password.",
 };
 
 export async function AccountForm({mode,query}:{
@@ -29,7 +30,7 @@ export async function AccountForm({mode,query}:{
  const next=returnPath(query.next);
  if(await accountSession())redirect(next);
  const signup=mode==="signup";
- const enabled=Boolean(authConfig() && (!signup||emailConfig()));
+ const enabled=Boolean(authConfig());
  const message=enabled?messages[query.status??""]:messages.unavailable;
  const suffix="?next="+encodeURIComponent(next);
  return <main id="main-content" className="rf-site mim-auth-page">
