@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "qa:smoke": "node scripts/smoke-check.mjs",
     "setup:appwrite": "node scripts/setup-appwrite.mjs",
-    "test:auth": "node scripts/test-hosted-auth.mjs"
+    "test:auth": "node scripts/test-hosted-auth.mjs",
+    "test:video": "node scripts/test-video-preview.mjs"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
