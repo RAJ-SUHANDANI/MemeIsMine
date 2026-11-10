@@ -109,8 +109,24 @@ export function ReframeHome({ initialImages, initialVideos }: {
    </div>
   </section>
   <section className="rf-home-studio-banner"><div className="container rf-home-studio-grid">
-   <Reveal><span className="rf-kicker">04 / YOUR CREATIVE CORNER</span><h2>Half-finished<br/>is still <em>something.</em></h2><p>Keep the jokes worth coming back to. Your drafts, saved formats and favorite finds, all in one personal space on this device.</p><Link href="/studio">Open your Studio <ArrowUpRight size={20}/></Link></Reveal>
-   <Reveal className="rf-home-studio-graphic"><span>KEEP</span><span>THE GOOD</span><span>ONES.</span><div>✳</div></Reveal>
+   <Reveal><span className="rf-kicker">04 / YOUR CREATIVE CORNER</span><h2>Half-finished<br/>is still <em>something.</em></h2><p>Keep the jokes worth coming back to. Your drafts, saved formats and favourite finds, all in one personal space on this device.</p><Link href="/studio">Open your Studio <ArrowUpRight size={20}/></Link></Reveal>
+   <Reveal className="rf-home-studio-graphic">
+    <div className="rf-studio-sample" aria-hidden="true">
+      <div className="rf-studio-sample-top"><span>MIM / YOUR SPACE</span><span>PRINTROOM NO. 004</span></div>
+      <div className="rf-studio-sample-stage">
+        <figure className="rf-studio-sample-card rf-studio-sample-back">
+          <Image src="/templates/two-buttons.jpg" width={600} height={908} alt=""/>
+          <figcaption>THE GOOD ONES / 002</figcaption>
+        </figure>
+        <figure className="rf-studio-sample-card rf-studio-sample-front">
+          <Image src="/templates/drake.jpg" width={1200} height={1200} alt=""/>
+          <figcaption>YOUR NEXT REACTION / 001</figcaption>
+        </figure>
+        <div className="rf-studio-sample-stamp">KEEP<br/>THIS.</div>
+      </div>
+      <div className="rf-studio-sample-foot"><span>ONE PLACE FOR YOUR IDEAS</span><span>✳</span></div>
+    </div>
+   </Reveal>
   </div></section>
   <section className="rf-home-faq"><div className="container rf-home-faq-grid">
    <Reveal><span className="rf-kicker">05 / BEFORE YOU ASK</span><h2>The fine<br/><em>print.</em></h2><Link href="/faq">All the answers <ArrowUpRight size={17}/></Link></Reveal>
