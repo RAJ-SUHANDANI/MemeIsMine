@@ -94,6 +94,9 @@ try {
  assert.equal(await accounts.currentUser(),null);
  assert.equal(await accounts.signIn(email,oldPassword),false,"old password should be revoked");
  assert.equal(await accounts.signIn(email,newPassword),true);
+ assert.equal(await accounts.changePassword("another-unique-password-2026"),false,"active sessions require old password");
+ assert.equal(await accounts.changePassword("another-unique-password-2026","incorrect"),false);
+ assert.equal(await accounts.changePassword("another-unique-password-2026",newPassword),true);
  await accounts.removeSession();
  assert.equal(await accounts.currentUser(),null);
  console.log("PASS first-party SQLite: email verification, password hashing, sessions, recovery, and private likes");
