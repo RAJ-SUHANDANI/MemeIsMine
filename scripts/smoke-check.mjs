@@ -65,42 +65,20 @@ for (const route of ["/account", "/studio", "/create/upload", "/create/112126428
 }
 // Exercise real server-side session guards with a temporary CI-only SQLite user.
 // This fixture never runs against a deployed customer database.
-if(process.env.CI && process.env.MIM_DATABASE_PATH?.startsWith("/tmp/mim-ci-")){
-  const {DatabaseSync}=await import("node:sqlite");
-  const {createHash,randomBytes,randomUUID}=await import("node:crypto");
-  const health=await fetch(base+"/api/health");
-  assert.equal(health.status,200,"CI account database should be healthy");
-  const db=new DatabaseSync(process.env.MIM_DATABASE_PATH);
-  const token=randomBytes(32).toString("base64url");
-  const tokenHash=createHash("sha256").update(token).digest("hex");
-  const id=randomUUID();
-  const now=Date.now();
-  db.prepare("INSERT INTO users(id,email,password_hash,verified,created_at) VALUES(?,?,?,?,?)")
-    .run(id,"ci-verified@example.test","scrypt:v1:"+"0".repeat(48)+":"+"0".repeat(128),1,now);
-  db.prepare("INSERT INTO session_tokens(token_hash,user_id,scope,expires_at,created_at) VALUES(?,?,?,?,?)")
-    .run(tokenHash,id,"user",now+600_000,now);
-  db.close();
-  const authenticated={headers:{Cookie:"mim_session="+token},redirect:"manual"};
-  for(const route of ["/account","/studio","/create/upload","/create/112126428","/video-editor/arjun-kapoor-angry"]){
-    const response=await fetch(base+route,{...authenticated,signal:AbortSignal.timeout(20000)});
-    if(response.status!==200){
-      const account=await fetch(base+"/api/account",{...authenticated});
-      const status=await account.json();
-      console.error("AUTH_DIAGNOSTIC",JSON.stringify({
-        route,httpStatus:response.status,redirect:response.headers.get("location"),
-        accountStatus:status,localFixture:true,
-      }));
-    }
-    assert.equal(response.status,200,"verified session must open "+route);
-    console.log("PASS signed-in route "+route);
-  }
-  const signed=await fetch(base+"/api/account",{...authenticated});
-  assert.equal((await signed.json()).signedIn,true);
-  const likes=await fetch(base+"/api/account/likes",{...authenticated});
-  assert.equal(likes.status,200);
-  assert.deepEqual((await likes.json()).items,[]);
-  console.log("PASS real authenticated session, Studio, both editors and private likes");
+// Hosting credentials are not available in public CI. Verify auth fails
+// closed, while a separately connected Appwrite project is tested at release.
+const health=await fetch(base+"/api/health");
+assert.equal(health.status,503,"Unconfigured Appwrite auth must fail closed");
+for(const route of ["/account","/studio","/create/upload","/create/112126428","/video-editor/arjun-kapoor-angry"]){
+ const response=await fetch(base+route,{redirect:"manual",signal:AbortSignal.timeout(20000)});
+ assert.ok([303,307,308].includes(response.status),"Protected route must redirect when signed out: "+route);
+ const destination=response.headers.get("location")||"";
+ assert.ok(destination.includes("/login"),"Protected route must send visitor to sign-in: "+route);
+ console.log("PASS guarded "+route);
 }
+const signup=await(await fetch(base+"/signup")).text();
+assert.ok(signup.includes("Account services are not configured"),"Signup must explain unconfigured auth");
+console.log("PASS hosted authentication disabled without credentials; no fake OTP or signup");
 for (const route of [
   "/api/memes?limit=4",
   "/api/memes?q=Drake&limit=10",
