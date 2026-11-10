@@ -24,6 +24,8 @@ jobs:
         run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs && node --check scripts/setup-appwrite.mjs
       - name: Lint application
         run: npm run lint
+      - name: Test hosted authentication contracts
+        run: npm run test:auth
       - name: Typecheck application
         run: npm run typecheck
       - name: Build application
