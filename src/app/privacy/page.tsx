@@ -10,7 +10,7 @@ import {
 import { SiteHeader } from "@/components/site";
 export default function PrivacyPage() {
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
       <SiteHeader />
       <section className="page-hero">
         <div className="container">
@@ -37,11 +37,11 @@ export default function PrivacyPage() {
               <br />
               <em>DEFAULT.</em>
             </h2>
-            <p>Last updated November 10, 2026</p>
+            <p>Updated November 10, 2026</p>
           </aside>
           <article className="privacy-copy">
             <p className="privacy-lede">
-              Your account remembers the templates you like. Drafts, bookmarks and uploads stay in your browser.
+              Your account and likes use the managed Appwrite account database. Drafts, bookmarks and uploads stay in your browser.
             </p>
             <section>
               <h3>
@@ -78,9 +78,7 @@ export default function PrivacyPage() {
                 <ShieldCheck size={19} /> APIs and services
               </h3>
               <p>
-                The template route may fetch a public template list from an
-                external service and caches the response where the hosting
-                platform supports it. The image proxy only allows configured image hostnames. Supabase handles account credentials and saves your likes. The gallery shares aggregate counts. Individual reactions stay private.
+                The catalogues are maintained from public template collections. Some media may load from external hosts, which can receive standard connection information. The image proxy only allows configured image hostnames. An account email, salted password hash, email-verification state, hashed session tokens, and liked-template keys are kept in Appwrite Cloud’s managed authentication and database services. Email verification and recovery codes are delivered through Appwrite’s email service. The gallery exposes aggregate counts, not a public list of individual reactions.
               </p>
             </section>
             <section>

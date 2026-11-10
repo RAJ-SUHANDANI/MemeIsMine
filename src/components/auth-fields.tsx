@@ -20,7 +20,7 @@ export function AuthPassword({
         name="password"
         autoComplete={signup ? "new-password" : "current-password"}
         required
-        minLength={signup ? 8 : undefined}
+        minLength={signup ? 12 : undefined}
         maxLength={128}
         disabled={disabled}
       />

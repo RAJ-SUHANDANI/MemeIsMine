@@ -1,0 +1,133 @@
+
+/* Soft-touch template discovery controls; no native OS dropdown chrome. */
+.rf-library-controls {
+  grid-template-columns: minmax(0, 1fr) clamp(216px, 18vw, 264px) auto;
+  gap: 13px;
+  align-items: start;
+}
+.rf-search-field {
+  height: 67px;
+  min-height: 67px;
+  border: 1px solid #cbc5b8;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 4px 12px #1b211d07;
+  transition: border-color .2s, box-shadow .2s;
+}
+.rf-search-field:focus-within {
+  box-shadow: 0 0 0 3px #b93e2e20, 0 6px 22px #1b211d0b;
+  border-color: var(--rf-accent);
+}
+.rf-search-field input { font-size: 15px; letter-spacing: -.02em; }
+.rf-search-field input::placeholder { color: #77796e; }
+.rf-surprise {
+  height: 67px;
+  min-height: 67px;
+  border-radius: 18px;
+  padding-inline: 25px;
+  background: #1b211d;
+  box-shadow: 0 4px 12px #1b211d15;
+  font-size: 13px;
+  transition: transform .2s, background .2s;
+}
+.rf-surprise:hover:not(:disabled) { transform: translateY(-2px); }
+.rf-surprise:active:not(:disabled) { transform: translateY(0); }
+.rf-category-strip button { border-radius: 999px; }
+.rf-motion-sort {
+  position: relative;
+  z-index: 38;
+  height: 67px;
+  background: #fffdf8;
+  border: 1px solid var(--rf-rule);
+  border-radius: 18px;
+  box-shadow: 0 4px 12px #1b211d07;
+  padding: 9px 13px 8px 17px;
+}
+.rf-motion-sort-label {
+  display: block;
+  color: var(--rf-muted);
+  letter-spacing: .13em;
+  font: 800 9px/1.2 var(--body);
+  margin-bottom: 2px;
+}
+.rf-motion-sort-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  min-height: 33px;
+  border: none;
+  background: transparent;
+  color: var(--rf-ink);
+  font: 750 14px/1.25 var(--body);
+  letter-spacing: -.02em;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.rf-motion-sort-trigger > span:nth-child(2) {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rf-motion-sort-trigger > svg:first-child { color: var(--rf-accent); flex: none; }
+.rf-motion-sort-trigger > span:last-child { display: grid; place-items: center; flex: none; }
+.rf-motion-sort-trigger:focus-visible { outline: 2px solid var(--rf-accent); outline-offset: 4px; border-radius: 3px; }
+.rf-motion-sort-panel {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  right: 0;
+  transform-origin: top center;
+  padding: 8px;
+  border: 1px solid #cbc5b8;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 22px 60px #1b211d26;
+  z-index: 50;
+}
+.rf-motion-sort-panel-caption {
+  display: block;
+  padding: 10px 12px 8px;
+  color: var(--rf-muted);
+  font: 800 9px var(--body);
+  letter-spacing: .12em;
+}
+.rf-motion-sort-panel > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-height: 59px;
+  padding: 11px 12px;
+  text-align: left;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  color: var(--rf-ink);
+  background: transparent;
+}
+.rf-motion-sort-panel > button:hover,
+.rf-motion-sort-panel > button:focus-visible { background: #f0e9dc; }
+.rf-motion-sort-panel > button.is-selected { background: #eee7da; }
+.rf-motion-sort-panel > button > span:first-child { display: grid; gap: 4px; }
+.rf-motion-sort-panel strong { font: 750 13px/1.2 var(--body); }
+.rf-motion-sort-panel small { font: 500 11px/1.2 var(--body); color: var(--rf-muted); }
+.rf-motion-sort-check { color: var(--rf-accent); flex: none; }
+@media(max-width:800px) {
+ .rf-library-controls { grid-template-columns: 1fr 1fr; }
+ .rf-search-field { grid-column: span 2; }
+ .rf-motion-sort { height: 59px; padding-top: 7px; }
+ .rf-surprise { min-height: 59px; height: 59px; }
+}
+@media(max-width:480px) {
+ .rf-library-controls { grid-template-columns: minmax(0,1fr) auto; gap: 9px; }
+ .rf-search-field { min-height: 56px; height: 56px; border-radius: 15px; }
+ .rf-motion-sort { height: 58px; min-width: 0; border-radius: 15px; }
+ .rf-surprise { min-height: 58px; height: 58px; border-radius: 15px; padding: 0 16px; }
+ .rf-motion-sort-trigger { font-size: 12px; }
+ .rf-motion-sort-panel { min-width: 240px; right: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .rf-search-field, .rf-surprise { transition: none; } }

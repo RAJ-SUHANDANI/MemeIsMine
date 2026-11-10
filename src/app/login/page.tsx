@@ -1,5 +1,5 @@
 import { AccountForm } from "@/components/account-form";
-export const metadata = { title: "Sign in" };
+export const metadata = { title: "Sign in",robots:{index:false,follow:false}};
 export default async function Login({
   searchParams,
 }: {

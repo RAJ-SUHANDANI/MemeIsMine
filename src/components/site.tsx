@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { ArrowUpRight, Bookmark, Maximize2, Menu, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import { usePathname } from "next/navigation";
 import {
   useEffect,
   useRef,
@@ -15,6 +15,7 @@ import {
 import type { MemeTemplate } from "@/data/memes";
 
 import { TemplatePreview } from "./template-preview";
+import { ReframeHeader } from "./reframe-shell";
 
 export function BrandLogo({ compact = false }: { compact?: boolean }) {
   return (
@@ -35,6 +36,11 @@ export function BrandLogo({ compact = false }: { compact?: boolean }) {
 }
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  return pathname.startsWith("/create/") || pathname.startsWith("/video-editor/") ? <LegacyHeader /> : <ReframeHeader />;
+}
+
+function LegacyHeader() {
   const pathname = usePathname();
   const currentNavPath = pathname === "/templates" ? "/explore" : pathname;
   const [open, setOpen] = useState(false);
@@ -143,6 +149,8 @@ export function SiteHeader() {
     </header>
   );
 }
+
+
 
 const BOOKMARKS_KEY = "mim-bookmarks";
 const CARD_IMAGE_SIZES =

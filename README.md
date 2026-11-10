@@ -1,63 +1,59 @@
-# Meme Is Mine
+# Meme Is Mine — Redesign
 
-An independent meme-creation studio with an editorial visual identity, animated templates, a browser-side editor and a local draft studio. Designed and developed by **Raj Suhandani**.
+A motion-driven, browser-based meme studio with image and video templates, a personal Studio, and email-verified accounts. This work stays on the `redesign` branch; the editor implementations and `main` branch are untouched.
 
-## Getting started
+## Development
+
+Node.js 24 is used by CI, although the application no longer depends on a local SQLite server.
 
 ```bash
-npm install
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000.
+The public homepage, `/explore` (Image Templates) and `/video-templates` (Video Templates) use a continuous horizontal Flow gallery. Each home gallery includes 24 formats, video previews autoplay silently and loop, and the branded first-visit intro completes before displaying the homepage. The duplicate `/templates` route redirects to `/explore`.
 
-## Pages
-- `/` — landing page with floating meme-card motion and a creator spotlight
-- `/explore` — search, filter, sort and bookmark template formats
-- `/templates` — randomized template discovery with popular, trending, recent and surprise filters
-- `/video-templates` — animated template collection with popular, trending, recent and name filters
-- `/video-editor/:id` — drag captions, add image overlays, choose output dimensions and export WebM
-- `/create/:id` — editor for a selected template
-- `/create/upload` — start with an image from your own device
-- `/studio` — drafts and bookmarks saved in the current browser
-- `/how-it-works` — how to create and export a meme
-- `/about` — product story and information about Raj Suhandani
-- `/faq` — interactive frequently asked questions
-- `/privacy` — plain-language data and storage details
-- `/contact` — portfolio, GitHub, LinkedIn and email links
-- `/api/memes` — the original Meme Is Mine template feed, with a bundled fallback
-- `/api/indian-memes` — paginated Indian still image template API
-- `/api/video-templates` — paginated animated GIF and video template API
-- `/api/video-source` — safe same-origin media proxy for GIF and supported video formats
-- `/api/image` — image proxy restricted to approved template image hosts
+## Free hosted accounts — Appwrite Cloud
 
-## Template API examples
+**No VPS, custom SMTP, self-managed SQLite, or paid database required.** Accounts, email-password login, six-digit email verification and password recovery are handled through Appwrite Cloud Free. The platform also stores private likes, while drafts, bookmarks, collections and uploads remain on the current browser.
 
-```text
-GET /api/indian-memes?page=1&limit=24&sort=popular
-GET /api/indian-memes?q=arjun&sort=trending
-GET /api/video-templates?page=1&limit=24&sort=recent
-GET /api/video-templates?slug=chinese-guy-explaining
+The Appwrite Free project, private indexed TablesDB likes table, and isolated Next.js preview Site are **already created**. `MEMBERSHIP-SETUP.md` records the verified project and the one remaining server API key permission. The required environment variables are:
+
+```env
+APPWRITE_ENDPOINT=https://<REGION>.cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=<your-project-id>
+APPWRITE_API_KEY=<server-only-api-key>
+APPWRITE_DATABASE_ID=mim
+APPWRITE_LIKES_COLLECTION_ID=template_likes
+NEXT_PUBLIC_SITE_URL=<your-public-https-url>
 ```
 
-The image endpoint returns a `memes` array; `/api/video-templates` returns a paginated `templates` array containing direct GIF and video files (including MP4). Both support pagination and search. Media is streamed through `/api/video-source?url=...`, which validates approved hosts, upload paths, and supported file extensions. Video templates stay as videos and are not converted into still images. The editor exports WebM locally in the browser.
+The private `mim/template_likes` TablesDB is already provisioned. `npm run setup:appwrite` remains available as an idempotent schema setup script for new environments.
 
-To refresh source indexes manually, run `npm run sync:indian-videos` followed by `npm run sync:indian-images`, or use the GitHub Actions workflow. The workflow also refreshes the catalogs weekly. The sync indexes template metadata and original media URLs; it does not mirror media files into this repository.
+**Security:** `APPWRITE_API_KEY` is server-only and must never appear in a public source file, chat message or `NEXT_PUBLIC_*` variable. Sessions are verified server-side with Appwrite and use HttpOnly cookies. Protected Studio and editor routes reject signed-out visitors.
 
-The sync process indexes template metadata and media URLs rather than copying media files into the repository. Check applicable content and usage terms before redistributing media or using it commercially.
+**Email:** Appwrite Cloud's default email service handles verification and recovery, using Appwrite branding on the Free plan. A custom SMTP provider is not necessary for initial public signup. Custom branded email templates and SMTP require a different provider/plan. Free-tier service limits, quotas and abuse controls still apply.
 
-## Stack
-Next.js App Router, React, TypeScript, Motion, Lucide icons, Tailwind CSS v4 and custom responsive CSS.
+**Hosting:** This managed setup is compatible with ordinary Next.js hosting, including Vercel, because no local account file needs persistent storage.
 
-## Data and privacy notes
-- The public meme endpoint retrieves templates from a no key feed where available, then falls back to bundled template metadata.
-- The Indian template sync job indexes metadata and original media URLs from the still image archive and the video category, checks robots rules, throttles requests, and retries rate limits. It does not download or rehost source media files. The video collection accepts direct `.gif`, `.mp4`, `.webm`, `.mov`, `.m4v`, and `.ogv` media URLs; video archive entries are excluded from the still-image catalog.
-- Meme images are provided by their respective source URLs. Template cards do not display external source/archive links.
-- The image editor exports PNGs in the browser using Canvas.
-- The video editor renders canvas frames and exports WebM with the browser MediaRecorder API. Browser support for WebM recording is required.
-- Drafts and bookmarks use browser localStorage. They are not uploaded to a hosted database and do not sync across devices.
-- Local image uploads are limited to 2.5 MB so data-URL drafts can remain in browser storage.
-- No hosted user database, email-verification service or external authentication provider is required.
+**Migration:** Previously registered users in the retired local SQLite authentication implementation are not automatically transferred to Appwrite. Browser drafts/bookmarks are unaffected. If you have real existing account data, perform an explicit, authorized migration before switching production users.
 
-## Deployment
-Import the repository into Vercel and use the standard Next.js build settings. Build command: `npm run build`.
+## Verification
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm run start -- -p 3001
+# In another terminal:
+npm run qa:smoke
+```
+
+CI verifies public pages, sitemap, gallery UI, security headers and signed-out route protection. A live Appwrite project exists, but this plugin connection cannot issue a permanent API key. Add the server key privately in the Site environment before end-to-end registration, OTP delivery, password reset, or cross-device likes can be tested. Do not claim the service is live until these tests pass.
+
+## Search visibility
+
+Set `NEXT_PUBLIC_SITE_URL` to the real HTTPS origin to generate accurate metadata, canonicals, structured data and sitemap entries. `SECURITY.md` and `SEARCH-VISIBILITY.md` document production checks. SEO ranking, AI citations, and unrestricted scale are not guaranteed.
+
+Public pages do not show source-code, provider, portfolio or other promotional external links. Media licensing requirements still apply even when source links are not rendered.

@@ -11,7 +11,6 @@ import { ZoomablePreview } from "./zoomable-preview";
 export function TemplatePreview({
   title,
   editorHref,
-  sourceHref,
   reactionKey,
   onClose,
   children,
@@ -121,16 +120,6 @@ export function TemplatePreview({
           )}
         </div>
         <footer className="template-lightbox-actions">
-          {sourceHref && (
-            <a
-              href={sourceHref}
-              target="_blank"
-              rel="noreferrer"
-              className="text-link"
-            >
-              Template source <ArrowUpRight size={14} />
-            </a>
-          )}
           <Link
             href={editorHref}
             className="button button-dark"

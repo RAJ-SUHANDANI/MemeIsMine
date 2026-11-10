@@ -5,3 +5,14 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 .impeccable/review/
+
+# First-party account database and backups must never be committed.
+.data/
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+*.backup

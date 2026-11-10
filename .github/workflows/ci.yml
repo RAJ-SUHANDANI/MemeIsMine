@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "redesign/**"]
+    branches: [main, redesign, "redesign/**"]
 
 jobs:
   build:
@@ -15,10 +15,30 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Install dependencies
         run: npm ci
+      - name: Audit production dependencies for high/critical vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
       - name: Validate catalog crawler syntax
-        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs
+        run: node --check scripts/sync-indian-meme-templates.mjs && node --check scripts/sync-indian-video-templates.mjs && node --check scripts/sync-open-templates.mjs && node --check scripts/setup-appwrite.mjs
+      - name: Lint application
+        run: npm run lint
+      - name: Test hosted authentication contracts
+        run: npm run test:auth
+      - name: Test video preview recovery and source safety
+        run: npm run test:video
+      - name: Typecheck application
+        run: npm run typecheck
       - name: Build application
         run: npm run build
+      - name: Test production routes and APIs
+        run: |
+          npm run start -- -p 3001 > /tmp/mim-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://localhost:3001/ > /dev/null; then break; fi
+            sleep 2
+          done
+          npm run qa:smoke

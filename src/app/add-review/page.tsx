@@ -1,138 +1,54 @@
 "use client";
 import Link from "next/link";
-import { SiteFooter } from "@/components/site-chrome";
-import { useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowUpRight, Star } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { ArrowLeft, ArrowUpRight, MessageCircle, PenLine, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
-
-const REVIEW_KEY = "mim-user-reviews";
-type UserReview = {
-  id: string;
-  name: string;
-  review: string;
-  createdAt: string;
-};
-export default function AddReviewPage() {
-  const [name, setName] = useState("");
-  const [review, setReview] = useState("");
-  const [error, setError] = useState("");
-  function submitReview(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const cleanName = name.trim();
-    const cleanReview = review.trim();
-    if (!cleanName || !cleanReview) {
-      setError("Add your name and a review before submitting.");
-      return;
-    }
-    if (cleanName.length > 60 || cleanReview.length > 500) {
-      setError(
-        "Please keep your name under 60 characters and your review under 500.",
-      );
-      return;
-    }
-    try {
-      const existing = JSON.parse(localStorage.getItem(REVIEW_KEY) ?? "[]");
-      const previous: UserReview[] = Array.isArray(existing)
-        ? existing.filter(
-            (item) =>
-              item &&
-              typeof item.name === "string" &&
-              typeof item.review === "string",
-          )
-        : [];
-      const next = [
-        {
-          id: "review-" + Date.now(),
-          name: cleanName,
-          review: cleanReview,
-          createdAt: new Date().toISOString(),
-        },
-        ...previous,
-      ].slice(0, 100);
-      localStorage.setItem(REVIEW_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("mim-reviews-updated"));
-      // Return home after the saved review is stored; the home page reads it on mount.
-      window.location.href = "/#reviews";
-    } catch {
-      setError(
-        "Your browser could not save this review. Check available site storage and try again.",
-      );
-    }
-  }
-  return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
-      <SiteHeader />
-      <section className="page-hero">
-        <div className="container">
-          <span className="eyebrow">Your words, your way</span>
-          <h1>
-            Keep a <span>note.</span>
-          </h1>
-          <p>
-            Keep your feedback about Meme Is Mine on this device. These notes
-            are private to this browser.
-          </p>
-        </div>
-      </section>
-      <section className="section add-review-section">
-        <div className="container add-review-layout">
-          <div>
-            <span className="eyebrow">Community notes / 01</span>
-            <h2 className="section-title">
-              Your take.
-              <br />
-              <span className="serif-italic">In your words.</span>
-            </h2>
-            <p className="section-note">
-              Capture what worked and what you would change. Your note appears
-              on the home page in this browser.
-            </p>
-            <div className="review-form-note">
-              <Star size={18} fill="currentColor" />
-              <span>
-                Reviews are saved in this browser. Shared, site-wide reviews
-                need a connected database.
-              </span>
-            </div>
-            <Link href="/#reviews" className="text-link">
-              <ArrowLeft size={14} /> Back to reviews
-            </Link>
-          </div>
-          <form className="review-form" onSubmit={submitReview}>
-            <label htmlFor="review-name">Your name</label>
-            <input
-              id="review-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              maxLength={60}
-              placeholder="What should we call you?"
-              required
-            />
-            <label htmlFor="review-text">Your note</label>
-            <textarea
-              id="review-text"
-              value={review}
-              onChange={(event) => setReview(event.target.value)}
-              maxLength={500}
-              rows={6}
-              placeholder="What did you enjoy? What could be better?"
-              required
-            />
-            <div className="review-form-foot">
-              <span>{review.length}/500 characters</span>
-              <button type="submit" className="button button-dark">
-                Save on this device <ArrowUpRight size={15} />
-              </button>
-            </div>
-            {error && (
-              <p className="review-form-error" role="alert">
-                {error}
-              </p>
-            )}
-          </form>
-        </div>
-      </section>
-      <SiteFooter />
-    </main>
-  );
+import { SiteFooter } from "@/components/site-chrome";
+const key="mim-user-reviews";
+type Note={id:string;name:string;review:string;createdAt:string};
+function valid(value:unknown):value is Note{
+ return !!value && typeof value==="object" && "name" in value && typeof value.name==="string" && "review" in value && typeof value.review==="string" && "id" in value && typeof value.id==="string" && "createdAt" in value && typeof value.createdAt==="string";
+}
+function readNotes():Note[]{try{const stored:unknown=JSON.parse(localStorage.getItem(key)??"[]");return Array.isArray(stored)?stored.filter(valid):[];}catch{return [];}}
+export default function FeedbackPage(){
+ const reduce=useReducedMotion();
+ const [name,setName]=useState("");
+ const [note,setNote]=useState("");
+ const [notes,setNotes]=useState<Note[]>([]);
+ const [notice,setNotice]=useState("");
+ useEffect(()=>setNotes(readNotes()),[]);
+ function submit(event:FormEvent<HTMLFormElement>){
+  event.preventDefault();
+  const cleanName=name.trim(),cleanNote=note.trim();
+  if(!cleanName||!cleanNote){setNotice("Add a name and your note.");return;}
+  if(cleanName.length>60||cleanNote.length>500){setNotice("Keep the name under 60 characters and the note under 500.");return;}
+  const next=[{id:"review-"+crypto.randomUUID(),name:cleanName,review:cleanNote,createdAt:new Date().toISOString()},...readNotes()].slice(0,100);
+  try{localStorage.setItem(key,JSON.stringify(next));setNotes(next);setName("");setNote("");setNotice("Saved on this device. This note is not published to other visitors.");window.dispatchEvent(new Event("mim-reviews-updated"));}
+  catch{setNotice("Could not save. Check available browser storage.");}
+ }
+ function remove(id:string){
+  try{const next=readNotes().filter(item=>item.id!==id);localStorage.setItem(key,JSON.stringify(next));setNotes(next);setNotice("Note removed from this device.");window.dispatchEvent(new Event("mim-reviews-updated"));}
+  catch{setNotice("Could not remove this note.");}
+ }
+ return <main id="main-content" tabIndex={-1} className="rf-site rf-notes">
+  <SiteHeader/>
+  <section className="rf-notes-hero"><div className="container"><span className="rf-kicker">THE SUGGESTION BOX / PRIVATE NOTES</span><h1>Tell it <em>like it is.</em></h1><p>Your thoughts about Meme Is Mine, saved privately in this browser. This is a personal notebook, not a public review wall or support ticket.</p></div></section>
+  <div className="container rf-notes-layout">
+   <div className="rf-notes-side"><MessageCircle size={45}/><span className="rf-kicker">NOTES FROM THE SIDELINES</span><h2>Even the good jokes need editing.</h2><p>Capture a problem, a clever idea or something you liked. If you need to contact the creator, use the Contact page instead.</p><Link href="/contact">Send a message <ArrowUpRight size={18}/></Link></div>
+   <div className="rf-notes-main">
+    <form onSubmit={submit} className="rf-notes-form"><div className="rf-notes-form-header"><PenLine size={26}/><span>WRITE A NOTE / 001</span></div>
+     <label htmlFor="rf-note-name">YOUR NAME</label><input id="rf-note-name" value={name} onChange={e=>setName(e.target.value)} required maxLength={60} placeholder="How should this note be labelled?"/>
+     <label htmlFor="rf-note-text">WHAT IS ON YOUR MIND?</label><textarea id="rf-note-text" value={note} onChange={e=>setNote(e.target.value)} required rows={6} maxLength={500} placeholder="What worked? What could be better?"/>
+     <div className="rf-notes-form-foot"><span>{note.length} / 500 CHARACTERS</span><button type="submit">Save privately <ArrowUpRight size={18}/></button></div>
+    </form>
+    {notice&&<p className="rf-notes-notice" role="status">{notice}</p>}
+    <div className="rf-notes-local"><div><span className="rf-kicker">SAVED IN THIS BROWSER</span><h2>Your notes.</h2></div><span>{notes.length} TOTAL</span></div>
+    {notes.length?<div className="rf-notes-list"><AnimatePresence>{notes.map(item=><motion.article key={item.id} initial={reduce?false:{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,x:20}}><div><strong>{item.name}</strong><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleDateString()}</time></div><p>{item.review}</p><button type="button" aria-label={"Delete note from "+item.name} onClick={()=>remove(item.id)}><Trash2 size={16}/> Delete</button></motion.article>)}</AnimatePresence></div>:
+     <div className="rf-notes-empty">No notes on this device yet. Your first one can go above.</div>}
+    <Link href="/" className="rf-notes-back"><ArrowLeft size={17}/> Back to the homepage</Link>
+   </div>
+  </div>
+  <SiteFooter/>
+ </main>;
 }

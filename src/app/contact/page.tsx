@@ -2,9 +2,6 @@
 import { SiteFooter } from "@/components/site-chrome";
 import {
   ArrowUpRight,
-  Github,
-  Globe2,
-  Linkedin,
   Mail,
   MessageCircle,
 } from "lucide-react";
@@ -14,27 +11,6 @@ export default function ContactPage() {
   const reduce = useReducedMotion();
   const links = [
     {
-      name: "Portfolio",
-      detail: "More about me, projects, and experience",
-      url: "https://rajsuhandani.vercel.app/",
-      icon: Globe2,
-      tag: "THE FULL PICTURE",
-    },
-    {
-      name: "GitHub",
-      detail: "Explore source code and other projects",
-      url: "https://github.com/RAJ-SUHANDANI",
-      icon: Github,
-      tag: "CODE & EXPERIMENTS",
-    },
-    {
-      name: "LinkedIn",
-      detail: "Professional updates and connections",
-      url: "https://www.linkedin.com/in/raj-suhandani-a4a393321",
-      icon: Linkedin,
-      tag: "LET’S CONNECT",
-    },
-    {
       name: "Email",
       detail: "Questions, ideas, and collaboration",
       url: "mailto:rajsuhandani11@gmail.com",
@@ -43,7 +19,7 @@ export default function ContactPage() {
     },
   ];
   return (
-    <main id="main-content" tabIndex={-1} className="paper-noise">
+    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
       <SiteHeader />
       <section className="page-hero">
         <div className="container">
@@ -52,8 +28,7 @@ export default function ContactPage() {
             Say <span>hello.</span>
           </h1>
           <p>
-            Questions about Meme Is Mine, a bug to report, or a cool idea? Here
-            are the best ways to reach me.
+            Questions about Meme Is Mine, a bug to report, or a cool idea? Send a direct email or leave a private note in your browser.
           </p>
         </div>
       </section>

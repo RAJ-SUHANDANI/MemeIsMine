@@ -1,60 +1,92 @@
 "use server";
 import { redirect } from "next/navigation";
-import { authClient } from "@/lib/auth";
+import { authConfig } from "@/lib/auth-config";
+import { changePassword, finishVerification, normalizedEmail, pendingVerification,
+  register, removeSession, requestRecovery, resendCode, signIn } from "@/lib/mim-accounts";
 import { returnPath } from "@/lib/return-path";
 
-export async function authenticate(form: FormData) {
-  const signingUp = form.get("mode") === "signup";
-  const route = signingUp ? "/signup" : "/login";
-  const next = returnPath(form.get("next"));
-  const fail = (status: string): never =>
-    redirect(route + "?" + new URLSearchParams({ next, status }));
-  const client = await authClient();
-  if (!client) return fail("unavailable");
-  const email = String(form.get("email") ?? "").trim();
-  const password = String(form.get("password") ?? "");
-  if (
-    !email ||
-    email.length > 254 ||
-    password.length > 128 ||
-    password.length < (signingUp ? 8 : 1)
-  ) {
-    return fail("invalid");
+function toStatus(error:unknown,fallBack="unavailable"){
+ const code=typeof error==="object"&&error!==null&&"code" in error?Number((error as {code:unknown}).code):0;
+ if(code===409)return "account-exists";
+ if(code===429)return "rate-limited";
+ if(code===401)return "login-error";
+ if(code===400)return "invalid";
+ return fallBack;
+}
+function fail(route:string,next:string,status:string):never{
+ redirect(route+"?"+new URLSearchParams({next,status}));
+}
+export async function authenticate(form:FormData){
+ const signup=form.get("mode")==="signup";
+ const route=signup?"/signup":"/login";
+ const next=returnPath(form.get("next"));
+ const email=normalizedEmail(String(form.get("email")??""));
+ const password=String(form.get("password")??"");
+ if(!email||password.length>128||password.length<(signup?12:1))fail(route,next,"invalid");
+ if(!authConfig())fail(route,next,"unavailable");
+ if(signup){
+  let result:"sent"|"email-unavailable";
+  try{result=await register(email!,password);}
+  catch(error){
+   if(toStatus(error)==="account-exists")redirect("/login?"+new URLSearchParams({next,status:"account-exists"}));
+   fail(route,next,toStatus(error,"signup-error"));
   }
-  if (signingUp) {
-    const { data, error } = await client.auth.signUp({ email, password });
-    if (error) return fail("signup-error");
-    if (!data.session) return fail("check-email");
-  } else {
-    const { error } = await client.auth.signInWithPassword({ email, password });
-    if (error) return fail("login-error");
-  }
-  redirect(next);
+  redirect("/account/verify?"+new URLSearchParams({next,...(result==="email-unavailable"?{status:"unavailable"}:{})}));
+ }
+ let result:"signed-in"|"verify";
+ try{result=await signIn(email!,password);}
+ catch(error){fail(route,next,toStatus(error,"login-error"));}
+ if(result==="verify")redirect("/account/verify?"+new URLSearchParams({next}));
+ redirect(next);
 }
-
-export async function requestPasswordReset(form: FormData) {
-  const client = await authClient();
-  const email = String(form.get("email") ?? "").trim();
-  if (client && email && email.length <= 254)
-    await client.auth.resetPasswordForEmail(email);
-  redirect("/account/recover?sent=1");
+export async function verifyEmailCode(form:FormData){
+ const pending=await pendingVerification();
+ const next=returnPath(form.get("next"));
+ if(!pending)redirect("/login?status=expired");
+ const code=String(form.get("code")??"").trim();
+ const password=String(form.get("password")??"");
+ if(!/^\d{6}$/.test(code))redirect("/account/verify?"+new URLSearchParams({next,status:"invalid-code"}));
+ if(pending.purpose==="recovery"&&(password.length<12||password.length>128))
+  redirect("/account/verify?"+new URLSearchParams({next,status:"invalid-password"}));
+ let result:"signup"|"recovery"|null=null;
+ try{result=await finishVerification(code,password);}
+ catch(error){redirect("/account/verify?"+new URLSearchParams({next,status:toStatus(error,"invalid-code")}));}
+ if(!result)redirect("/account/verify?"+new URLSearchParams({next,status:"invalid-code"}));
+ redirect(result==="recovery"?"/login?status=password-reset":next);
 }
-
-export async function updatePassword(form: FormData) {
-  const client = await authClient();
-  if (!client) redirect("/login");
-  const password = String(form.get("password") ?? "");
-  if (password.length < 8 || password.length > 128)
-    redirect("/account/password?error=1");
-  const { data } = await client.auth.getUser();
-  if (!data.user) redirect("/login");
-  const { error } = await client.auth.updateUser({ password });
-  if (error) redirect("/account/password?error=1");
-  redirect("/account");
+export async function resendEmailCode(form:FormData){
+ const next=returnPath(form.get("next"));
+ const pending=await pendingVerification();
+ if(!pending)redirect("/login?status=expired");
+ let status="sent";
+ try{if(!(await resendCode()))status="unavailable";}
+ catch(error){status=toStatus(error);}
+ redirect("/account/verify?"+new URLSearchParams({next,status}));
 }
-
-export async function signOut() {
-  const client = await authClient();
-  if (client) await client.auth.signOut({ scope: "local" });
-  redirect("/login");
+export async function requestPasswordReset(form:FormData){
+ const email=normalizedEmail(String(form.get("email")??""));
+ if(!authConfig())redirect("/account/recover?status=unavailable");
+ if(!email)redirect("/account/recover?status=invalid");
+ try{await requestRecovery(email);}
+ catch(error){
+  if(toStatus(error)==="rate-limited")redirect("/account/recover?status=rate-limited");
+  // Avoid revealing account existence to unauthenticated visitors.
+  redirect("/account/recover?status=unavailable");
+ }
+ redirect("/account/verify?purpose=recovery");
+}
+export async function updatePassword(form:FormData){
+ const password=String(form.get("password")??"");
+ const currentPassword=String(form.get("currentPassword")??"");
+ if(password.length<12||password.length>128||!currentPassword)redirect("/account/password?error=1");
+ try{if(!(await changePassword(password,currentPassword)))redirect("/account/password?error=1");}
+ catch(error){
+  if(error&&typeof error==="object"&&"digest" in error)throw error;
+  redirect("/account/password?error=1");
+ }
+ redirect("/account?status=password-updated");
+}
+export async function signOut(){
+ await removeSession();
+ redirect("/login");
 }
