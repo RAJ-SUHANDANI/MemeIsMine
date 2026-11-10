@@ -61,6 +61,14 @@ try {
  assert.equal(emails.length,1);
  assert.match(emails[0].code,/^[0-9]{6}$/);
  assert.equal(emails[0].purpose,"signup");
+ await accounts.savePending(email,"signup");
+ assert.deepEqual(await accounts.pendingVerification(),{email,purpose:"signup"});
+ const authenticPending=jar.get("mim_verify");
+ const [signedBody,signedSignature]=authenticPending.split(".");
+ jar.set("mim_verify",signedBody+"."+("f"===signedSignature[0]?"a":"f")+signedSignature.slice(1));
+ assert.equal(await accounts.pendingVerification(),null,"a modified verification cookie must be rejected");
+ jar.set("mim_verify",authenticPending);
+ assert.deepEqual(await accounts.pendingVerification(),{email,purpose:"signup"},"original signed cookie must still work");
  assert.equal(await accounts.verifyChallenge(email,"000000" === emails[0].code ? "999999" : "000000","signup"),false);
  assert.equal(await accounts.finishVerification(email,emails[0].code,"signup"),true);
  assert.equal(await accounts.verifyChallenge(email,emails[0].code,"signup"),false,"OTP cannot be reused");
