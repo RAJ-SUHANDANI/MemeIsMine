@@ -1,0 +1,31 @@
+name: Resolve hosted-auth dependency lock
+on:
+  push:
+    branches: [redesign]
+    paths:
+      - .github/workflows/refresh-hosted-auth-lock.yml
+permissions:
+  contents: write
+jobs:
+  update-lockfile:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/redesign'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: redesign
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Generate dependency integrity tree
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --save-exact
+      - name: Commit lockfile to redesign only
+        run: |
+          git config user.name "mim-dependency-ci"
+          git config user.email "dependency-ci@users.noreply.github.com"
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Lock Appwrite Cloud auth SDK dependencies"
+            git push origin HEAD:redesign
+          fi
