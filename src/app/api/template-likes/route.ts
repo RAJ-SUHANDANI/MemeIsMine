@@ -13,6 +13,6 @@ export async function GET(request:Request) {
  if(!authConfig())return NextResponse.json({error:"Likes unavailable"},{status:503,headers});
  try{
   const user=(await accountSession())?.user;
-  return NextResponse.json(likeState(key,user?.id),{headers});
+  return NextResponse.json(await likeState(key,user?.id),{headers});
  }catch{return NextResponse.json({error:"Likes unavailable"},{status:503,headers});}
 }
