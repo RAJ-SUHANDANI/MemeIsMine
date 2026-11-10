@@ -5,9 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowUpRight,
   Code2,
-  Github,
   Globe2,
-  Linkedin,
   Sparkles,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site";
@@ -96,24 +94,6 @@ export default function AboutPage() {
               React, Next.js, TypeScript, and motion/3D tools. I’ve also worked
               on content planning and brand communication.
             </p>
-            <div className="about-actions">
-              <a
-                className="button button-dark"
-                href="https://rajsuhandani.vercel.app/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Visit my portfolio <ArrowUpRight size={16} />
-              </a>
-              <a
-                className="text-link"
-                href="https://github.com/RAJ-SUHANDANI"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Explore my GitHub <Github size={15} />
-              </a>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -174,32 +154,7 @@ export default function AboutPage() {
               Meme Is Mine is designed and developed by Raj Suhandani as an
               independent creative web project.
             </p>
-            <div className="about-socials">
-              <a
-                href="https://www.linkedin.com/in/raj-suhandani-a4a393321"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Raj's LinkedIn"
-              >
-                <Linkedin />
-              </a>
-              <a
-                href="https://github.com/RAJ-SUHANDANI"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Raj's GitHub"
-              >
-                <Github />
-              </a>
-              <a
-                href="https://rajsuhandani.vercel.app/"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Raj's portfolio"
-              >
-                <Globe2 />
-              </a>
-            </div>
+
           </div>
           <motion.div
             className="about-end-stamp"
