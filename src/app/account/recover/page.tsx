@@ -11,13 +11,13 @@ export default async function Recover({searchParams}:{searchParams:Promise<{stat
  return <main id="main-content" className="rf-site mim-verify-page">
    <SiteHeader/>
    <section className="mim-verify-wrap mim-recover-wrap">
-    <div className="mim-verify-art" aria-hidden="true"><div className="mim-verify-art-inner"><span>✳</span><strong>WE'VE<br/>GOT<br/>YOU.</strong><small>GET BACK TO THE GOOD STUFF.</small></div></div>
+    <div className="mim-verify-art" aria-hidden="true"><div className="mim-verify-art-inner"><span>✳</span><strong>WE HAVE<br/>GOT<br/>YOU.</strong><small>GET BACK TO THE GOOD STUFF.</small></div></div>
     <div className="mim-verify-content">
      <div className="mim-verify-icon"><KeyRound size={31}/></div>
      <span className="rf-kicker">ACCOUNT / RECOVERY</span>
      <h1>Back in <em>business.</em></h1>
-     <p>Enter your email address. If it belongs to an account, we'll send a six-digit code to verify it's you.</p>
-     {status==="unavailable"&&<p className="mim-auth-notice" role="status">Email verification isn't configured on this server yet.</p>}
+     <p>Enter your email address. If it belongs to an account, we will send a six-digit code to verify it is you.</p>
+     {status==="unavailable"&&<p className="mim-auth-notice" role="status">Email verification is not configured on this server yet.</p>}
      <form action={requestPasswordReset} className="mim-verify-form">
       <label htmlFor="recovery-email">EMAIL ADDRESS</label>
       <input id="recovery-email" type="email" autoComplete="email" name="email" placeholder="you@example.com" maxLength={254} required disabled={!enabled}/>
