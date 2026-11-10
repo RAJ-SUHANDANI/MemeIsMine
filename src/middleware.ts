@@ -1,7 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 /* Account validation happens inside Node.js server components and actions.
    Middleware must never open a SQLite database in the Edge runtime. */
-export function middleware(_request: NextRequest) {
+export function middleware() {
  const response=NextResponse.next();
  response.headers.set("Cache-Control","private, no-store");
  return response;
