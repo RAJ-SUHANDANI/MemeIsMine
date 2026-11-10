@@ -17,6 +17,7 @@ export function TemplatePreview({
 }: {
   title: string;
   editorHref: string;
+  sourceHref?: string;
   reactionKey: string;
   onClose: () => void;
   children: ReactNode;
