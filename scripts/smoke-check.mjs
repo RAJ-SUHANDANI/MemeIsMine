@@ -20,6 +20,14 @@ for (const route of routes) {
   assert.match(await r.text(), /Meme Is Mine/, route);
   console.log("PASS route " + route);
 }
+// First paint contains complete motion rails, not a tiny placeholder set.
+const homeMarkup = await (await fetch(base + "/", { signal: AbortSignal.timeout(20000) })).text();
+const centerSegments = (homeMarkup.match(/data-rail-copy="1"/g) ?? []).length;
+const totalRailCards = (homeMarkup.match(/class="rf-rail-card"/g) ?? []).length;
+assert.equal(centerSegments, 2, "homepage must contain one still and one moving carousel");
+assert.ok(totalRailCards >= 120, "homepage must render at least 20 templates per rail across loop copies");
+console.log("PASS two continuously populated homepage galleries");
+
 for (const route of ["/account", "/studio", "/create/upload", "/create/112126428", "/video-editor/arjun-kapoor-angry"]) {
   const response = await fetch(base + route, { redirect: "manual" });
   assert.equal(response.status, 307, route);
@@ -32,6 +40,8 @@ for (const route of [
   "/api/memes?limit=4",
   "/api/memes?q=Drake&limit=10",
   "/api/video-templates?limit=3",
+  "/api/memes?limit=24",
+  "/api/video-templates?limit=24",
   "/api/memes?sort=new&limit=3",
   "/api/video-templates?sort=new&limit=3",
   "/api/memes?id=memegen-bongo",
@@ -42,6 +52,11 @@ for (const route of [
   assert.equal(r.status, 200, route);
   const data = await r.json();
   assert.equal(data.success, true, route);
+  if (route.endsWith("limit=24")) {
+    const entries = data.templates ?? data.memes ?? [];
+    assert.ok(entries.length >= 20, "gallery archive must supply at least 20 formats");
+    assert.equal(new Set(entries.map(item => item.id)).size, entries.length, "gallery formats must be unique");
+  }
   if (route.includes("q=Drake"))
     assert.ok(data.memes.every((m) => m.name.toLowerCase().includes("drake")));
   console.log("PASS API " + route);
