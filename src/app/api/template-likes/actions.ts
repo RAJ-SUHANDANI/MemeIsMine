@@ -10,6 +10,6 @@ export async function setTemplateLike(key:string,liked:boolean):Promise<LikeStat
  if(!canonical||typeof liked!=="boolean"||!authConfig())return null;
  const session=await accountSession();
  if(!session)return null;
- try{return toggleLike(canonical,session.user.id,liked);}
+ try{return await toggleLike(canonical,session.user.id,liked);}
  catch(error){console.error("Like update failed:",error instanceof Error?error.message:"unknown");return null;}
 }
