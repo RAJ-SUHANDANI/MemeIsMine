@@ -101,9 +101,10 @@ export async function createSession(userId: string, scope: "user" | "recovery" =
   });
 }
 export async function readSession(): Promise<SessionRow | null> {
-  if (!authConfig()) return null;
+  // Always read request cookies. Without it, a build with no DB configured
+  // could accidentally prerender /studio and /account as permanently signed out.
   const token = (await cookies()).get(COOKIE)?.value;
-  if (!token) return null;
+  if (!authConfig() || !token) return null;
   const current = database().prepare(`
     SELECT users.id,users.email,users.verified,sessions.scope,sessions.token_hash,sessions.expires_at
     FROM session_tokens sessions JOIN users ON users.id=sessions.user_id
