@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-chrome";
 import { requireAccount } from "@/lib/require-account";
 import { signOut } from "./actions";
 
-export const metadata={title:"Your account"};
+export const metadata={title:"Your account",robots:{index:false,follow:false}};
 export default async function Account(){
  const {user}=await requireAccount("/account");
  return <main id="main-content" tabIndex={-1} className="rf-site rf-account">
