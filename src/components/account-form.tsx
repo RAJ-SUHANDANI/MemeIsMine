@@ -15,6 +15,7 @@ const messages:Record<string,string>={
  invalid:"Enter a valid email address. New passwords must be 12–128 characters.",
  "signup-error":"Couldn't create the account. Please try again.",
  "login-error":"Email or password is incorrect, or the email hasn't been verified.",
+ "account-exists":"An account already exists for that email. Sign in to continue.",
  "too-many-codes":"Too many codes were requested. Try again later.",
  "check-email":"Check your inbox for the six-digit confirmation code.",
  "confirmation-error":"That verification code has expired.",
