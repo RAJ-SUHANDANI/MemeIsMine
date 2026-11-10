@@ -623,3 +623,57 @@
 @media (prefers-reduced-motion: reduce) {
   .rf-studio-sample { transition: none; transform: none; }
 }
+
+/* Homepage editorial marquee: two identical runs form a mathematically
+   seamless track. A single compositor transform keeps it smooth on mobile. */
+.rf-ticker {
+  overflow: hidden;
+  width: 100%;
+}
+.rf-ticker > .rf-ticker-track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  max-width: none;
+  white-space: nowrap;
+  padding: 19px 0;
+  text-align: left;
+  animation: rf-ticker-scroll-left 32s linear infinite;
+  will-change: transform;
+}
+.rf-ticker-sequence {
+  display: flex;
+  align-items: center;
+  gap: clamp(25px, 3.3vw, 61px);
+  flex: 0 0 auto;
+  width: max-content;
+  padding-right: clamp(25px, 3.3vw, 61px);
+}
+.rf-ticker-sequence > span:not(.rf-ticker-mark) {
+  flex-shrink: 0;
+  font: 750 clamp(19px, 2.25vw, 32px)/1.1 var(--display);
+  letter-spacing: -.045em;
+}
+.rf-ticker-sequence > .rf-ticker-mark {
+  flex-shrink: 0;
+  color: var(--rf-accent);
+  font: 400 clamp(23px, 2.75vw, 39px)/1 var(--rf-serif);
+  letter-spacing: 0;
+}
+@keyframes rf-ticker-scroll-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@media (max-width: 600px) {
+  .rf-ticker > .rf-ticker-track { padding-block: 15px; animation-duration: 27s; }
+  .rf-ticker-sequence { gap: 25px; padding-right: 25px; }
+  .rf-ticker-sequence > span:not(.rf-ticker-mark) { font-size: 21px; }
+  .rf-ticker-sequence > .rf-ticker-mark { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rf-ticker > .rf-ticker-track {
+    animation: none;
+    transform: none;
+    will-change: auto;
+  }
+}
