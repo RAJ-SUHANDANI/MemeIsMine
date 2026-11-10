@@ -258,7 +258,7 @@
 }
 .rf-gallery-home .rf-motion-rail {
   width: calc(100% + clamp(40px, 7vw, 110px));
-  margin-inline: calc(clamp(40px, 7vw, 110px) / -2);
+  margin-inline: calc(-1 * clamp(20px, 3.5vw, 55px));
 }
 .rf-rail-meta {
   min-height: 56px;
