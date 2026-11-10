@@ -15,24 +15,62 @@ import "./reframe-refinement.css";
 import "./reframe-controls.css";
 import "./reframe-auth.css";
 import { MotionProvider } from "@/components/motion-provider";
+import { safeJsonLd, siteOrigin } from "@/lib/site-seo";
+const origin=siteOrigin();
 export const metadata: Metadata = {
   title: {
-    default: "Meme Is Mine | Make the internet yours",
+    default: "Meme Is Mine — Free Image & Video Meme Templates and Meme Maker",
     template: "%s | Meme Is Mine",
   },
   description:
-    "Find the format. Make it yours. A playful, beautifully simple studio for creating and downloading memes.",
-  metadataBase: new URL("https://memeismine.vercel.app"),
-  icons: { icon: "/mim-mark.svg" },
-  openGraph: {
-    title: "Meme Is Mine",
-    description:
-      "Make image and video memes in your browser. Preview templates for free, then sign in to make them yours.",
-    images: [{ url: "/editor-preview.jpg", width: 1395, height: 790 }],
+    "Browse image and video meme templates, preview looping reaction clips, add your own captions and download memes. Free template gallery and a personal browser-based meme studio.",
+  metadataBase:new URL(origin),
+  applicationName:"Meme Is Mine",
+  alternates:{canonical:"/"},
+  keywords:[
+    "meme maker", "free meme templates", "image meme templates", "video meme templates",
+    "meme generator", "make a meme online", "reaction memes", "meme editor",
+  ],
+  icons:{icon:"/mim-mark.svg"},
+  openGraph:{
+    type:"website",locale:"en_US",siteName:"Meme Is Mine",
+    url:origin,
+    title:"Meme Is Mine — Find a format. Make the punchline yours.",
+    description:"Explore free image and video meme templates. Preview, caption and export your next meme in the browser.",
+    images:[{url:"/editor-preview.jpg",width:1395,height:790,alt:"Meme Is Mine meme creation workspace"}],
   },
-  applicationName: "Meme Is Mine",
-  keywords: ["meme maker", "meme editor", "meme templates", "download memes"],
+  twitter:{
+    card:"summary_large_image",
+    title:"Meme Is Mine — Free Meme Templates & Meme Maker",
+    description:"Discover image memes and looping video templates, then make your own.",
+    images:["/editor-preview.jpg"],
+  },
+  robots:{index:true,follow:true,googleBot:{index:true,follow:true,"max-image-preview":"large","max-snippet":-1,"max-video-preview":-1}},
+  category:"entertainment",
 };
+const structured={
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"WebSite",name:"Meme Is Mine",url:origin,
+      description:"Browse image and video meme templates and create memes in your browser.",
+      inLanguage:"en",
+      potentialAction:{
+        "@type":"SearchAction",target:{"@type":"EntryPoint",urlTemplate:origin+"/explore?q={search_term_string}"},
+        "query-input":"required name=search_term_string",
+      },
+    },
+    {
+      "@type":"WebApplication",name:"Meme Is Mine",url:origin,
+      applicationCategory:"MultimediaApplication",operatingSystem:"Any",
+      description:"A free browser-based meme maker with image and video templates, caption tools and local draft storage.",
+      offers:{"@type":"Offer",price:"0",priceCurrency:"USD"},
+      browserRequirements:"Modern browser with JavaScript enabled",
+      inLanguage:"en",
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -42,6 +80,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJsonLd(structured)}}/>
         <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
