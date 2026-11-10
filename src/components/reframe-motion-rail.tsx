@@ -208,7 +208,7 @@ export function ReframeMotionRail({ count, mode, variant, label, paused = false,
         aria-label={label + ". Swipe, drag, or scroll horizontally to browse."}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd}
         onPointerCancel={onPointerEnd} onPointerEnter={e => { if (e.pointerType === "mouse") hovered.current = true; }}
-        onPointerLeave={e => { if (e.pointerType === "mouse") { hovered.current = false; onPointerEnd(); } }}
+        onPointerLeave={e => { if (e.pointerType === "mouse") { hovered.current = false; if (drag.current) onPointerEnd(); } }}
         onTouchStart={() => hold(7000)} onWheel={() => hold(4000)}
         onFocusCapture={() => { focused.current = true; hold(5000); }}
         onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) { focused.current = false; hold(2000); } }}
