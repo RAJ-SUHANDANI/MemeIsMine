@@ -12,6 +12,7 @@ export const metadata={title:"Verify your email"};
 const messages:Record<string,string>={
  "invalid-code":"That code did not match, expired, or was used too many times. Request a new one if needed.",
  "too-many-codes":"Too many requests. Please try again in an hour.",
+ "rate-limited":"Too many requests from this connection. Try again later.",
  wait:"A code was recently sent. Check your inbox or wait a minute to request another.",
  unavailable:"Email delivery is temporarily unavailable. Please try again.",
  sent:"A fresh code has been requested. Check your inbox.",
