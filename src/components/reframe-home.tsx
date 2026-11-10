@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Bookmark, Clapperboard, Download, Layers3, UploadCloud } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { starterMemes, type MemeTemplate } from "@/data/memes";
 import { SiteHeader } from "./site";
 import { SiteFooter } from "./site-chrome";
@@ -49,18 +49,13 @@ function CaptionArtifact({meme}:{meme:MemeTemplate}) {
  </div>;
 }
 
-export function ReframeHome() {
+export function ReframeHome({ initialImages, initialVideos }: {
+ initialImages: MemeTemplate[];
+ initialVideos: HomeVideo[];
+}) {
  const reduced=useReducedMotion();
- const [images,setImages]=useState<MemeTemplate[]>(starterMemes.slice(0,6));
- const [videos,setVideos]=useState<HomeVideo[]>([]);
- const [catalogError,setCatalogError]=useState(false);
- useEffect(()=>{
-  const controller=new AbortController();
-  fetch("/api/home-templates",{signal:controller.signal,cache:"no-store"}).then(async r=>{if(!r.ok)throw Error("archive unavailable");return r.json();})
-   .then(data=>{if(controller.signal.aborted)return;if(Array.isArray(data.images)&&data.images.length)setImages(data.images);if(Array.isArray(data.videos))setVideos(data.videos);setCatalogError(false);})
-   .catch(()=>{if(!controller.signal.aborted)setCatalogError(true);});
-  return ()=>controller.abort();
- },[]);
+ const images=initialImages;
+ const videos=initialVideos;
  return <main id="main-content" tabIndex={-1} className="rf-site rf-home">
   <ReframeIntro/><SiteHeader/>
   <section className="rf-home-hero">
@@ -83,10 +78,10 @@ export function ReframeHome() {
    <div className="container">
     <Reveal className="rf-section-heading">
       <div><span className="rf-kicker">01 / THE STILL IMAGE DEPARTMENT</span><h2>Every face<br/>has <em>a story.</em></h2></div>
-      <p>For the thoughts you cannot explain without a reaction image. Arrange the gallery however you want.</p>
+      <p>For the thoughts that need a face. Twenty-four formats moving on their own — drag, swipe or change the arrangement.</p>
     </Reveal>
-    <ReframeGallery kind="image" variant="showcase" path="/explore" items={images.map(asImage)}/>
-    <div className="rf-section-end"><span>{catalogError?"Showing a small offline-ready collection.":"A FEW FRAMES FROM THE ARCHIVE."}</span><Link href="/templates">See every image <ArrowUpRight size={18}/></Link></div>
+    <ReframeGallery home kind="image" variant="showcase" path="/explore" items={images.map(asImage)}/>
+    <div className="rf-section-end"><span>{images.length + " ACTUAL FORMATS · ENDLESSLY IN MOTION"}</span><Link href="/templates">See every image <ArrowUpRight size={18}/></Link></div>
    </div>
   </section>
   <section className="rf-home-editor-section">
@@ -106,11 +101,11 @@ export function ReframeHome() {
    <div className="container">
     <Reveal className="rf-section-heading">
       <div><span className="rf-kicker">03 / THE MOVING IMAGE DEPARTMENT</span><h2>Some moments<br/><em>need motion.</em></h2></div>
-      <p>When one frame just does not do it. Moving memes, GIFs and clips ready for your next caption.</p>
+      <p>A moving wall of reactions. Twenty-four moments in an endless stack — swipe through and find the one that lands.</p>
     </Reveal>
-    {videos.length?<ReframeGallery items={videos.map(asVideo)} kind="video" variant="objects" path="/video-templates"/>:
+    {videos.length?<ReframeGallery home items={videos.map(asVideo)} kind="video" variant="objects" path="/video-templates"/>:
       <div className="rf-motion-teaser"><Clapperboard size={58}/><h3>The moving archive.</h3><p>Watch the moment, then make it yours.</p><Link href="/video-templates">Browse video formats <ArrowUpRight size={18}/></Link></div>}
-    <div className="rf-section-end"><span>MAKE THE REACTION MOVE.</span><Link href="/video-templates">Explore the motion archive <ArrowUpRight size={18}/></Link></div>
+    <div className="rf-section-end"><span>{videos.length + " MOVING FORMATS · THE FULL LOOP"}</span><Link href="/video-templates">Explore the motion archive <ArrowUpRight size={18}/></Link></div>
    </div>
   </section>
   <section className="rf-home-studio-banner"><div className="container rf-home-studio-grid">
