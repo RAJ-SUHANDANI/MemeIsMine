@@ -129,14 +129,16 @@ export async function sendChallenge(email: string, purpose: "signup" | "recovery
   }
 }
 
-export async function register(email: string, password: string): Promise<"sent" | "cooldown" | "limited" | "unavailable"> {
+export async function register(email: string, password: string): Promise<"sent" | "cooldown" | "limited" | "unavailable" | "exists" | "invalid"> {
   if (!authConfig() || password.length < 12 || password.length > 128) return "unavailable";
   const existing = getUser(email);
   if (!existing) {
     database().prepare("INSERT OR IGNORE INTO users(id,email,password_hash,verified,created_at) VALUES(?,?,?,?,?)")
       .run(randomUUID(),email,passwordHash(password),0,Date.now());
-  } else if (!existing.verified && !matchesPassword(password,existing.password_hash)) {
-    return "sent";
+  } else if (existing.verified) {
+    return "exists";
+  } else if (!matchesPassword(password,existing.password_hash)) {
+    return "invalid";
   }
   return sendChallenge(email,"signup");
 }
