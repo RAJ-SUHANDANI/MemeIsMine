@@ -1,43 +1,40 @@
 #!/usr/bin/env node
 /**
- * One-time Appwrite Cloud Free setup.
- *
- * Requires APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID and APPWRITE_API_KEY
- * with documentsdb.read and documentsdb.write scopes.
- * Creates one database and one private, schemaless likes collection.
- *
- * Idempotent: an existing database or collection is preserved.
+ * Idempotent Appwrite TablesDB initialization for Meme Is Mine.
+ * Expects a server-only key with databases.write and tables.write scopes.
  */
-import { Client, DocumentsDB } from "node-appwrite";
-
+import {Client,TablesDB} from "node-appwrite";
 const endpoint=process.env.APPWRITE_ENDPOINT;
 const projectId=process.env.APPWRITE_PROJECT_ID;
 const apiKey=process.env.APPWRITE_API_KEY;
 const databaseId=process.env.APPWRITE_DATABASE_ID||"mim";
-const collectionId=process.env.APPWRITE_LIKES_COLLECTION_ID||"template_likes";
+const tableId=process.env.APPWRITE_LIKES_COLLECTION_ID||"template_likes";
 if(!endpoint||!projectId||!apiKey){
- console.error("Set APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID and APPWRITE_API_KEY first.");
+ console.error("Set APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID and APPWRITE_API_KEY.");
  process.exit(1);
 }
 const client=new Client().setEndpoint(endpoint).setProject(projectId).setKey(apiKey);
-const documents=new DocumentsDB(client);
-async function ensure(label,action){
- try{await action();console.log("CREATED "+label);}
- catch(error){
-  if(error?.code===409){console.log("EXISTS "+label);return;}
-  throw error;
- }
+const tables=new TablesDB(client);
+async function ensure(label,call){
+ try{await call();console.log("CREATED "+label);}
+ catch(error){if(error?.code===409){console.log("EXISTS "+label);return;}throw error;}
 }
 try{
- await ensure("database "+databaseId,()=>documents.createDatabase({
-  databaseId,name:"Meme Is Mine",enabled:true,
+ await ensure("database "+databaseId,()=>tables.create({databaseId,name:"Meme Is Mine"}));
+ await ensure("table "+tableId,()=>tables.createTable({
+  databaseId,tableId,name:"Template Likes",permissions:[],rowSecurity:false,
+  columns:[
+   {key:"templateKey",type:"varchar",size:255,required:true},
+   {key:"userId",type:"varchar",size:64,required:true},
+   {key:"createdAt",type:"bigint",required:true},
+  ],
+  indexes:[
+   {key:"likes_by_template",type:"key",attributes:["templateKey"]},
+   {key:"likes_by_user",type:"key",attributes:["userId"]},
+  ],
  }));
- await ensure("private likes collection "+collectionId,()=>documents.createCollection({
-  databaseId,collectionId,name:"Template likes",
-  permissions:[],documentSecurity:false,enabled:true,
- }));
- console.log("Appwrite database setup complete. Account emails use Appwrite's default email sender.");
+ console.log("Private indexed Appwrite likes table is ready.");
 }catch(error){
- console.error("Appwrite setup failed:",error instanceof Error?error.message:"unknown error");
+ console.error("Appwrite setup failed:",error instanceof Error?error.message:"unknown");
  process.exitCode=1;
 }
