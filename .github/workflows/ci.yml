@@ -26,6 +26,8 @@ jobs:
         run: npm run lint
       - name: Test hosted authentication contracts
         run: npm run test:auth
+      - name: Test video preview recovery and source safety
+        run: npm run test:video
       - name: Typecheck application
         run: npm run typecheck
       - name: Build application
