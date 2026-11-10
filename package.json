@@ -14,7 +14,7 @@
     "sync:indian-images": "node scripts/sync-indian-meme-templates.mjs",
     "typecheck": "tsc --noEmit",
     "qa:smoke": "node scripts/smoke-check.mjs",
-    "test:auth": "node scripts/test-account-store.mjs"
+    "setup:appwrite": "node scripts/setup-appwrite.mjs"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
@@ -24,9 +24,9 @@
     "lucide-react": "^0.468.0",
     "motion": "^12.23.24",
     "next": "15.5.29",
+    "node-appwrite": "31.1.0",
     "react": "19.1.10",
-    "react-dom": "19.1.10",
-    "nodemailer": "^10.4.0"
+    "react-dom": "19.1.10"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
