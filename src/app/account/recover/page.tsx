@@ -2,12 +2,12 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, KeyRound } from "lucide-react";
 import { SiteHeader } from "@/components/site";
 import { SiteFooter } from "@/components/site-chrome";
-import { authConfig, emailConfig } from "@/lib/auth-config";
+import { authConfig } from "@/lib/auth-config";
 import { requestPasswordReset } from "../actions";
 export const metadata={title:"Reset your password",robots:{index:false,follow:false}};
 export default async function Recover({searchParams}:{searchParams:Promise<{status?:string}>}){
  const {status}=await searchParams;
- const enabled=Boolean(authConfig()&&emailConfig());
+ const enabled=Boolean(authConfig());
  return <main id="main-content" className="rf-site mim-verify-page">
    <SiteHeader/>
    <section className="mim-verify-wrap mim-recover-wrap">
@@ -16,8 +16,8 @@ export default async function Recover({searchParams}:{searchParams:Promise<{stat
      <div className="mim-verify-icon"><KeyRound size={31}/></div>
      <span className="rf-kicker">ACCOUNT / RECOVERY</span>
      <h1>Back in <em>business.</em></h1>
-     <p>Enter your email address. If it belongs to an account, we will send a six-digit code to verify it is you.</p>
-     {status==="unavailable"&&<p className="mim-auth-notice" role="status">Email verification is not configured on this server yet.</p>}
+     <p>Enter your email address. If it belongs to an account, a six-digit code will be sent to help you reset your password.</p>
+     {status==="unavailable"&&<p className="mim-auth-notice" role="status">Account recovery is temporarily unavailable.</p>}
      {status==="rate-limited"&&<p className="mim-auth-notice" role="status">Too many recovery requests. Please try again later.</p>}
      <form action={requestPasswordReset} className="mim-verify-form">
       <label htmlFor="recovery-email">EMAIL ADDRESS</label>
