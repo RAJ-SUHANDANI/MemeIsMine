@@ -94,7 +94,7 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
           {likes.failed && <p className="rf-error" role="status">Likes are temporarily unavailable.</p>}
           <p className="rf-gesture-note">{item.kind==="image"?"Pinch to zoom. Double-tap to like.":"Video starts when you press play."}</p>
           <div className="rf-preview-links"><Link href={item.editorHref} className="rf-primary-action">Use this template <ArrowUpRight size={19}/></Link>
-            {item.sourceHref && <a href={item.sourceHref} target="_blank" rel="noopener noreferrer">View original source <ArrowUpRight size={15}/></a>}
+            
           </div>
         </div>
       </div>
