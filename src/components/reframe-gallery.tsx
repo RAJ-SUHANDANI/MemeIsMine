@@ -35,7 +35,7 @@ function GalleryCard({ item, index, onOpen, onSave, saved, shared = true }: {
           layoutId={shared ? "rf-art-" + item.kind + "-" + item.id : undefined}
           transition={{ type: "spring", stiffness: 330, damping: 35 }}>
           {item.image
-            ? <img src={item.image} alt="" loading={index < 3 ? "eager" : "lazy"} decoding="async" />
+            ? <img src={item.image} alt="" loading={shared && index < 3 ? "eager" : "lazy"} decoding="async" />
             : <span className="rf-poster-placeholder">MIM / {item.kind === "video" ? "MOTION" : "STILL"}</span>}
         </motion.div>
         <span className="rf-gallery-overprint"><span>{item.kind === "video" ? "MOVING IMAGE" : "STILL FRAME"}</span><ArrowUpRight size={17}/></span>
