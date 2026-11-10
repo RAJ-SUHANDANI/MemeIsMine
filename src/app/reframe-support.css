@@ -153,3 +153,19 @@
  .rf-account-links>a{min-height:250px}
 }
 @media(prefers-reduced-motion:reduce){.rf-account-links>a{transition:none}}
+
+/* Native details expose every real answer to crawlers and assistive tech.
+   The chevron animates; the content is never omitted from initial HTML. */
+.rf-faq-page .faq-item{display:block}
+.rf-faq-page summary.faq-question{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:22px;list-style:none;cursor:pointer;
+}
+.rf-faq-page summary.faq-question::-webkit-details-marker{display:none}
+.rf-faq-page summary.faq-question::marker{content:""}
+.rf-faq-page summary.faq-question>svg{flex:none;transition:transform .24s ease}
+.rf-faq-page details[open]>summary.faq-question>svg{transform:rotate(180deg)}
+.rf-faq-page .faq-answer{overflow:visible}
+.rf-faq-page .faq-answer p{padding:0 20px 27px 39px}
+.rf-faq-page .faq-question:focus-visible{outline:3px solid var(--rf-accent);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.rf-faq-page summary.faq-question>svg{transition:none}}
