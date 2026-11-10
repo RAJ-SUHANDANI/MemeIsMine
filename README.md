@@ -17,7 +17,7 @@ Routes: `/`, `/explore` (**Image Templates**), `/video-templates` (**Video Templ
 
 ### Discovery
 
-Search and filter controls use a rounded design with a keyboard-accessible animated sort menu. Flow and Stack browse horizontally and can autoplay, pause, and respond to touch/drag/keyboard gestures. The homepage renders 24 still and 24 moving formats from the catalogue immediately, with no List/Grid toggle on the landing page. Previews have like, save, share-link, and zoom interactions.
+Search and filter controls use a rounded design with a keyboard-accessible animated sort menu. Flow is the only gallery layout across Home, Image Templates and Video Templates. It scrolls horizontally, loops continuously and supports autoplay, pause, touch/drag and keyboard gestures. The homepage renders 24 still and 24 moving formats from the catalogue immediately, with no List/Grid toggle on the landing page. Video cards and expanded previews silently autoplay and loop without playback controls; the actual editor retains playback controls. Image previews offer like, save, share-link and zoom interactions.
 
 ## First-party accounts: SQLite + Node + SMTP
 
@@ -69,3 +69,11 @@ npm run qa:smoke
 The repository's CI runs lint, TypeScript, build, and production route/API checks. Browser and end-to-end signup/SMTP delivery tests on the target host remain required before a production launch.
 
 Notes: image/video template media can originate from remote hosts; rights and third-party license terms still apply even when the UI doesn't show promotional links. No platform/source-code/portfolio links appear in the public redesigned flows.
+
+## Current design and search visibility
+
+The homepage intro runs through its full Motion progress animation and exit before the main page is revealed on the first visit; a manual Skip control and reduced-motion/no-JavaScript fallbacks remain available. Home and both template archives use the **Flow gallery only**. There are no Grid, List or Stack layout controls.
+
+Unique per-page canonical metadata, structured WebApplication/WebSite descriptions, an SSR FAQ and server-rendered image/video catalogues support indexing. Set `NEXT_PUBLIC_SITE_URL` to the **real HTTPS public domain** before launch. See `SEARCH-VISIBILITY.md` and `SECURITY.md` for release checks. No search ranking or AI citation can be guaranteed.
+
+GitHub Actions also tests a temporary signed-in SQLite session accessing Studio and both existing editor routes. The genuine email/OTP workflow still requires a production SMTP account and persistent Node deployment. These steps cannot be verified by CI without real SMTP credentials.
