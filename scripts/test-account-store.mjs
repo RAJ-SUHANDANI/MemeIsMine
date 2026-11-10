@@ -42,7 +42,7 @@ function load(file) {
  }
  const evaluate = new Function("require", "module", "exports", "process", "Buffer", transpiled);
  evaluate(localRequire, loadedModule, loadedModule.exports, process, Buffer);
- cache.set(location, module.exports);
+ cache.set(location, loadedModule.exports);
  return loadedModule.exports;
 }
 
