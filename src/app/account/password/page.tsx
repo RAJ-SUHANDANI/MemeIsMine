@@ -21,10 +21,10 @@ export default async function Password({searchParams}:{searchParams:Promise<{err
       <p>Choose a new, unique password. This will sign out other sessions to protect your account.</p>
       {error&&<p className="mim-auth-notice" role="status">Use a password between 12 and 128 characters. Please try again.</p>}
       <form action={updatePassword} className="mim-verify-form">
-        {session.scope==="user"&&<>
+        <>
           <label htmlFor="password-current">CURRENT PASSWORD</label>
           <input id="password-current" name="currentPassword" type="password" required autoComplete="current-password" placeholder="Your current password"/>
-        </>}
+        </>
         <label htmlFor="password-new">NEW PASSWORD</label>
         <input id="password-new" name="password" type="password" minLength={12} maxLength={128} required autoComplete="new-password" placeholder="At least 12 characters"/>
         <button type="submit">Save password <ArrowUpRight size={19}/></button>
