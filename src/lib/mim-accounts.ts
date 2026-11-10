@@ -204,18 +204,33 @@ export async function finishVerification(email:string, code:string, purpose:"sig
   (await cookies()).delete(PENDING);
   return true;
 }
+/**
+ * The pending-verification cookie is signed so the browser cannot substitute
+ * another email or change the purpose from signup to password recovery.
+ * The embedded expiry is checked even if the browser retains an old cookie.
+ */
 export async function savePending(email:string,purpose:"signup"|"recovery") {
-  (await cookies()).set(PENDING,Buffer.from(JSON.stringify({email,purpose})).toString("base64url"),{
+  const payload=Buffer.from(JSON.stringify({
+    email,purpose,expires:Date.now()+TEN_MINUTES,
+  })).toString("base64url");
+  const signature=hmac("pending:"+payload);
+  (await cookies()).set(PENDING,payload+"."+signature,{
     httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"lax",path:"/",maxAge:600,
   });
 }
 export async function pendingVerification():Promise<{email:string;purpose:"signup"|"recovery"}|null> {
   const value=(await cookies()).get(PENDING)?.value;
-  if(!value)return null;
+  if(!value||value.length>1400)return null;
   try{
-    const decoded:unknown=JSON.parse(Buffer.from(value,"base64url").toString("utf8"));
-    if(!decoded || typeof decoded!=="object" || !("email" in decoded) || !("purpose" in decoded))return null;
-    if(typeof decoded.email!=="string" || (decoded.purpose!=="signup"&&decoded.purpose!=="recovery"))return null;
+    const parts=value.split(".");
+    if(parts.length!==2||!parts[0]||!/^([0-9a-f]{64})$/.test(parts[1]))return null;
+    const expected=Buffer.from(hmac("pending:"+parts[0]),"hex");
+    const supplied=Buffer.from(parts[1],"hex");
+    if(!timingSafeEqual(expected,supplied))return null;
+    const decoded:unknown=JSON.parse(Buffer.from(parts[0],"base64url").toString("utf8"));
+    if(!decoded||typeof decoded!=="object"||!("email" in decoded)||!("purpose" in decoded)||!("expires" in decoded))return null;
+    if(typeof decoded.email!=="string"||(decoded.purpose!=="signup"&&decoded.purpose!=="recovery"))return null;
+    if(typeof decoded.expires!=="number"||decoded.expires<=Date.now()||decoded.expires>Date.now()+TEN_MINUTES)return null;
     const email=normalizedEmail(decoded.email);
     return email?{email,purpose:decoded.purpose}:null;
   }catch{return null;}
