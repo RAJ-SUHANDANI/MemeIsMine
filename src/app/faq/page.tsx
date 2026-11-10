@@ -1,122 +1,91 @@
-"use client";
 import Link from "next/link";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { SiteFooter } from "@/components/site-chrome";
-import { useState } from "react";
-import { ChevronDown, ArrowUpRight } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { SiteHeader } from "@/components/site";
-const questions = [
+import { safeJsonLd, siteAbsolute } from "@/lib/site-seo";
+
+const questions=[
   {
-    q: "Can I create video memes?",
-    a: "Yes. Choose a video or GIF in Video templates, add captions and overlays, then export WebM or convert to MP4. The source media must be available, and rendering depends on your browser capabilities.",
+    q:"What is Meme Is Mine?",
+    a:"Meme Is Mine is a browser-based meme maker with image templates, looping video and GIF previews, caption editing, exports, and a personal Studio for saved work.",
   },
   {
-    q: "Is Meme Is Mine free to use?",
-    a: "Browsing and previews are free. Sign in with a free account to use both editors and Studio.",
+    q:"Can I create video memes?",
+    a:"Yes. Choose a clip in Video Templates, watch the silent looping preview, open it in the editor, add captions, and export a supported video format. Browser and source-file support can vary.",
   },
   {
-    q: "Do I need to sign up or verify my email?",
-    a: "Sign in to use the image or video editor. You can browse and preview templates without an account. Drafts stay in the browser where you saved them.",
+    q:"Is Meme Is Mine free to use?",
+    a:"Yes. You can browse and preview image and video meme templates without paying or signing in. A free account is required to edit memes, save drafts in Studio, and like templates.",
   },
   {
-    q: "Can I upload my own image?",
-    a: "Yes. Open Create from your image or choose Upload image in the editor. JPG, PNG, and WebP images are supported, with a size limit shown in the editor so uploads can be kept locally in your browser.",
+    q:"How do I create an account and verify my email?",
+    a:"Choose Create account, enter your email address and a unique password, then enter the six-digit code sent to your inbox. Verification requires a correctly configured email-delivery service on the website server.",
   },
   {
-    q: "How do I download the meme?",
-    a: "Use Download PNG in the editor. The app draws the selected image and your captions to a canvas in the browser and exports PNG or JPG at the canvas dimensions you choose.",
+    q:"Can I make a meme with my own image?",
+    a:"Yes. Choose Upload your image and select a JPG, PNG or WebP file from your device. You can position captions and export the finished result.",
   },
   {
-    q: "Where are saved drafts stored?",
-    a: "Drafts and bookmarks are stored in localStorage in your browser. They are not uploaded to a database, do not sync across devices, and may be removed if you clear browser site data.",
+    q:"How do I download a finished meme?",
+    a:"Open an image template in the editor, add text, and choose an available PNG or JPG export. Video templates support the formats offered by your browser and the editor.",
   },
   {
-    q: "Why does a template image sometimes fail to load?",
-    a: "The template library uses publicly available remote image URLs when the upstream feed is reachable. Availability can change if a remote image is moved or removed. You can upload an image you have permission to use instead.",
+    q:"Where are my saved meme drafts stored?",
+    a:"Drafts, collections and bookmarks are kept in the current browser's local storage, not synchronized across devices. Sign-in does not automatically transfer them. Studio provides a manual backup option.",
   },
   {
-    q: "Can I use a downloaded meme anywhere?",
-    a: "That depends on the image and its rights. Only upload or use images you have permission to edit and share, and check any applicable rights or terms before using a meme commercially.",
+    q:"Why does a video or image template sometimes fail?",
+    a:"Some template files are hosted by external media services. If a source is offline, blocks requests, or changes its URL, a preview may be unavailable. Try another template or upload your own image.",
   },
   {
-    q: "Does the editor work on mobile?",
-    a: "The pages are responsive and you can browse and create on mobile. The editor layout stacks its tool and settings panels around the canvas on smaller screens.",
+    q:"Can I use downloaded memes commercially?",
+    a:"It depends on the original image, video and applicable rights. Use only media you have permission to edit or share, especially for commercial projects.",
   },
   {
-    q: "Does the site use AI to write memes?",
-    a: "No AI writing feature is part of this version. You choose the format and write your own captions.",
+    q:"Can I make memes on a phone?",
+    a:"The site offers a responsive interface for mobile browsing and creation. Video processing support and export performance may depend on your device and browser.",
+  },
+  {
+    q:"Does the website use AI to write my memes?",
+    a:"No. The current version is a manual meme maker: you choose the template and write the caption yourself.",
   },
 ];
-export default function FAQPage() {
-  const [open, setOpen] = useState<number | null>(0);
-  return (
-    <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page">
-      <SiteHeader />
-      <section className="page-hero">
-        <div className="container">
-          <span className="eyebrow">The obvious questions</span>
-          <h1>
-            Good to <span>know.</span>
-          </h1>
-          <p>
-            Everything you need to know before you make the group chat’s day.
-          </p>
-        </div>
-      </section>
-      <section className="section">
-        <div className="container faq-layout">
-          <div className="faq-intro">
-            <span className="eyebrow">FAQ / 001</span>
-            <h2 className="page-display">
-              NO MYSTERY.
-              <br />
-              <em>JUST MEMES.</em>
-            </h2>
-            <p>
-              If something isn’t answered here, send a note and tell us what
-              you’re trying to do.
-            </p>
-            <Link href="/contact" className="button button-dark">
-              Get in touch <ArrowUpRight size={15} />
-            </Link>
-          </div>
-          <div className="faq-list">
-            {questions.map((item, index) => (
-              <div
-                className={open === index ? "faq-item is-open" : "faq-item"}
-                key={item.q}
-              >
-                <button
-                  type="button"
-                  className="faq-question"
-                  aria-expanded={open === index}
-                  onClick={() => setOpen(open === index ? null : index)}
-                >
-                  <span>
-                    <small>{String(index + 1).padStart(2, "0")}</small>
-                    {item.q}
-                  </span>
-                  <ChevronDown size={19} />
-                </button>
-                <AnimatePresence initial={false}>
-                  {open === index && (
-                    <motion.div
-                      className="faq-answer"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.22 }}
-                    >
-                      <p>{item.a}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      <SiteFooter />
-    </main>
-  );
+const schema={
+ "@context":"https://schema.org",
+ "@type":"FAQPage",
+ mainEntity:questions.map(item=>({
+   "@type":"Question",name:item.q,
+   acceptedAnswer:{"@type":"Answer",text:item.a},
+ })),
+ url:siteAbsolute("/faq"),
+};
+
+export default function FAQPage(){
+ return <main id="main-content" tabIndex={-1} className="paper-noise rf-support-page rf-faq-page">
+   <SiteHeader/>
+   <script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJsonLd(schema)}}/>
+   <section className="page-hero"><div className="container">
+     <span className="eyebrow">Answers before you begin</span>
+     <h1>Good to <span>know.</span></h1>
+     <p>Clear answers about image memes, video templates, saving drafts, downloads, account verification and privacy.</p>
+   </div></section>
+   <section className="section"><div className="container faq-layout">
+     <div className="faq-intro">
+       <span className="eyebrow">A GUIDE TO MAKING MEMES</span>
+       <h2 className="page-display">NO MYSTERY.<br/><em>JUST MEMES.</em></h2>
+       <p>Find the right format, create your own caption and keep control of the final result.</p>
+       <Link href="/contact" className="button button-dark">Ask a question <ArrowUpRight size={17}/></Link>
+     </div>
+     <div className="faq-list">
+       {questions.map((item,index)=><details key={item.q} className="faq-item" open={index===0}>
+         <summary className="faq-question">
+           <span><small>{String(index+1).padStart(2,"0")}</small>{item.q}</span>
+           <ChevronDown size={20} aria-hidden="true"/>
+         </summary>
+         <div className="faq-answer"><p>{item.a}</p></div>
+       </details>)}
+     </div>
+   </div></section>
+   <SiteFooter/>
+ </main>;
 }
