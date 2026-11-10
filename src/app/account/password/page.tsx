@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site";
 import { SiteFooter } from "@/components/site-chrome";
 import { readSession } from "@/lib/mim-accounts";
 import { updatePassword } from "../actions";
-export const metadata={title:"Set a new password"};
+export const metadata={title:"Set a new password",robots:{index:false,follow:false}};
 export default async function Password({searchParams}:{searchParams:Promise<{error?:string}>}){
  const session=await readSession();
  if(!session)redirect("/account/recover");
