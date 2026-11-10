@@ -53,7 +53,7 @@ export function SiteFooter() {
     </div>
     <div className="container rf-footer-wordmark" aria-hidden="true">MEME IS MINE<span>✳</span></div>
     <div className="container rf-footer-bottom"><span>INDEPENDENTLY BUILT FOR THE INTERNET.</span>
-      <span>DESIGN & DEVELOPMENT / RAJ SUHANDANI</span><Link href="/">BACK TO TOP ↑</Link>
+      <span>YOUR MEMES. YOUR RULES.</span><Link href="/">BACK TO TOP ↑</Link>
     </div>
   </footer>;
 }
