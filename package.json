@@ -13,7 +13,8 @@
     "sync:indian-videos": "node scripts/sync-indian-video-templates.mjs",
     "sync:indian-images": "node scripts/sync-indian-meme-templates.mjs",
     "typecheck": "tsc --noEmit",
-    "qa:smoke": "node scripts/smoke-check.mjs"
+    "qa:smoke": "node scripts/smoke-check.mjs",
+    "test:auth": "node scripts/test-account-store.mjs"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
