@@ -1,0 +1,16 @@
+FROM node:24-bookworm-slim AS build
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:24-bookworm-slim
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0
+WORKDIR /app
+COPY --from=build /app ./
+RUN mkdir -p /data && chown -R node:node /data /app
+USER node
+EXPOSE 3000
+CMD ["npm","run","start","--","-p","3000"]
