@@ -6,7 +6,6 @@
  * Scoped to the redesigned website; editor controls retain their old palette.
  */
 :root {
-  --body: var(--sans);
   --rf-stock: #f1ebdf;
   --rf-card: #fffdf7;
   --rf-ink: #1b211d;
@@ -15,6 +14,9 @@
   --rf-accent: #b93e2e;
   --rf-tint: #e6dfd2;
   --rf-serif: Georgia, "Times New Roman", serif;
+}
+.rf-site, .rf-header, .rf-footer, .rf-support-page, .membership-page {
+  --body: var(--sans);
 }
 .rf-site, .rf-header, .rf-footer {
   font-family: var(--body, "DM Sans Variable", sans-serif);
