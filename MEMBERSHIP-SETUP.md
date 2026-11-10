@@ -1,13 +1,24 @@
-# Free accounts and live template likes
+# Account setup — Redesign
 
-Use Node.js 22 or newer. Apply `supabase/migrations/202611100002_template_likes.sql` in the Meme Is Mine Supabase project. Set the two public project values in `.env.example` for local development and in Vercel before building the app.
+Meme Is Mine uses its own Node.js + SQLite account database and SMTP verification. Supabase is no longer used for account/session or like workflows.
 
-In Supabase Auth, enable email and password sign-in with email confirmation. Set the site URL to the deployment origin. Set the confirmation email URL to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}` and the recovery email URL to `{{ .SiteURL }}/auth/confirm?type=recovery&token_hash={{ .TokenHash }}`. Configure production SMTP. Signing in from Studio or an editor link returns to that page.
+1. Use **Node.js 24.15+**.
+2. Set `MIM_DATABASE_PATH` to an **absolute, persistent, writable location** on a server you control (for example `/data/accounts.sqlite`). SQLite creates the tables automatically on first use.
+3. Set `MIM_AUTH_SECRET` to at least 32 unpredictable characters, e.g. `openssl rand -hex 32`. Keep it server-only. Rotating the secret invalidates outstanding OTP codes and rate-limit identifiers.
+4. Set `MIM_SMTP_HOST`, `MIM_SMTP_PORT`, `MIM_SMTP_USER`, `MIM_SMTP_PASSWORD` and `MIM_SMTP_FROM`. Use an SMTP provider or your own configured mail server with authenticated TLS. Configure SPF/DKIM/DMARC for deliverability.
+5. Put an HTTPS reverse proxy before the Node application and enforce TLS. Secure session cookies are enabled in production.
+6. Back up the persistent SQLite volume and periodically verify recovery on a test server.
 
-The migration publishes only public aggregate counts to Supabase Realtime. Individual reactions are private and every account gets one reaction per template. Enable Realtime for the project. Guests can read counts and preview templates. A free account unlocks Studio, both editors, and likes. Drafts and bookmarks stay on the current browser.
+## Security behavior
 
-The scheduled catalog workflow runs daily on the GitHub default branch and refreshes Imgflip, Memegen, and the Indian video archive. New memes shows templates added or published in the last 30 days. Run `node scripts/sync-open-templates.mjs` and `npm run sync:indian-videos` to refresh the source snapshots locally.
+Passwords are salted scrypt hashes; plaintext passwords are never persisted. OTPs are six digits, sent by SMTP, HMAC-hashed at rest, expire in ten minutes, allow five failed attempts, and have a one-minute resend cooldown plus hourly send caps. Sessions are random 256-bit bearer tokens stored as hashes, HTTP-only and SameSite=Lax in the browser. Password reset uses a ten-minute recovery-only session and revokes all other sessions. Likes belong to the signed-in user; published counts are aggregate only.
 
-## Redesign Studio liked formats
+## Important hosting limitation
 
-Apply `supabase/migrations/202611100003_account_likes.sql` after the template likes migration. It grants authenticated users a private, limited list of their own liked template keys using a SECURITY DEFINER function filtered by `auth.uid()`. `/api/account/likes` resolves those keys against the public image/video catalog for the Studio Liked tab; it is never a public list of individual reactions. The tab reports that likes are unavailable if the migration has not been applied. Browser drafts, bookmarks, collections, and local JSON backups remain on-device and are not uploaded to Supabase.
+Do **not** deploy this setup as an ephemeral Vercel/serverless SQLite file: that would cause account loss and inconsistent sessions. Use one persistent Node instance and a durable SQLite volume, or deliberately redesign the backend for a durable external SQL database using direct SQL connections. A dedicated deployment example is included.
+
+## Migration
+
+The older `supabase/migrations` files are retained as historical documentation only. Nothing in the redesigned account flow uses them. Previously stored accounts and likes are **not** migrated automatically. Existing users must sign up again or an explicit migration must be performed before switching traffic.
+
+The `/account/verify` screen accepts a six-digit code and the `/account/recover` screen initiates recovery. All login/signup actions fail closed when configuration is missing.
