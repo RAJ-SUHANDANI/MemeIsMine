@@ -60,7 +60,7 @@ export function ReframeHome({ initialImages, initialVideos }: {
  return <main id="main-content" tabIndex={-1} className="rf-site rf-home">
   <ReframeIntro onComplete={()=>setIntroComplete(true)}/>
   <div className={introComplete?"rf-home-content":"rf-home-content rf-home-content-waiting"}
-       inert={!introComplete} aria-hidden={!introComplete}>
+       >
   <SiteHeader/>
   <section className="rf-home-hero">
    <div className="container rf-home-hero-grid">
