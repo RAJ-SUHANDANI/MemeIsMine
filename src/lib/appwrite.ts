@@ -1,5 +1,5 @@
 import "server-only";
-import { Account, Client, DocumentsDB } from "node-appwrite";
+import { Account, Client, TablesDB } from "node-appwrite";
 import { cookies } from "next/headers";
 import { authConfig, likesConfig } from "./auth-config";
 
@@ -40,5 +40,5 @@ export function likesClient(){
  const config=likesConfig();
  if(!config)throw Error("Appwrite likes are not configured");
  const client=appwriteClient().setKey(config.apiKey);
- return {documents:new DocumentsDB(client),databaseId:config.databaseId,collectionId:config.collectionId};
+ return {tables:new TablesDB(client),databaseId:config.databaseId,tableId:config.collectionId};
 }
