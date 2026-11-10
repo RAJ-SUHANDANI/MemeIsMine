@@ -677,3 +677,18 @@
     will-change: auto;
   }
 }
+
+/* Reveal the landing page only after the first-visit intro exit has completed.
+   Render page markup for crawlers and users with JavaScript disabled, but
+   prevent keyboard/touch interaction while the branded intro is on screen. */
+.rf-home-content-waiting{visibility:hidden;pointer-events:none}
+.rf-home-content{visibility:visible}
+.rf-gallery-toolbar{justify-content:space-between}
+.rf-gallery-toolbar>.rf-kicker{color:var(--rf-accent)}
+.rf-gallery-toolbar-note{margin-left:0}
+.rf-gallery[data-layout="coverflow"] .rf-rail-viewport{scroll-behavior:auto}
+.rf-gallery .rf-gallery-art-trigger:focus-visible{outline:3px solid var(--rf-accent);outline-offset:4px}
+@media(max-width:520px){
+  .rf-gallery-toolbar{min-height:55px;gap:11px}
+  .rf-gallery-toolbar-note{display:inline;font-size:9px;letter-spacing:.055em}
+}
