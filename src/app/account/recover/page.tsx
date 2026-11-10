@@ -18,6 +18,7 @@ export default async function Recover({searchParams}:{searchParams:Promise<{stat
      <h1>Back in <em>business.</em></h1>
      <p>Enter your email address. If it belongs to an account, we will send a six-digit code to verify it is you.</p>
      {status==="unavailable"&&<p className="mim-auth-notice" role="status">Email verification is not configured on this server yet.</p>}
+     {status==="rate-limited"&&<p className="mim-auth-notice" role="status">Too many recovery requests. Please try again later.</p>}
      <form action={requestPasswordReset} className="mim-verify-form">
       <label htmlFor="recovery-email">EMAIL ADDRESS</label>
       <input id="recovery-email" type="email" autoComplete="email" name="email" placeholder="you@example.com" maxLength={254} required disabled={!enabled}/>
