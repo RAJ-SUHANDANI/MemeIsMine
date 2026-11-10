@@ -33,7 +33,6 @@ export function ReframeMotionRail({ count, mode, variant, label, paused = false,
   const lastProgress = useRef(-1);
   const active = useRef(false);
   const visible = useRef(false);
-  const redraw = useRef<() => void>(() => undefined);
 
   active.current = playing && !paused;
   visible.current = inView;
@@ -96,7 +95,6 @@ export function ReframeMotionRail({ count, mode, variant, label, paused = false,
         updateDepth();
       });
     };
-    redraw.current = onScroll;
 
     let initialized = false;
     const measure = () => {
@@ -117,27 +115,48 @@ export function ReframeMotionRail({ count, mode, variant, label, paused = false,
     resize.observe(element);
     measure();
 
-    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.12 });
-    observer.observe(element);
     element.addEventListener("scroll", onScroll, { passive: true });
 
     const tick = (now: number) => {
       const delta = Math.min((now - previous) / 1000, 0.045);
       previous = now;
-      if (active.current && visible.current && !hovered.current && !focused.current &&
-          !drag.current && now > holdUntil.current && document.visibilityState === "visible" &&
-          railWidth.current > 0) {
-        element.scrollLeft += (mode === "stack" ? 34 : 29) * delta;
+      if (active.current && visible.current && !focused.current &&
+          !drag.current && now > holdUntil.current && railWidth.current > 0) {
+        // Keep moving on hover, just more slowly so a card is easier to inspect.
+        const speed = hovered.current ? 10 : mode === "stack" ? 34 : 29;
+        element.scrollLeft += speed * delta;
       }
-      frame = requestAnimationFrame(tick);
+      if (visible.current && document.visibilityState === "visible") {
+        frame = requestAnimationFrame(tick);
+      } else {
+        frame = 0;
+      }
     };
-    frame = requestAnimationFrame(tick);
+    const start = () => {
+      if (!frame && visible.current && document.visibilityState === "visible") {
+        previous = performance.now();
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible.current = entry.isIntersecting;
+      setInView(entry.isIntersecting);
+      if (entry.isIntersecting) start();
+      else if (frame) { cancelAnimationFrame(frame); frame = 0; }
+    }, { threshold: 0.12 });
+    observer.observe(element);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") start();
+      else if (frame) { cancelAnimationFrame(frame); frame = 0; }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(drawFrame);
       resize.disconnect();
       observer.disconnect();
       element.removeEventListener("scroll", onScroll);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [count, mode]);
 
