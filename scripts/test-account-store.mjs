@@ -60,6 +60,7 @@ try {
  assert.equal(await accounts.verifyChallenge(email,"000000" === emails[0].code ? "999999" : "000000","signup"),false);
  assert.equal(await accounts.finishVerification(email,emails[0].code,"signup"),true);
  assert.equal(await accounts.verifyChallenge(email,emails[0].code,"signup"),false,"OTP cannot be reused");
+ assert.equal(await accounts.register(email,oldPassword),"exists","existing verified email should not pretend another code was sent");
  let user = await accounts.currentUser();
  assert.equal(user?.email,email);
  assert.equal((db.database().prepare("SELECT password_hash FROM users WHERE email=?").get(email)).password_hash.includes(oldPassword),false);
