@@ -1,46 +1,48 @@
-# Meme Is Mine — Free Appwrite Cloud setup
+# Meme Is Mine — Appwrite Cloud integration
 
-This guide replaces the old SQLite/SMTP self-hosting workflow. Appwrite Cloud manages the accounts and email delivery, and a private DocumentsDB collection stores template likes.
+## Already completed for your MemeIsMine project
 
-## One-time setup
+- Appwrite Cloud Free project exists in Frankfurt, project ID \`6af2b2b50036b641f46d\`.
+- API endpoint: \`https://fra.cloud.appwrite.io/v1\`.
+- Email/password and six-digit email OTP authentication are enabled.
+- Password policy: 12-character minimum, common-password checks, checks against personal information and breached passwords, and session invalidation on password changes.
+- The private **TablesDB** database \`mim\` and indexed table \`template_likes\` are created with \`templateKey\` (varchar), \`userId\` (varchar), and \`createdAt\` (bigint).
+- A separate Next.js SSR preview Site, \`memeismine-redesign\`, was created. Its runtime uses Node 24 and public Appwrite environment variables are already set.
+- An isolated source build from the public \`redesign\` branch succeeded. It has not been activated while real account credentials are still missing.
+- No changes were made to \`main\` or to either meme editor implementation.
 
-1. Create an Appwrite Cloud Free project at https://cloud.appwrite.io. Choose a region.
-2. Enable **Email/Password** sign-in in your project's Auth settings. Enable **Email Verification OTP** / verification by code.
-3. In your project's Settings, copy the API endpoint (for example `https://fra.cloud.appwrite.io/v1`) and project ID. Add your actual website's domain as a Web platform where applicable.
-4. Create one **server API key** with only the scopes needed for server actions and the private likes database: `sessions.write`, `users.read`, `users.write`, `documentsdb.read` and `documentsdb.write`. Appwrite may label these permissions slightly differently in the Console; follow the current Auth and DocumentsDB API reference.
-5. Set environment variables on your Next.js hosting provider, then redeploy:
-   ```env
-   APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
-   APPWRITE_PROJECT_ID=<PROJECT_ID>
-   APPWRITE_API_KEY=<PRIVATE_SERVER_KEY>
-   APPWRITE_DATABASE_ID=mim
-   APPWRITE_LIKES_COLLECTION_ID=template_likes
-   NEXT_PUBLIC_SITE_URL=https://your-site.example
-   ```
-   The endpoint above is **an example**; use your chosen project's region. Never expose the API key via `NEXT_PUBLIC_*`.
-6. Run `npm run setup:appwrite` in an environment with the same private variables. This creates a private, server-access-only DocumentsDB database named `mim` and collection named `template_likes`. This operation is idempotent.
-7. Open the hosted website and test a **real registration**, verify the six-digit email code, sign out/in, recover a password, and test Studio likes with two separate accounts. Do not activate production signups until these checks succeed.
+## The remaining access-control step
 
-## Account behavior
+The connected Appwrite plugin can configure database resources but **cannot issue permanent project API keys or grant additional site runtime scopes**. Appwrite declined both operations. The project owner must therefore complete one secure setup inside the Appwrite Console:
 
-- Email and passwords are managed by Appwrite rather than stored by this application.
-- On sign-up, an unverified account session is created and Appwrite sends a six-digit code valid for 15 minutes.
-- The Studio and both editor routes require a **verified** account. Unverified users see the code-verification flow.
-- Password recovery sends a six-digit code and requests a new password in the same secure form; recovery does not silently log users in.
-- Account and recovery session details are kept in HttpOnly cookies; pending verification state is HMAC-signed and expires.
-- Template likes are stored in a private Appwrite DocumentsDB collection. Only authenticated server actions use its API key. Public APIs return aggregate counts, never lists of another person's reactions.
-- The local browser still owns drafts, bookmarks and collections. These do **not** automatically sync across browsers.
+1. Open the **MemeIsMine** project → **Settings → API Keys**.
+2. Create a new server key named \`MemeIsMine SSR\`, scoped only to \`users.read\`, \`users.write\`, \`sessions.read\`, \`sessions.write\`, \`tokens.write\`, \`rows.read\`, and \`rows.write\`.
+3. Open **Sites → MemeIsMine Redesign → Settings → Environment variables** and create a **secret** variable \`APPWRITE_API_KEY\` containing that key. Never paste it into GitHub, source code, or chat.
+4. Redeploy the latest \`redesign\` branch, and confirm the build is successful. If using another Next.js host, set the same private variable there instead.
 
-## Costs and limits
+Existing environment values:
 
-Appwrite Cloud Free publishes **75,000 monthly active users**, **5 GB monthly bandwidth**, one database, and resource limits. Free projects can pause after inactivity. Its standard built-in mail sender is available without configuring a personal Gmail account or SMTP credentials, but generic provider branding and undisclosed anti-abuse or delivery limits can apply. The Free plan is not an unlimited email sender or an unlimited-traffic guarantee.
+\`\`\`env
+APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=6af2b2b50036b641f46d
+APPWRITE_DATABASE_ID=mim
+APPWRITE_LIKES_COLLECTION_ID=template_likes
+APPWRITE_API_KEY=<server-only secret; do not commit>
+\`\`\`
 
-## Security and operational notes
+The API key is **server-only** and used for server-side email/password sessions, verification, recovery, and private likes. The table has no public read/write permissions. The local database and SMTP mail server are gone.
 
-Appwrite API keys bypass some client-side API rate limits. **Before a high-traffic launch**, put bot protection or rate limiting on public signup, login, OTP and recovery actions at the hosting/CDN layer, and monitor abuse. Keep secrets in hosting environment settings. Review Appwrite's Auth security policy (minimum password length, disposable email rules, email verification and session restrictions). Check privacy and regulatory requirements for storing user data with Appwrite.
+## Production testing checklist
 
-The previous local Node SQLite database and custom SMTP sender are intentionally removed. No database file, persistent Docker volume or self-managed mail server is needed.
+Use a real account after configuring the secret. Confirm: create account, receive a six-digit email verification code, verify it, sign in again, open Studio and both editors, like and unlike a template, use password recovery, and sign out. Check a second account cannot read private user likes.
 
-## Important
+Appwrite's built-in sender handles email on the Free plan, subject to mail/abuse quotas and Appwrite branding. Do not advertise live signup until actual delivery and recovery have been tested. Browser drafts and bookmarks stay local and do not automatically sync across devices.
 
-There is no Appwrite project or server API key connected to this repository by default. Until you configure one, account actions fail closed and the signup screen explains why; it must never pretend to send verification emails.
+## Optional setup script
+
+\`npm run setup:appwrite\` is now based on TablesDB with the same schema and is idempotent. It is **not required again** for this already-created project.
+
+## Hosting and privacy
+
+Next.js no longer needs local SQLite persistence and can use Appwrite Sites or another SSR host. Do not expose the secret key using a \`NEXT_PUBLIC_*\` environment variable. Keep HTTPS and CDN bot controls enabled, and monitor free-tier quotas.
+
