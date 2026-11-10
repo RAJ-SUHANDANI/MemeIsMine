@@ -9,6 +9,7 @@ import { ArrowUpRight, Bookmark, Check, Copy, Heart, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTemplateLikes } from "./use-template-likes";
 import { ZoomablePreview } from "./zoomable-preview";
+import { ReframeRecoverableMedia } from "./reframe-recoverable-media";
 
 export type ReframeItem = {
   id:string; name:string; image:string; kind:"image"|"video"; category:string;
@@ -28,7 +29,6 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
   const [copied,setCopied] = useState(false);
   const [copyError,setCopyError] = useState(false);
   const [guestHint,setGuestHint] = useState(false);
-  const [mediaError,setMediaError] = useState(false);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const oldOverflow = document.body.style.overflow;
@@ -57,7 +57,6 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
       window.setTimeout(()=>setCopied(false),2200);
     } catch {setCopyError(true);}
   }
-  const videoSrc = item.mediaUrl ? "/api/video-source?url=" + encodeURIComponent(item.mediaUrl) + (item.sourceHref ? "&referrer=" + encodeURIComponent(item.sourceHref) : "") : "";
   return <motion.div className="rf-preview-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
     <button type="button" className="rf-preview-scrim" aria-label="Close preview" onClick={onClose}/>
     <motion.div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} className="rf-preview-panel"
@@ -66,12 +65,9 @@ export function ReframePreview({item,onClose,saved,onSave,galleryPath}:{
       <div className="rf-preview-top"><span className="rf-kicker">FORMAT / {item.kind==="image"?"STILL":"MOTION"} / {item.category}</span><button type="button" className="rf-round-icon" onClick={onClose} aria-label="Close preview"><X size={20}/></button></div>
       <div className="rf-preview-grid">
         <motion.div className="rf-preview-art" layoutId={"rf-art-" + item.kind + "-" + item.id} transition={{type:"spring",stiffness:330,damping:35}}>
-          {item.kind==="image" ? <ZoomablePreview onDoubleTap={doubleTap}><img src={item.image} alt={item.name}/></ZoomablePreview> :
-            mediaError || !videoSrc ?
-              <div className="rf-media-fallback"><img src={item.image} alt=""/><p role="status">This clip is unavailable right now. Try another format.</p></div> :
-              item.mediaType==="gif" ?
-                <img src={videoSrc} className="rf-gif" alt={item.name} onError={()=>setMediaError(true)}/> :
-                <video src={videoSrc} poster={item.image||undefined} autoPlay muted loop playsInline preload="auto" aria-label={item.name} onLoadedData={event=>{void event.currentTarget.play().catch(()=>{});}} onError={()=>setMediaError(true)}/>}
+          {item.kind==="image"
+            ? <ZoomablePreview onDoubleTap={doubleTap}><img src={item.image} alt={item.name}/></ZoomablePreview>
+            : <ReframeRecoverableMedia item={item}/>}
         </motion.div>
         <div className="rf-preview-copy">
           <div><span className="rf-kicker">YOUR NEXT FORMAT</span><h2 id={titleId}>{item.name}</h2><p>{item.kind==="video"?"A moving moment, waiting for your caption.":"A familiar image. Your entirely new punchline."}</p></div>
