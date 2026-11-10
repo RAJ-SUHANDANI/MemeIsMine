@@ -132,7 +132,7 @@ async function handle(request: Request) {
     let body=upstream.body;
     if(body && request.method!=="HEAD"){
       let bytes=0;
-      body=body.pipeThrough(new TransformStream<Uint8Array,Uint8Array>({
+      body=body.pipeThrough(new TransformStream<Uint8Array<ArrayBuffer>,Uint8Array<ArrayBuffer>>({
         transform(chunk,controller){
           bytes+=chunk.byteLength;
           if(bytes>90*1024*1024)throw Error("Media size limit exceeded");
