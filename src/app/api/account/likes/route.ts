@@ -13,7 +13,7 @@ export async function GET() {
  try{
   const images=new Map(imageCatalog.map(item=>[item.likeId,item]));
   const videos=new Map(videoCatalog.map(item=>[item.likeId,item]));
-  const items=likedKeys(session.user.id).flatMap(key=>{
+  const items=(await likedKeys(session.user.id)).flatMap(key=>{
    const [kind,...parts]=key.split(":");const id=parts.join(":");
    if(kind==="image"){
     const image=images.get(id);
