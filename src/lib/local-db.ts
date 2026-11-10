@@ -11,6 +11,7 @@ let active: DatabaseSync | null = null;
  * Never use /tmp or an ephemeral serverless filesystem for user accounts.
  */
 export function database(): DatabaseSync {
+  if (process.env.VERCEL) throw new Error("Local SQLite accounts require a persistent, self-hosted Node server.");
   const location = process.env.MIM_DATABASE_PATH;
   if (!location || !path.isAbsolute(location)) {
     throw new Error("MIM_DATABASE_PATH must point to a durable, absolute SQLite path.");
