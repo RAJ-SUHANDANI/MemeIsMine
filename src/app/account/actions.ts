@@ -87,9 +87,12 @@ export async function requestPasswordReset(form:FormData){
 }
 export async function updatePassword(form:FormData){
  const password=String(form.get("password")??"");
+ const currentPassword=String(form.get("currentPassword")??"");
  if(password.length<12||password.length>128)redirect("/account/password?error=1");
+ if(!allowRequest("password-change",await requestIdentity(),20,60*60*1000))
+  redirect("/account/password?error=1");
  let success=false;
- try{success=await changePassword(password);}
+ try{success=await changePassword(password,currentPassword);}
  catch(error){console.error("Password change failed:",error instanceof Error?error.message:"unknown");}
  if(!success)redirect("/account/password?error=1");
  redirect("/account");
