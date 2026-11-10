@@ -26,7 +26,10 @@ function videoItem(item:ApiVideo):ReframeItem {
   mediaUrl:item.url,mediaType:item.mediaType};
 }
 
-export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?:"explore"|"templates"}) {
+export function ReframeLibrary({kind,mode="explore",initialItems=[],initialTotal=0}:{
+  kind:"image"|"video";mode?:"explore"|"templates";
+  initialItems?:ReframeItem[];initialTotal?:number;
+}) {
  const reduce=useReducedMotion();
  const [query,setQuery]=useState("");
  const [search,setSearch]=useState("");
@@ -34,13 +37,13 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
  const [category,setCategory]=useState("All");
  const [page,setPage]=useState(1);
  const [seed,setSeed]=useState(17);
- const [items,setItems]=useState<ReframeItem[]>([]);
- const [total,setTotal]=useState(0);
- const [pages,setPages]=useState(1);
- const [loading,setLoading]=useState(true);
+ const [items,setItems]=useState<ReframeItem[]>(initialItems);
+ const [total,setTotal]=useState(initialTotal);
+ const [pages,setPages]=useState(Math.max(1,Math.ceil(initialTotal/pageSize)));
+ const [loading,setLoading]=useState(false);
  const [error,setError]=useState("");
  const [refresh,setRefresh]=useState(0);
- const path=kind==="video"?"/video-templates":mode==="templates"?"/templates":"/explore";
+ const path=kind==="video"?"/video-templates":"/explore";
  useEffect(()=>{
   const params=new URLSearchParams(window.location.search);
   const initial=params.get("sort");
@@ -79,8 +82,8 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
  const eyebrow=kind==="video"?"THE MOTION DEPARTMENT":mode==="templates"?"THE IMAGE TEMPLATE ARCHIVE":"THE IMAGE TEMPLATE ARCHIVE";
  const title=kind==="video"?"Moments in motion.":mode==="templates"?"Find your next punchline.":"Find your next punchline.";
  const description=kind==="video"?"A living collection of reaction clips and GIFs. Find the perfect moment, then make it your own.":
-  mode==="templates"?"Classic formats, obscure discoveries and the faces that say it all. Choose an arrangement and explore.":
-  "A place for the internet’s most expressive faces. Browse the archive like a gallery, not a spreadsheet.";
+  mode==="templates"?"Classic formats, obscure discoveries and the faces that say it all. Swipe, drag or scroll to explore.":
+  "Browse a gallery of familiar reactions, trending formats and classic memes. Swipe, drag or scroll to explore.";
  function chooseSort(value:string){setSort(value);setPage(1);}
  function surprise(){setSort("surprise");setSeed(n=>n+104729);setPage(1);}
  function reset(){setQuery("");setSearch("");setCategory("All");setSort("popular");setPage(1);}
@@ -110,7 +113,7 @@ export function ReframeLibrary({kind,mode="explore"}:{kind:"image"|"video";mode?
      {kind==="image"&&<div className="rf-category-strip" role="group" aria-label="Image categories">
        {categoryNames.map(name=><button type="button" key={name} aria-pressed={name===category} onClick={()=>{setCategory(name);setPage(1);}}>{name==="All"?"All formats":name}</button>)}
      </div>}
-     <div className="rf-library-status" aria-live="polite"><span><span className="rf-status-dot"/>{loading?"SEARCHING THE ARCHIVE":total+" FORMATS IN THE COLLECTION"}</span><span>CHOOSE HOW TO SEE THEM <ArrowRight size={15}/></span></div>
+     <div className="rf-library-status" aria-live="polite"><span><span className="rf-status-dot"/>{loading?"SEARCHING THE ARCHIVE":total+" FORMATS IN THE COLLECTION"}</span><span>FLOW THROUGH THE ARCHIVE <ArrowRight size={15}/></span></div>
      {error&&<div className="rf-library-error" role="status"><p>{error}</p><button type="button" onClick={()=>setRefresh(n=>n+1)}>Try again</button></div>}
      {loading?<div className="rf-gallery-loading" aria-busy="true"><div/><div/><div/><div/></div>:
       items.length?<ReframeGallery items={items} kind={kind} path={path} variant={kind==="video"?"objects":"showcase"}/>:
