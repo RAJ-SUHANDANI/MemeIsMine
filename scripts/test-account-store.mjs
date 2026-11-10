@@ -25,8 +25,8 @@ function load(file) {
  const transpiled = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
  }).outputText;
- const module = { exports: {} };
- cache.set(location, module.exports);
+ const loadedModule = { exports: {} };
+ cache.set(location, loadedModule.exports);
  function localRequire(name) {
   if (name === "server-only") return {};
   if (name === "next/headers") return { cookies: async () => ({
@@ -41,9 +41,9 @@ function load(file) {
   return originalRequire(name);
  }
  const evaluate = new Function("require", "module", "exports", "process", "Buffer", transpiled);
- evaluate(localRequire, module, module.exports, process, Buffer);
+ evaluate(localRequire, loadedModule, loadedModule.exports, process, Buffer);
  cache.set(location, module.exports);
- return module.exports;
+ return loadedModule.exports;
 }
 
 try {
