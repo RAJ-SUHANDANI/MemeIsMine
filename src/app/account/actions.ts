@@ -22,6 +22,8 @@ export async function authenticate(form:FormData){
   if(signup){
    const result=await register(email!,password);
    if(result==="unavailable")failure(route,next,"unavailable");
+   if(result==="exists")redirect("/login?"+new URLSearchParams({next,status:"account-exists"}));
+   if(result==="invalid")failure(route,next,"signup-error");
    if(result==="limited")failure(route,next,"too-many-codes");
    await savePending(email!,"signup");
    redirect("/account/verify?"+new URLSearchParams({next, ...(result==="cooldown"?{status:"wait"}:{})}));
