@@ -77,6 +77,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <noscript><style>{".rf-intro{display:none!important}.rf-home-content-waiting{visibility:visible!important;pointer-events:auto!important}"}</style></noscript>
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
