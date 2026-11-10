@@ -14,7 +14,6 @@ type StoredVideo={id:string;name:string;posterUrl?:string};
 type Undo={key:"mim-drafts"|"mim-video-drafts";draft:Draft};
 type Tab="overview"|"drafts"|"saved"|"liked"|"collections"|"backup";
 type LikedItem={key:string;id:string;kind:"image"|"video";name:string;image:string;editorHref:string};
-const draftKeys=["mim-drafts","mim-video-drafts"] as const;
 const backupKeys=["mim-drafts","mim-video-drafts","mim-bookmarks","mim-bookmark-templates","mim-studio-collections"] as const;
 const sections:{id:Tab;name:string;Icon:typeof LayoutDashboard}[]=[
  {id:"overview",name:"Overview",Icon:LayoutDashboard},
