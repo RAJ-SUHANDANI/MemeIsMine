@@ -27,6 +27,30 @@ assert.equal(centerSegments, 2, "homepage must contain one still and one moving 
 assert.ok(totalRailCards >= 120, "homepage must render at least 20 templates per rail across loop copies");
 console.log("PASS two continuously populated homepage galleries");
 
+// Search/answer discovery and Flow-only content must be visible in SSR HTML.
+const homepageResponse=await fetch(base+"/");
+assert.equal(homepageResponse.headers.get("x-frame-options"),"DENY");
+assert.match(homepageResponse.headers.get("content-security-policy")??"",/frame-ancestors 'none'/);
+assert.match(homeMarkup,/"@type":"WebApplication"/);
+assert.match(homeMarkup,/rel="canonical"/);
+for(const route of ["/explore","/video-templates"]){
+ const response=await fetch(base+route);
+ const html=await response.text();
+ assert.ok(html.includes('data-rail-copy="1"'),"SSR Flow gallery missing: "+route);
+ assert.ok(html.includes('data-layout="coverflow"'),"Flow layout missing: "+route);
+ assert.ok(!html.includes('data-layout="stack"'),"Stack must not appear: "+route);
+ assert.ok((html.match(/class="rf-rail-card"/g)??[]).length>=60,"At least 20 SSR formats required: "+route);
+}
+const faqHTML=await (await fetch(base+"/faq")).text();
+assert.ok(faqHTML.includes('"@type":"FAQPage"'),"Missing truthful FAQ structured data");
+assert.ok(faqHTML.includes("Where are my saved meme drafts stored?"),"FAQ answer text must be crawlable");
+const siteMap=await (await fetch(base+"/sitemap.xml")).text();
+assert.ok(siteMap.includes("/explore")&&siteMap.includes("/video-templates"));
+assert.ok(!siteMap.includes("/signup")&&!siteMap.includes("/studio"));
+const robots=await (await fetch(base+"/robots.txt")).text();
+assert.ok(robots.includes("Disallow: /account"),"Private account pages should not be crawled");
+console.log("PASS secure headers, real SSR Flow galleries, canonical metadata and crawlable answers");
+
 const duplicate = await fetch(base + "/templates", { redirect: "manual" });
 assert.ok([307, 308].includes(duplicate.status), "old image archive should redirect");
 assert.equal(new URL(duplicate.headers.get("location"),base).pathname,"/explore");
