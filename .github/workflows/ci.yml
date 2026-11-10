@@ -29,6 +29,9 @@ jobs:
       - name: Build application
         run: npm run build
       - name: Test production routes and APIs
+        env:
+          MIM_DATABASE_PATH: /tmp/mim-ci-accounts.sqlite
+          MIM_AUTH_SECRET: ci-test-very-long-unpredictable-placeholder-only-not-for-production-2026
         run: |
           npm run start -- -p 3001 > /tmp/mim-server.log 2>&1 &
           server_pid=$!
