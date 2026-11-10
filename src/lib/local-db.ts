@@ -55,6 +55,11 @@ export function database(): DatabaseSync {
       window_start INTEGER NOT NULL,
       blocked_until INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS rate_buckets (
+      bucket TEXT PRIMARY KEY,
+      attempts INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS template_likes (
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       template_key TEXT NOT NULL,
