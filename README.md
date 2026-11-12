@@ -1,10 +1,67 @@
-# Meme Is Mine — Redesign
+# Meme Is Mine.
 
-A motion-driven, browser-based meme studio with image and video templates, a personal Studio, and email-verified accounts. This work stays on the `redesign` branch; the editor implementations and `main` branch are untouched.
+### The internet gave you the template. Make the punchline yours.
 
-## Development
+**POV:** You had the perfect reaction, but the group chat already moved on.
 
-Node.js 24 is used by CI, although the application no longer depends on a local SQLite server.
+Not anymore.
+
+**Meme Is Mine** is a free, browser-based creative studio for turning familiar images, iconic reactions, GIFs, and video clips into something unmistakably yours. Discover the format. Rewrite the moment. Send the meme that makes everyone forget what the conversation was originally about.
+
+**Your humor. Your edit. Your meme.**
+
+[**Enter Meme Is Mine**](https://memeismine.vercel.app) · [Explore image templates](https://memeismine.vercel.app/explore) · [Find a video reaction](https://memeismine.vercel.app/video-templates)
+
+---
+
+## The group chat isn't going to carry itself.
+
+Some ideas deserve more than a screenshot with text slapped on it.
+
+Meme Is Mine brings the whole process into one place: a curated-feeling archive of recognizable formats, an expressive editor, and a personal workspace for the jokes worth keeping.
+
+| THE FEATURE | THE PLOT |
+| :--- | :--- |
+| **Image templates** | From classic reaction formats to the face that says exactly what you're thinking. |
+| **Video memes & GIFs** | Find a moving moment, preview it on repeat, and make it say something new. |
+| **Image editor** | Add captions, adjust your composition, and export your finished image. |
+| **Video editor** | Put your words over the clip, preview the result, and export in supported formats. |
+| **Flow galleries** | Browse continuous, horizontally moving collections instead of digging through endless folders. |
+| **Your Studio** | Return to saved drafts, bookmarks, and the formats you liked. |
+
+Thoughtful interactions, responsive layouts, and enough personality to feel like a place to make things—not another form you have to fill in.
+
+## No complicated lore. Just three moves.
+
+**01 / FIND YOUR MOMENT.** Browse the image or video archive. Search for a reaction, explore the gallery, and discover the format that fits your exact situation.
+
+**02 / MAKE IT PERSONAL.** Open a template in its editor, write the caption you *actually* wanted to send, and adjust the result until it lands.
+
+**03 / DROP THE MEME.** Export the finished creation. Share it wherever your audience—or your most chaotic group chat—happens to be.
+
+> The format is familiar. The punchline is the flex.
+
+## Free to use. Seriously.
+
+**Meme Is Mine is free.** Browse and preview templates without paying or creating an account.
+
+When you're ready to create, sign up for a free account, verify your email with a six-digit code, and unlock the editors and Studio. No subscription is required to get started.
+
+### Your drafts are yours to keep.
+
+Drafts, bookmarks, collections, and personal uploads stay in **your browser on your device**. They don't automatically sync across devices, and clearing your browser's site data can erase them—so use Studio's manual backup option for anything you want to preserve.
+
+Account authentication and template likes use managed backend services. Your meme captions are your creative choices: **the current studio doesn't write jokes for you with AI.**
+
+## Built with care. And a little internet brain rot.
+
+Behind the jokes is a modern web experience built with **Next.js, React, TypeScript, and Motion**. The image and video editors run in the browser; hosted authentication handles account verification and sign-in.
+
+The details matter here: responsive controls, respectful motion preferences, keyboard-friendly browsing, and a workflow that gets out of the way when inspiration strikes.
+
+### Development
+
+This project uses Node.js 24.
 
 ```bash
 npm ci
@@ -12,48 +69,24 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The public homepage, `/explore` (Image Templates) and `/video-templates` (Video Templates) use a continuous horizontal Flow gallery. Each home gallery includes 24 formats, video previews autoplay silently and loop, and the branded first-visit intro completes before displaying the homepage. The duplicate `/templates` route redirects to `/explore`.
+The local development server runs at `http://localhost:3000`.
 
-## Free hosted accounts — Appwrite Cloud
-
-**No VPS, custom SMTP, self-managed SQLite, or paid database required.** Accounts, email-password login, six-digit email verification and password recovery are handled through Appwrite Cloud Free. The platform also stores private likes, while drafts, bookmarks, collections and uploads remain on the current browser.
-
-The Appwrite Free project, private indexed TablesDB likes table, and isolated Next.js preview Site are **already created**. `MEMBERSHIP-SETUP.md` records the verified project and the one remaining server API key permission. The required environment variables are:
-
-```env
-APPWRITE_ENDPOINT=https://<REGION>.cloud.appwrite.io/v1
-APPWRITE_PROJECT_ID=<your-project-id>
-APPWRITE_API_KEY=<server-only-api-key>
-APPWRITE_DATABASE_ID=mim
-APPWRITE_LIKES_COLLECTION_ID=template_likes
-NEXT_PUBLIC_SITE_URL=<your-public-https-url>
-```
-
-The private `mim/template_likes` TablesDB is already provisioned. `npm run setup:appwrite` remains available as an idempotent schema setup script for new environments.
-
-**Security:** `APPWRITE_API_KEY` is server-only and must never appear in a public source file, chat message or `NEXT_PUBLIC_*` variable. Sessions are verified server-side with Appwrite and use HttpOnly cookies. Protected Studio and editor routes reject signed-out visitors.
-
-**Email:** Appwrite Cloud's default email service handles verification and recovery, using Appwrite branding on the Free plan. A custom SMTP provider is not necessary for initial public signup. Custom branded email templates and SMTP require a different provider/plan. Free-tier service limits, quotas and abuse controls still apply.
-
-**Hosting:** This managed setup is compatible with ordinary Next.js hosting, including Vercel, because no local account file needs persistent storage.
-
-**Migration:** Previously registered users in the retired local SQLite authentication implementation are not automatically transferred to Appwrite. Browser drafts/bookmarks are unaffected. If you have real existing account data, perform an explicit, authorized migration before switching production users.
-
-## Verification
+For full account functionality, configure the server-side Appwrite environment settings described in `MEMBERSHIP-SETUP.md`. Keep API keys private; never use a `NEXT_PUBLIC_` prefix for server credentials.
 
 ```bash
 npm run lint
 npm run typecheck
+npm run test:auth
+npm run test:video
 npm run build
-npm run start -- -p 3001
-# In another terminal:
-npm run qa:smoke
 ```
 
-CI verifies public pages, sitemap, gallery UI, security headers and signed-out route protection. A live Appwrite project exists, but this plugin connection cannot issue a permanent API key. Add the server key privately in the Site environment before end-to-end registration, OTP delivery, password reset, or cross-device likes can be tested. Do not claim the service is live until these tests pass.
+Some video formats and exports depend on the browser and availability of the original media host. Please respect the rights attached to any image or clip you edit or share.
 
-## Search visibility
+---
 
-Set `NEXT_PUBLIC_SITE_URL` to the real HTTPS origin to generate accurate metadata, canonicals, structured data and sitemap entries. `SECURITY.md` and `SEARCH-VISIBILITY.md` document production checks. SEO ranking, AI citations, and unrestricted scale are not guaranteed.
+### The reaction was already iconic. Now it's personal.
 
-Public pages do not show source-code, provider, portfolio or other promotional external links. Media licensing requirements still apply even when source links are not rendered.
+**[MAKE IT YOURS →](https://memeismine.vercel.app)**
+
+*Created with intent. Delivered with immaculate timing.*
