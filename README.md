@@ -116,7 +116,7 @@ Some clips live on external sites, so availability and video exports can depend 
   npm run dev
   ~~~
 
-  Set up your own server-side Appwrite credentials in \` .env.local \` using the guidance in [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md). Never put private API keys in client-side variables or commits.
+  Set up your own server-side Appwrite credentials in <code>.env.local</code> using the guidance in [MEMBERSHIP-SETUP.md](MEMBERSHIP-SETUP.md). Never put private API keys in client-side variables or commits.
 
   ~~~bash
   npm run lint
