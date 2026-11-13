@@ -15,6 +15,7 @@ import "./reframe-refinement.css";
 import "./reframe-controls.css";
 import "./reframe-auth.css";
 import { MotionProvider } from "@/components/motion-provider";
+import { PrivacyAnalytics } from "@/components/privacy-analytics";
 import { safeJsonLd, siteOrigin } from "@/lib/site-seo";
 const origin=siteOrigin();
 export const metadata: Metadata = {
@@ -83,6 +84,7 @@ export default function RootLayout({
         </a>
         <script type="application/ld+json" dangerouslySetInnerHTML={{__html:safeJsonLd(structured)}}/>
         <MotionProvider>{children}</MotionProvider>
+        <PrivacyAnalytics />
       </body>
     </html>
   );
