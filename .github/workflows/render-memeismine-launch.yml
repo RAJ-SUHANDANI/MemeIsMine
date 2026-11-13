@@ -1,0 +1,66 @@
+name: Render Meme Is Mine real-footage launch
+on:
+  push:
+    branches:
+      - launch-video-real-footage
+    paths:
+      - 'launch-video/**'
+      - '.github/workflows/render-memeismine-launch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture-and-render:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out isolated video branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Install Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install capture dependencies
+        working-directory: launch-video
+        run: |
+          npm init -y
+          npm install --no-save --no-audit playwright@1.65.0
+          npx playwright install --with-deps chromium
+
+      - name: Capture actual production website
+        working-directory: launch-video
+        run: node capture.js
+
+      - name: Render live-footage film
+        working-directory: launch-video
+        run: python3 render.py
+
+      - name: Verify export
+        run: |
+          test -s launch-video/output/memeismine-real-launch.mp4
+          ffprobe -v error -show_entries stream=codec_name,width,height -show_entries format=duration,size -of default=noprint_wrappers=1 launch-video/output/memeismine-real-launch.mp4
+          ffmpeg -v error -i launch-video/output/memeismine-real-launch.mp4 -f null -
+
+      - name: Publish video to this branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f launch-video/output/memeismine-real-launch.mp4 launch-video/output/memeismine-real-poster.jpg
+          git commit -m "Render launch video using actual live website footage"
+          git push origin HEAD:launch-video-real-footage
+
+      - name: Provide downloadable launch assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: memeismine-real-footage-launch
+          path: |
+            launch-video/output/memeismine-real-launch.mp4
+            launch-video/output/memeismine-real-poster.jpg
+          retention-days: 30
