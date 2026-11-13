@@ -1,0 +1,31 @@
+name: Update Vercel Analytics dependency lockfile
+
+on:
+  push:
+    branches:
+      - feat/vercel-web-analytics-20261113
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Vercel Analytics and refresh npm lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund @vercel/analytics@latest
+      - name: Verify lockfile consistency
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Commit package manifest and lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet || git commit -m "Install @vercel/analytics for Next.js"
+          git push origin HEAD:feat/vercel-web-analytics-20261113
