@@ -37,11 +37,11 @@ export default function PrivacyPage() {
               <br />
               <em>DEFAULT.</em>
             </h2>
-            <p>Updated November 10, 2026</p>
+            <p>Updated November 13, 2026</p>
           </aside>
           <article className="privacy-copy">
             <p className="privacy-lede">
-              Your account and likes use the managed Appwrite account database. Drafts, bookmarks and uploads stay in your browser.
+              Meme Is Mine is an independent website created by Raj Suhandani. Appwrite Cloud handles accounts and likes, Vercel hosts the service, and drafts, bookmarks and uploads stay in your browser.
             </p>
             <section>
               <h3>
@@ -78,8 +78,15 @@ export default function PrivacyPage() {
                 <ShieldCheck size={19} /> APIs and services
               </h3>
               <p>
-                The catalogues are maintained from public template collections. Some media may load from external hosts, which can receive standard connection information. The image proxy only allows configured image hostnames. An account email, salted password hash, email-verification state, hashed session tokens, and liked-template keys are kept in Appwrite Cloud’s managed authentication and database services. Email verification and recovery codes are delivered through Appwrite’s email service. The gallery exposes aggregate counts, not a public list of individual reactions.
+                Account signup and login involve your email and password handled by Appwrite Cloud. The account service manages account identifiers, email verification and recovery codes, and sessions. A necessary HttpOnly cookie holds your session, with a temporary signed verification cookie for confirmation and recovery. A private Appwrite database stores which templates an account likes; the gallery displays aggregate counts, not public lists of individuals. We use these details to provide sign-in, editor access and likes. Vercel and Appwrite process network requests and operational logs needed to deliver and secure the service. Third-party media hosts may receive normal network information when their files load. The site application has no optional advertising pixels or analytics-tracking scripts today. Providers may process information outside your country.
               </p>
+            </section>
+            <section><h3>Retention, requests and contact</h3>
+              <p>Local drafts, bookmarks and notes remain on this device until you remove them or clear browser data. Account data and likes are retained as needed to operate your account, respond to legitimate requests, and meet applicable obligations. Hosting and authentication providers may retain operational logs under their policies and relevant law.</p>
+              <p>For access, correction, deletion requests or privacy concerns, email <a href="mailto:rajsuhandani11@gmail.com?subject=Meme%20Is%20Mine%20privacy%20request">rajsuhandani11@gmail.com</a>. We may verify account ownership before responding. Account deletion is not currently self-service, and removing the account will not automatically clear browser drafts. Applicable rights vary by jurisdiction.</p>
+            </section>
+            <section><h3>Children, support and changes</h3>
+              <p>The account service is not specifically directed to children. If you believe a child has provided account data, contact us to review the issue. Contact emails are used to respond to questions, feedback and rights or privacy requests, not to enroll you in an email marketing list. This notice may be updated as the site changes.</p>
             </section>
             <section>
               <h3>Limits to keep in mind</h3>
@@ -87,7 +94,7 @@ export default function PrivacyPage() {
                 This page describes the current implementation, not a legal
                 guarantee. Hosting, access logs, external image providers, and
                 browser storage each have their own behavior and policies. Avoid
-                storing sensitive information in drafts.
+                storing sensitive information in drafts. Please also read our <Link href="/terms">Terms of Use</Link>, <Link href="/cookies">Cookies &amp; Storage</Link>, and <Link href="/content-rights">Content &amp; Copyright</Link> pages.
               </p>
             </section>
             <div className="privacy-callout">

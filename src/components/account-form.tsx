@@ -15,6 +15,7 @@ const messages:Record<string,string>={
  invalid:"Enter a valid email address. New passwords must be 12–128 characters.",
  "signup-error":"Couldn't create the account. Please try again.",
  "login-error":"Email or password is incorrect, or the email hasn't been verified.",
+ "terms-required":"Please accept the Terms of Use to create an account.",
  "account-exists":"An account already exists for that email. Sign in to continue.",
  "too-many-codes":"Too many codes were requested. Try again later.",
  "rate-limited":"Too many account requests from this connection. Please try again later.",
@@ -66,6 +67,7 @@ export async function AccountForm({mode,query}:{
            <div className="mim-auth-password-heading"><label htmlFor="auth-password">PASSWORD</label>{!signup&&<Link href="/account/recover">Forgot password?</Link>}</div>
            <AuthPassword signup={signup} disabled={!enabled}/>
            {signup&&<p className="mim-auth-hint"><LockKeyhole size={15}/> At least 12 characters. Use a unique password.</p>}
+           {signup && <div className="mim-auth-agreement"><label htmlFor="mim-terms"><input id="mim-terms" type="checkbox" name="acceptedTerms" value="yes" required disabled={!enabled}/><span>I agree to the <Link href="/terms">Terms of Use</Link>.</span></label><p>Read our <Link href="/privacy">Privacy Notice</Link> to see how we use account information.</p></div>}
            <AuthSubmit signup={signup} disabled={!enabled}/>
          </form>
          <div className="mim-auth-underform"><span><Check size={16}/> Free to create</span><span><Sparkles size={16}/> Your work stays yours</span></div>

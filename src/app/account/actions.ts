@@ -24,6 +24,7 @@ export async function authenticate(form:FormData){
  const password=String(form.get("password")??"");
  if(!email||password.length>128||password.length<(signup?12:1))fail(route,next,"invalid");
  if(!authConfig())fail(route,next,"unavailable");
+ if(signup && form.get("acceptedTerms")!=="yes")fail(route,next,"terms-required");
  if(signup){
   let result:"sent"|"email-unavailable";
   try{result=await register(email!,password);}

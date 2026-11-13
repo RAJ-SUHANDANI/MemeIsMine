@@ -1,0 +1,10 @@
+import Link from "next/link";
+import { LegalShell } from "@/components/legal-shell";
+export const metadata={title:"Cookies & Browser Storage",description:"Necessary login cookies and local storage used by Meme Is Mine."};
+export default function Cookies(){return <LegalShell eyebrow="STORAGE NOTES / 002" title="Cookies & storage." description="What stays in your browser, and why.">
+<p className="privacy-lede">Meme Is Mine uses necessary account cookies and browser storage for features you choose to use. No advertising pixels or optional analytics-tracking scripts are currently integrated into the application.</p>
+<section><h3>01 / Essential cookies</h3><p><code>mim_session</code> is an HttpOnly, SameSite=Lax session cookie used to sign you in. It is marked Secure on the production HTTPS website and expires with the session or when you sign out. <code>mim_verify</code> is a signed, temporary cookie for email verification or password recovery, expiring after about 15 minutes. Neither exists to serve advertisements.</p></section>
+<section><h3>02 / Browser storage</h3><p>Drafts, collections, bookmarks, private notes and personal uploads may be stored in localStorage in your browser. These items do not automatically sync across devices. Clearing site data can erase them, so use Studio's manual backup option if you need to keep your work.</p></section>
+<section><h3>03 / Hosting and media requests</h3><p>Vercel and Appwrite may process technical connection data and operational logs required to provide and secure the service. Some external image/video sources receive normal network requests if their media is loaded directly. Those source hosts have their own policies.</p></section>
+<section><h3>04 / Do you need to click Accept?</h3><p>There is no application-level optional ad or tracking cookie system to accept today. We will review this policy and applicable consent controls before introducing non-essential tracking. Disabling essential cookies can prevent account features from working. For questions see <Link href="/privacy">Privacy</Link> and <Link href="/contact">Contact</Link>.</p></section>
+</LegalShell>}

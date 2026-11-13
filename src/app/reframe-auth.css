@@ -514,3 +514,10 @@
  .mim-auth-art-card,.mim-auth-switcher>a,.mim-auth-form input,.mim-auth-form .auth-submit{transition:none!important;}
  .mim-auth-art-stage:hover .mim-auth-art-card{transform:none;}
 }
+
+.mim-auth-agreement{display:grid;gap:6px;color:var(--rf-ink);font:500 13px/1.6 var(--body)}
+.mim-auth-agreement label{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.mim-auth-agreement input[type="checkbox"]{flex:none;appearance:auto;width:18px;height:18px;margin:3px 0 0;accent-color:var(--rf-accent)}
+.mim-auth-agreement input[type="checkbox"]:focus-visible{outline:3px solid var(--rf-accent);outline-offset:3px}
+.mim-auth-agreement a{color:var(--rf-ink);font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.mim-auth-agreement p{margin:0;color:var(--rf-muted);font-size:12px;line-height:1.6}
