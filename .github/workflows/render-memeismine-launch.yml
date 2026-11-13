@@ -38,6 +38,11 @@ jobs:
         working-directory: launch-video
         run: node capture.js
 
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+
       - name: Render live-footage film
         working-directory: launch-video
         run: python3 render.py
